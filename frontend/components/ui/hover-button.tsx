@@ -64,14 +64,12 @@ const HoverButton = React.forwardRef<HTMLButtonElement, HoverButtonProps>(
       })
     }, [circles])
 
-    const mergedStyle: React.CSSProperties & Record<string, string> = {
-      ...(style || {}),
+    const mergedStyle = { ...(style || {}) } as React.CSSProperties
+    if ((mergedStyle as any)["--circle-start"] === undefined) {
+      ;(mergedStyle as any)["--circle-start"] = "var(--circle-start, #B388FF)"
     }
-    if (mergedStyle["--circle-start"] === undefined) {
-      mergedStyle["--circle-start"] = "var(--circle-start, #B388FF)"
-    }
-    if (mergedStyle["--circle-end"] === undefined) {
-      mergedStyle["--circle-end"] = "var(--circle-end, #6800E9)"
+    if ((mergedStyle as any)["--circle-end"] === undefined) {
+      ;(mergedStyle as any)["--circle-end"] = "var(--circle-end, #6800E9)"
     }
 
     return (
