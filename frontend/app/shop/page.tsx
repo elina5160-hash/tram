@@ -54,7 +54,7 @@ export default function Shop() {
       <div className="w-full px-0 pt-6">
         <h1 className="text-xl sm:text-2xl font-semibold">Каталог</h1>
         <section className="mt-4">
-          <div className="mt-3 grid grid-cols-2 md:grid-cols-3 gap-3">
+          <div className="mt-3 inline-grid grid-cols-2 md:grid-cols-3 gap-3 mx-auto">
             {promos.map((it) => (
               <div
                 key={it.id}
@@ -139,7 +139,7 @@ export default function Shop() {
           </div>
         </section>
         <section className="mt-6">
-          <div className="mt-3 grid grid-cols-2 md:grid-cols-3 gap-3">
+          <div className="mt-3 inline-grid grid-cols-2 md:grid-cols-3 gap-3 mx-auto">
             {bests.map((it) => (
               <div
                 key={it.id}
@@ -222,7 +222,7 @@ export default function Shop() {
           </div>
         </section>
         <section className="mt-6">
-          <div className="mt-3 grid grid-cols-2 md:grid-cols-3 gap-3">
+          <div className="mt-3 inline-grid grid-cols-2 md:grid-cols-3 gap-3 mx-auto">
             {novelties.map((it) => (
               <div
                 key={it.id}

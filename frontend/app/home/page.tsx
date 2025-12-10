@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation"
 import { addToCart } from "@/lib/cart"
  
 import BottomBanner from "@/components/ui/bottom-banner"
+import { BackgroundGradientAnimation } from "@/components/ui/background-gradient-animation"
 
 export default function HomePage() {
   const router = useRouter()
@@ -65,6 +66,15 @@ export default function HomePage() {
     const id = setTimeout(() => setCatalogEntered(true), 0)
     return () => clearTimeout(id)
   }, [])
+  useEffect(() => {
+    try {
+      const p = new URLSearchParams(window.location.search)
+      const ref = p.get("ref")
+      if (ref) {
+        window.localStorage.setItem("referral_code", ref)
+      }
+    } catch {}
+  }, [])
 
   return (
     <div className="min-h-screen w-full bg-white flex flex-col justify-start relative pb-24">
@@ -77,10 +87,31 @@ export default function HomePage() {
       </button>
       <div className="w-full max-w-5xl px-4 pt-6">
         <h1 className="text-xl sm:text-2xl font-semibold">Главная</h1>
+        <div
+          aria-label="Баннер"
+          className="mt-3 h-[280px] sm:h-[360px] md:h-[420px] relative rounded-[20px] overflow-hidden"
+        >
+          <Image src="/афиша.png" alt="Афиша" fill className="object-contain" priority />
+        </div>
+
+        <div className="mt-1">
+          <BackgroundGradientAnimation
+            interactive={false}
+            containerClassName="relative w-full h-[34px] rounded-[12px] border border-gray-500/60 overflow-hidden"
+            gradientBackgroundStart="rgb(28, 28, 28)"
+            gradientBackgroundEnd="rgb(64, 0, 120)"
+            size="180%"
+            blendingValue="soft-light"
+          >
+            <div className="absolute inset-y-0 left-0 flex items-center whitespace-nowrap">
+              <span className="marquee-left pl-4 pr-8 text-white text-[12px] sm:text-[13px]">Добро пожаловать в магазин ETRA🤗</span>
+            </div>
+          </BackgroundGradientAnimation>
+        </div>
 
         <section className="mt-4">
           <h2 className="text-lg sm:text-xl font-semibold">Скидки и акции</h2>
-          <div className="mt-3 grid grid-cols-2 md:grid-cols-3 gap-3">
+          <div className="mt-3 inline-grid grid-cols-2 md:grid-cols-3 gap-3 mx-auto">
             {promos.map((it, idx) => (
               <div
                 key={it.id}
@@ -189,7 +220,7 @@ export default function HomePage() {
         </section>
         <section className="mt-6">
           <h2 className="text-lg sm:text-xl font-semibold">Хиты продаж</h2>
-          <div className="mt-3 grid grid-cols-2 md:grid-cols-3 gap-3">
+          <div className="mt-3 inline-grid grid-cols-2 md:grid-cols-3 gap-3 mx-auto">
             {hits.map((it, idx) => (
               <div
                 key={it.id}
@@ -279,7 +310,7 @@ export default function HomePage() {
         
         <section className="mt-6">
           <h2 className="text-lg sm:text-xl font-semibold">Выбор покупателей</h2>
-          <div className="mt-3 grid grid-cols-2 md:grid-cols-3 gap-3">
+          <div className="mt-3 inline-grid grid-cols-2 md:grid-cols-3 gap-3 mx-auto">
             {bests.map((it) => (
               <div
                 key={it.id}
@@ -361,7 +392,7 @@ export default function HomePage() {
           </div>
         </section>
         <section className="mt-6">
-          <div className="mt-3 grid grid-cols-2 md:grid-cols-3 gap-3">
+          <div className="mt-3 inline-grid grid-cols-2 md:grid-cols-3 gap-3 mx-auto">
             {novelties.map((it, idx) => (
               <div
                 key={it.id}

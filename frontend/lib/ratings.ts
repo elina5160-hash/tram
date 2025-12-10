@@ -104,3 +104,22 @@ export function addRatingOnce(id: number, stars: number): boolean {
   setUserStars(map)
   return true
 }
+
+export function removeUserRating(id: number): boolean {
+  const star = getUserStar(id)
+  const items = getRatings()
+  const idx = items.findIndex((x) => x.id === id)
+  if (idx >= 0 && star > 0) {
+    const pos = items[idx].ratings.indexOf(star)
+    if (pos >= 0) {
+      items[idx].ratings.splice(pos, 1)
+      setRatings(items)
+    }
+  }
+  const map = getUserStars()
+  if (map[id]) {
+    delete map[id]
+    setUserStars(map)
+  }
+  return true
+}

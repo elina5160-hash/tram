@@ -1,10 +1,20 @@
 "use client"
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useParams } from "next/navigation"
 import Image from "next/image"
 import BackButton from "@/components/ui/back-button"
+import { HoverButton } from "@/components/ui/hover-button"
 import BottomBanner from "@/components/ui/bottom-banner"
 import { addToCart } from "@/lib/cart"
+import { addRatingOnce, addReview, getRatingCount, getRatings, getUserStar, removeUserRating } from "@/lib/ratings"
+
+function plural(count: number, one: string, few: string, many: string) {
+  const mod10 = count % 10
+  const mod100 = count % 100
+  if (mod10 === 1 && mod100 !== 11) return one
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return few
+  return many
+}
 
 type RouteParams = { id: string }
 
@@ -40,6 +50,26 @@ export default function ItemPage() {
   const [tab, setTab] = useState<"description" | "composition" | "reviews">("description")
   const [tariff, setTariff] = useState<"self" | "basic" | "vip">("self")
   const [shareOpen, setShareOpen] = useState(false)
+  const [userStar, setUserStar] = useState<number>(() => getUserStar(idNum))
+  const [reviewInput, setReviewInput] = useState("")
+  const [reviewCount, setReviewCount] = useState<number>(() => {
+    const all = getRatings()
+    const entry = all.find((x) => x.id === idNum)
+    return entry ? entry.reviews.length : 0
+  })
+  const [ratingsCount, setRatingsCount] = useState<number>(() => getRatingCount(idNum))
+
+  useEffect(() => {
+    const update = () => {
+      setUserStar(getUserStar(idNum))
+      setRatingsCount(getRatingCount(idNum))
+      const all = getRatings()
+      const entry = all.find((x) => x.id === idNum)
+      setReviewCount(entry ? entry.reviews.length : 0)
+    }
+    window.addEventListener("rating:changed", update)
+    return () => window.removeEventListener("rating:changed", update)
+  }, [idNum])
   
 
   if (!item) {
@@ -149,28 +179,28 @@ export default function ItemPage() {
               {item.id === 7 && (
                 <>
                   <div className="flex gap-2">
-                    <button
-                    className={`flex-1 inline-flex items-center justify-center h-9 px-3 rounded-[12px] border transition-colors duration-150 text-[12px] sm:text-[13px] ${tariff === "self" ? "bg-[#6800E9] text-white border-[#6800E9] shadow-[0_1px_2px_rgba(0,0,0,0.08)]" : "bg-white text-[#232323] border-[#E5E5E5] hover:bg-[#F7F7F7]"}`}
+                    <HoverButton
+                      className={`flex-1 inline-flex items-center justify-center h-9 px-3 rounded-[12px] border transition-colors duration-150 text-[12px] sm:text-[13px] ${tariff === "self" ? "bg-[#6800E9] text-white border-[#6800E9] shadow-[0_1px_2px_rgba(0,0,0,0.08)]" : "bg-white text-[#232323] border-[#E5E5E5] hover:bg-[#F7F7F7]"}`}
                       aria-pressed={tariff === "self"}
                       onClick={() => setTariff("self")}
                     >
                       Тариф КТО ГОТОВИТ САМ
-                    </button>
-                    <button
+                    </HoverButton>
+                    <HoverButton
                       className={`flex-1 inline-flex items-center justify-center h-9 px-3 rounded-[12px] border transition-colors duration-150 text-[12px] sm:text-[13px] ${tariff === "basic" ? "bg-[#6800E9] text-white border-[#6800E9] shadow-[0_1px_2px_rgba(0,0,0,0.08)]" : "bg-white text-[#232323] border-[#E5E5E5] hover:bg-[#F7F7F7]"}`}
                       aria-pressed={tariff === "basic"}
                       onClick={() => setTariff("basic")}
                     >
                       Тариф ОСНОВНОЙ
-                    </button>
+                    </HoverButton>
                   </div>
-                  <button
+                  <HoverButton
                     className={`mt-2 w-full inline-flex items-center justify-center h-9 px-3 rounded-[12px] border transition-colors duration-150 text-[12px] sm:text-[13px] ${tariff === "vip" ? "bg-[#6800E9] text-white border-[#6800E9] shadow-[0_1px_2px_rgba(0,0,0,0.08)]" : "bg-white text-[#232323] border-[#E5E5E5] hover:bg-[#F7F7F7]"}`}
                     aria-pressed={tariff === "vip"}
                     onClick={() => setTariff("vip")}
                   >
                     Тариф VIP
-                  </button>
+                  </HoverButton>
                   <span className="mt-3 block text-[12px] sm:text-[13px] font-semibold" style={{ color: "#000000" }}>
                     {tariff === "self" ? "42 000 р." : tariff === "basic" ? "55 000 р." : "60 000 р."}
                   </span>
@@ -180,13 +210,34 @@ export default function ItemPage() {
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-1" aria-label="Рейтинг товара">
                 {Array.from({ length: 5 }).map((_, idx) => (
-                  <svg key={idx} className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor" style={{ color: idx < 4 ? "#FFD54F" : "#D1D5DB" }}>
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.801 2.035a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.035a1 1 0 00-1.176 0l-2.8 2.035c-.785.57-1.84-.197-1.54-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.88 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                  </svg>
+                  <button
+                    key={idx}
+                    aria-label={`Поставить ${idx + 1} из 5`}
+                    onClick={() => {
+                      const ok = addRatingOnce(idNum, idx + 1)
+                      if (ok) {
+                        setTab("reviews")
+                      }
+                    }}
+                    className="active:scale-105"
+                  >
+                    <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor" style={{ color: idx < userStar ? "#FFD54F" : "#D1D5DB" }}>
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.801 2.035a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.035a1 1 0 00-1.176 0l-2.8 2.035c-.785.57-1.84-.197-1.54-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.88 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                  </button>
                 ))}
               </div>
-              {item.id !== 8 && (
-                <span className="text-[12px]" style={{ color: "#8A8A8A" }}>1 отзыв</span>
+              <span className="text-[12px]" style={{ color: "#8A8A8A" }}>
+                {ratingsCount} {plural(ratingsCount, "оценка", "оценки", "оценок")} · {reviewCount} {plural(reviewCount, "отзыв", "отзыва", "отзывов")}
+              </span>
+              {userStar > 0 && (
+                <button
+                  className="ml-2 px-2 py-1 rounded-[10px] border bg-white text-[12px]"
+                  style={{ color: "#E53935", borderColor: "#E5E5E5" }}
+                  onClick={() => removeUserRating(idNum)}
+                >
+                  Удалить мою оценку
+                </button>
               )}
             </div>
             {false}
@@ -354,11 +405,36 @@ export default function ItemPage() {
                 )
               )}
               {tab === "reviews" && (
-                item.id === 8 ? null : item.id === 6 ? (
-                  <p>Отзывов пока нет</p>
-                ) : (
-                  <p>1 отзыв: Покупатель отметил улучшение самочувствия и повышение энергии.</p>
-                )
+                <div className="space-y-2">
+                  <input
+                    type="text"
+                    value={reviewInput}
+                    onChange={(e) => setReviewInput(e.target.value)}
+                    placeholder="Напишите отзыв"
+                    className="w-full rounded-[12px] bg-white border border-gray-300 px-3 py-2 text-[13px]"
+                  />
+                  <button
+                    className="rounded-[12px] bg-white border border-gray-300 px-3 py-2 text-[13px] active:scale-105"
+                    onClick={() => {
+                      const text = reviewInput.trim()
+                      if (text) {
+                        addReview(idNum, text)
+                        setReviewInput("")
+                      }
+                    }}
+                  >
+                    Сохранить отзыв
+                  </button>
+                  <div className="mt-2 space-y-1">
+                    {(getRatings().find((x) => x.id === idNum)?.reviews || []).length === 0 ? (
+                      <p>Отзывов пока нет</p>
+                    ) : (
+                      (getRatings().find((x) => x.id === idNum)?.reviews || []).map((rv, i) => (
+                        <p key={i}>• {rv}</p>
+                      ))
+                    )}
+                  </div>
+                </div>
               )}
             </div>
           </div>
@@ -371,13 +447,12 @@ export default function ItemPage() {
           >
             Помощь менеджера
           </button>
-          <button
-            className="w-full rounded-[12px] border px-3 py-3 text-[13px] sm:text-[14px] active:scale-105"
-            style={{ backgroundColor: "#6800E9", borderColor: "#6800E9", color: "#FFFFFF" }}
+          <HoverButton
+            className="w-full rounded-[12px] border px-3 py-3 text-[13px] sm:text-[14px] active:scale-105 bg-[#6800E9] text-white"
             onClick={() => addToCart({ id: item.id, title: item.id === 7 ? `${item.title} — ${tariff === "self" ? "КТО ГОТОВИТ САМ" : tariff === "basic" ? "ОСНОВНОЙ" : "VIP"}` : item.title, qty: 1 })}
           >
             В корзину
-          </button>
+          </HoverButton>
         </div>
       </div>
       <BottomBanner />
