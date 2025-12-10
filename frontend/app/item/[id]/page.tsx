@@ -87,14 +87,16 @@ export default function ItemPage() {
   return (
     <div className="min-h-screen w-full bg-white flex flex-col justify-start relative pb-24">
       <BackButton />
-      <div className="w-full max-w-5xl px-4 pt-6">
-        <h1 className="text-xl sm:text-2xl font-semibold">{item.title}</h1>
+      <div className="w-full max-w-[420px] mx-auto px-4 pt-6">
+        <h1 className="text-xl font-semibold">{item.title}</h1>
 
         <div className="mt-4 bg-white rounded-[20px] border border-gray-300 p-3">
           <div className="relative rounded-[16px] overflow-hidden">
             <div className="aspect-square bg-[#F1F1F1]">
               {item.id === 6 ? (
-                <video src="/видео 1.mp4" muted playsInline autoPlay loop className="w-full h-full object-contain" />
+                <video muted playsInline autoPlay loop className="w-full h-full object-contain">
+                  <source src="/видео%201.mp4" type="video/mp4" />
+                </video>
               ) : (
                 <Image src={item.image} alt={item.title} fill className="object-cover" />
               )}
@@ -165,13 +167,13 @@ export default function ItemPage() {
           <div className="mt-2 flex items-center justify-between">
             <div className="flex flex-col">
               {item.id === 6 && (
-                <span className="text-[12px] sm:text-[13px] whitespace-nowrap" style={{ color: "#8A8A8A", textDecoration: "line-through" }}>6000 РУБ</span>
+                <span className="text-[12px] whitespace-nowrap" style={{ color: "#8A8A8A", textDecoration: "line-through" }}>6000 РУБ</span>
               )}
               {item.id === 2 && (
-                <span className="text-[12px] sm:text-[13px] whitespace-nowrap" style={{ color: "#8A8A8A", textDecoration: "line-through" }}>32 000 р.</span>
+                <span className="text-[12px] whitespace-nowrap" style={{ color: "#8A8A8A", textDecoration: "line-through" }}>32 000 р.</span>
               )}
               {item.id === 10 || item.id === 7 ? null : (
-                <span className="text-[13px] sm:text-[14px] font-semibold" style={{ color: "#000000" }}>{item.id === 6 ? "4200руб" : item.id === 2 ? "24 000 р." : splitPrice(item.price).main}</span>
+                <span className="text-[13px] font-semibold" style={{ color: "#000000" }}>{item.id === 6 ? "4200руб" : item.id === 2 ? "24 000 р." : splitPrice(item.price).main}</span>
               )}
               {item.id !== 6 && item.id !== 2 && item.id !== 7 && item.id !== 10 && splitPrice(item.price).sub && (
                 <span className="text-[12px]" style={{ color: "#8A8A8A" }}>{splitPrice(item.price).sub}</span>
@@ -180,14 +182,14 @@ export default function ItemPage() {
                 <>
                   <div className="flex gap-2">
                     <HoverButton
-                      className={`flex-1 inline-flex items-center justify-center h-9 px-3 rounded-[12px] border transition-colors duration-150 text-[12px] sm:text-[13px] ${tariff === "self" ? "bg-[#6800E9] text-white border-[#6800E9] shadow-[0_1px_2px_rgba(0,0,0,0.08)]" : "bg-white text-[#232323] border-[#E5E5E5] hover:bg-[#F7F7F7]"}`}
+                      className={`flex-1 inline-flex items-center justify-center h-9 px-3 rounded-[12px] border transition-colors duration-150 text-[12px] ${tariff === "self" ? "bg-[#6800E9] text-white border-[#6800E9] shadow-[0_1px_2px_rgba(0,0,0,0.08)]" : "bg-white text-[#232323] border-[#E5E5E5] hover:bg-[#F7F7F7]"}`}
                       aria-pressed={tariff === "self"}
                       onClick={() => setTariff("self")}
                     >
                       Тариф КТО ГОТОВИТ САМ
                     </HoverButton>
                     <HoverButton
-                      className={`flex-1 inline-flex items-center justify-center h-9 px-3 rounded-[12px] border transition-colors duration-150 text-[12px] sm:text-[13px] ${tariff === "basic" ? "bg-[#6800E9] text-white border-[#6800E9] shadow-[0_1px_2px_rgba(0,0,0,0.08)]" : "bg-white text-[#232323] border-[#E5E5E5] hover:bg-[#F7F7F7]"}`}
+                      className={`flex-1 inline-flex items-center justify-center h-9 px-3 rounded-[12px] border transition-colors duration-150 text-[12px] ${tariff === "basic" ? "bg-[#6800E9] text-white border-[#6800E9] shadow-[0_1px_2px_rgba(0,0,0,0.08)]" : "bg-white text-[#232323] border-[#E5E5E5] hover:bg-[#F7F7F7]"}`}
                       aria-pressed={tariff === "basic"}
                       onClick={() => setTariff("basic")}
                     >
@@ -195,13 +197,13 @@ export default function ItemPage() {
                     </HoverButton>
                   </div>
                   <HoverButton
-                    className={`mt-2 w-full inline-flex items-center justify-center h-9 px-3 rounded-[12px] border transition-colors duration-150 text-[12px] sm:text-[13px] ${tariff === "vip" ? "bg-[#6800E9] text-white border-[#6800E9] shadow-[0_1px_2px_rgba(0,0,0,0.08)]" : "bg-white text-[#232323] border-[#E5E5E5] hover:bg-[#F7F7F7]"}`}
+                    className={`mt-2 w-full inline-flex items-center justify-center h-9 px-3 rounded-[12px] border transition-colors duration-150 text-[12px] ${tariff === "vip" ? "bg-[#6800E9] text-white border-[#6800E9] shadow-[0_1px_2px_rgba(0,0,0,0.08)]" : "bg-white text-[#232323] border-[#E5E5E5] hover:bg-[#F7F7F7]"}`}
                     aria-pressed={tariff === "vip"}
                     onClick={() => setTariff("vip")}
                   >
                     Тариф VIP
                   </HoverButton>
-                  <span className="mt-3 block text-[12px] sm:text-[13px] font-semibold" style={{ color: "#000000" }}>
+                  <span className="mt-3 block text-[12px] font-semibold" style={{ color: "#000000" }}>
                     {tariff === "self" ? "42 000 р." : tariff === "basic" ? "55 000 р." : "60 000 р."}
                   </span>
                 </>
@@ -268,7 +270,7 @@ export default function ItemPage() {
                 </button>
               )}
             </div>
-            <div className="mt-2 text-[13px] sm:text-[14px] text-[#232323]">
+            <div className="mt-2 text-[13px] text-[#232323]">
               {tab === "description" && (
                 item.id === 6 ? (
                   <p>
@@ -442,13 +444,13 @@ export default function ItemPage() {
 
         <div className="mt-4 grid grid-cols-2 gap-2">
           <button
-            className="w-full rounded-[12px] bg-white border border-gray-300 px-3 py-3 text-[13px] sm:text-[14px]"
+            className="w-full rounded-[12px] bg-white border border-gray-300 px-3 py-3 text-[13px]"
             onClick={() => window.open("https://t.me/avatime_cosmetics_income", "_blank")}
           >
             Помощь менеджера
           </button>
           <HoverButton
-            className="w-full rounded-[12px] border px-3 py-3 text-[13px] sm:text-[14px] active:scale-105 bg-[#6800E9] text-white"
+            className="w-full rounded-[12px] border px-3 py-3 text-[13px] active:scale-105 bg-[#6800E9] text-white"
             onClick={() => addToCart({ id: item.id, title: item.id === 7 ? `${item.title} — ${tariff === "self" ? "КТО ГОТОВИТ САМ" : tariff === "basic" ? "ОСНОВНОЙ" : "VIP"}` : item.title, qty: 1 })}
           >
             В корзину

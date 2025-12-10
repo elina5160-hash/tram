@@ -78,18 +78,20 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen w-full bg-white flex flex-col justify-start relative pb-24">
-      <button
-        aria-label="Меню"
-        onClick={() => setMenuOpen(true)}
-        className="absolute top-4 right-4 w-10 h-10 rounded-[12px] bg-white border border-gray-300 flex items-center justify-center"
-      >
-        <Image src="/Vector.png" alt="Меню" width={24} height={24} />
-      </button>
-      <div className="w-full max-w-5xl px-4 pt-6">
-        <h1 className="text-xl sm:text-2xl font-semibold">Главная</h1>
+      <div className="w-full max-w-[420px] mx-auto px-4 pt-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-xl font-semibold">Главная</h1>
+          <button
+            aria-label="Меню"
+            onClick={() => setMenuOpen(true)}
+            className="w-10 h-10 rounded-[12px] bg-white border border-gray-300 flex items-center justify-center"
+          >
+            <Image src="/Vector.png" alt="Меню" width={24} height={24} />
+          </button>
+        </div>
         <div
           aria-label="Баннер"
-          className="mt-3 h-[280px] sm:h-[360px] md:h-[420px] relative rounded-[20px] overflow-hidden"
+          className="mt-3 h-[280px] relative rounded-[20px] overflow-hidden"
         >
           <Image src="/афиша.png" alt="Афиша" fill className="object-contain" priority />
         </div>
@@ -104,14 +106,14 @@ export default function HomePage() {
             blendingValue="soft-light"
           >
             <div className="absolute inset-y-0 left-0 flex items-center whitespace-nowrap">
-              <span className="marquee-left pl-4 pr-8 text-white text-[12px] sm:text-[13px]">Добро пожаловать в магазин ETRA🤗</span>
+              <span className="marquee-left pl-4 pr-8 text-white text-[12px]">Добро пожаловать в магазин ETRA🤗</span>
             </div>
           </BackgroundGradientAnimation>
         </div>
 
         <section className="mt-4">
-          <h2 className="text-lg sm:text-xl font-semibold">Скидки и акции</h2>
-          <div className="mt-3 inline-grid grid-cols-2 md:grid-cols-3 gap-3 mx-auto">
+          <h2 className="text-lg font-semibold">Скидки и акции</h2>
+          <div className="mt-3 inline-grid grid-cols-2 gap-3 mx-auto">
             {promos.map((it, idx) => (
               <div
                 key={it.id}
@@ -124,7 +126,9 @@ export default function HomePage() {
                   <Link href={`/item/${it.id}`} className="block" aria-label="Открыть товар">
                     <div className="aspect-square bg-[#F1F1F1]">
                       {it.id === 6 ? (
-                        <video src="/видео 1.mp4" muted playsInline autoPlay loop className="w-full h-full object-contain" />
+                        <video muted playsInline autoPlay loop className="w-full h-full object-contain">
+                          <source src="/видео%201.mp4" type="video/mp4" />
+                        </video>
                       ) : (
                         <Image src={it.image} alt={it.title} fill className="object-cover" priority={it.id <= 2} />
                       )}
@@ -150,42 +154,42 @@ export default function HomePage() {
                 
                 <div className="mt-2">
                   <Link href={`/item/${it.id}`} className="block">
-                    <span className="block text-[13px] sm:text-[14px] font-bold leading-tight min-h-[28px] sm:min-h-[32px]" style={{ color: "#000000" }}>{it.title}</span>
+                    <span className="block text-[13px] font-bold leading-tight min-h-[28px]" style={{ color: "#000000" }}>{it.title}</span>
                   </Link>
                   <div className="mt-1 flex items-center justify-between">
                     <div className="flex flex-col">
                       {it.id === 6 && (
-                        <span className="text-[12px] sm:text-[13px] whitespace-nowrap" style={{ color: "#8A8A8A", textDecoration: "line-through" }}>6000 РУБ</span>
+                        <span className="text-[12px] whitespace-nowrap" style={{ color: "#8A8A8A", textDecoration: "line-through" }}>6000 РУБ</span>
                       )}
                       {it.id === 2 && (
-                        <span className="text-[12px] sm:text-[13px] whitespace-nowrap" style={{ color: "#8A8A8A", textDecoration: "line-through" }}>32 000 р.</span>
+                        <span className="text-[12px] whitespace-nowrap" style={{ color: "#8A8A8A", textDecoration: "line-through" }}>32 000 р.</span>
                       )}
                       {it.id !== 10 && (
-                        <span className="text-[12px] sm:text-[13px] whitespace-nowrap" style={{ color: "#8A8A8A" }}>{it.id === 6 ? "4200руб" : it.id === 2 ? "24 000 р." : splitPrice(it.price).main}</span>
+                        <span className="text-[12px] whitespace-nowrap" style={{ color: "#8A8A8A" }}>{it.id === 6 ? "4200руб" : it.id === 2 ? "24 000 р." : splitPrice(it.price).main}</span>
                       )}
                       {it.id !== 6 && it.id !== 2 && splitPrice(it.price).sub && (
                         <span className="text-[12px]" style={{ color: "#8A8A8A" }}>{splitPrice(it.price).sub}</span>
                       )}
                     </div>
-                    <div className="flex items-center gap-1 sm:gap-2">
+                    <div className="flex items-center gap-1">
                       <div
                         aria-label="Уменьшить количество"
                       onClick={(e) => {
                         e.stopPropagation()
                         setQty((prev) => ({ ...prev, [it.id]: Math.max(1, (prev[it.id] || 1) - 1) }))
                       }}
-                        className="w-8 h-8 sm:w-9 sm:h-9 rounded-[12px] bg-white border border-gray-300 text-[#232323] text-[16px] sm:text-[18px] flex items-center justify-center cursor-pointer"
+                        className="w-8 h-8 rounded-[12px] bg-white border border-gray-300 text-[#232323] text-[16px] flex items-center justify-center cursor-pointer"
                       >
                         −
                       </div>
-                      <span className="text-[13px] sm:text-[14px]">{qty[it.id] || 1}</span>
+                      <span className="text-[13px]">{qty[it.id] || 1}</span>
                       <div
                         aria-label="Увеличить количество"
                       onClick={(e) => {
                         e.stopPropagation()
                         setQty((prev) => ({ ...prev, [it.id]: (prev[it.id] || 1) + 1 }))
                       }}
-                        className="w-8 h-8 sm:w-9 sm:h-9 rounded-[12px] bg-white border border-gray-300 text-[#232323] text-[16px] sm:text-[18px] flex items-center justify-center cursor-pointer"
+                        className="w-8 h-8 rounded-[12px] bg-white border border-gray-300 text-[#232323] text-[16px] flex items-center justify-center cursor-pointer"
                       >
                         +
                       </div>
@@ -219,8 +223,8 @@ export default function HomePage() {
       </div>
         </section>
         <section className="mt-6">
-          <h2 className="text-lg sm:text-xl font-semibold">Хиты продаж</h2>
-          <div className="mt-3 inline-grid grid-cols-2 md:grid-cols-3 gap-3 mx-auto">
+          <h2 className="text-lg font-semibold">Хиты продаж</h2>
+          <div className="mt-3 inline-grid grid-cols-2 gap-3 mx-auto">
             {hits.map((it, idx) => (
               <div
                 key={it.id}
@@ -261,42 +265,42 @@ export default function HomePage() {
                 </div>
                 <div className="mt-2">
                   <Link href={`/item/${it.id}`} className="block">
-                    <span className="block text-[13px] sm:text-[14px] font-bold leading-tight min-h-[28px] sm:min-h-[32px]" style={{ color: "#000000" }}>{it.title}</span>
+                    <span className="block text-[13px] font-bold leading-tight min-h-[28px]" style={{ color: "#000000" }}>{it.title}</span>
                   </Link>
                   <div className="mt-1 flex items-center justify-between">
                     <div className="flex flex-col">
                       {it.id === 6 && (
-                        <span className="text-[12px] sm:text-[13px] whitespace-nowrap" style={{ color: "#8A8A8A", textDecoration: "line-through" }}>6000 РУБ</span>
+                        <span className="text-[12px] whitespace-nowrap" style={{ color: "#8A8A8A", textDecoration: "line-through" }}>6000 РУБ</span>
                       )}
                       {it.id === 2 && (
-                        <span className="text-[12px] sm:text-[13px] whitespace-nowrap" style={{ color: "#8A8A8A", textDecoration: "line-through" }}>32 000 р.</span>
+                        <span className="text-[12px] whitespace-nowrap" style={{ color: "#8A8A8A", textDecoration: "line-through" }}>32 000 р.</span>
                       )}
                       {it.id !== 10 && (
-                        <span className="text-[12px] sm:text-[13px] whitespace-nowrap" style={{ color: "#8A8A8A" }}>{it.id === 6 ? "4200руб" : it.id === 2 ? "24 000 р." : splitPrice(it.price).main}</span>
+                        <span className="text-[12px] whitespace-nowrap" style={{ color: "#8A8A8A" }}>{it.id === 6 ? "4200руб" : it.id === 2 ? "24 000 р." : splitPrice(it.price).main}</span>
                       )}
                       {it.id !== 6 && it.id !== 2 && splitPrice(it.price).sub && (
                         <span className="text-[12px]" style={{ color: "#8A8A8A" }}>{splitPrice(it.price).sub}</span>
                       )}
                     </div>
-                    <div className="flex items-center gap-1 sm:gap-2">
+                    <div className="flex items-center gap-1">
                       <div
                         aria-label="Уменьшить количество"
                         onClick={(e) => {
                           e.stopPropagation()
                           setQty((prev) => ({ ...prev, [it.id]: Math.max(1, (prev[it.id] || 1) - 1) }))
                         }}
-                        className="w-8 h-8 sm:w-9 sm:h-9 rounded-[12px] bg-white border border-gray-300 text-[#232323] text-[16px] sm:text-[18px] flex items-center justify-center cursor-pointer"
+                        className="w-8 h-8 rounded-[12px] bg-white border border-gray-300 text-[#232323] text-[16px] flex items-center justify-center cursor-pointer"
                       >
                         −
                       </div>
-                      <span className="text-[13px] sm:text-[14px]">{qty[it.id] || 1}</span>
+                      <span className="text-[13px]">{qty[it.id] || 1}</span>
                       <div
                         aria-label="Увеличить количество"
                         onClick={(e) => {
                           e.stopPropagation()
                           setQty((prev) => ({ ...prev, [it.id]: (prev[it.id] || 1) + 1 }))
                         }}
-                        className="w-8 h-8 sm:w-9 sm:h-9 rounded-[12px] bg-white border border-gray-300 text-[#232323] text-[16px] sm:text-[18px] flex items-center justify-center cursor-pointer"
+                        className="w-8 h-8 rounded-[12px] bg-white border border-gray-300 text-[#232323] text-[16px] flex items-center justify-center cursor-pointer"
                       >
                         +
                       </div>
@@ -309,8 +313,8 @@ export default function HomePage() {
         </section>
         
         <section className="mt-6">
-          <h2 className="text-lg sm:text-xl font-semibold">Выбор покупателей</h2>
-          <div className="mt-3 inline-grid grid-cols-2 md:grid-cols-3 gap-3 mx-auto">
+          <h2 className="text-lg font-semibold">Выбор покупателей</h2>
+          <div className="mt-3 inline-grid grid-cols-2 gap-3 mx-auto">
             {bests.map((it) => (
               <div
                 key={it.id}
@@ -347,40 +351,40 @@ export default function HomePage() {
                 </div>
                 <div className="mt-2">
                   <Link href={`/item/${it.id}`} className="block">
-                    <span className="block text-[13px] sm:text-[14px] font-bold leading-tight min-h-[28px] sm:min-h-[32px]" style={{ color: "#000000" }}>{it.title}</span>
+                    <span className="block text-[13px] font-bold leading-tight min-h-[28px]" style={{ color: "#000000" }}>{it.title}</span>
                   </Link>
                   <div className="mt-1 flex items-center justify-between">
                     <div className="flex flex-col">
                       {it.id === 6 && (
-                        <span className="text-[12px] sm:text-[13px] whitespace-nowrap" style={{ color: "#8A8A8A", textDecoration: "line-through" }}>6000 РУБ</span>
+                        <span className="text-[12px] whitespace-nowrap" style={{ color: "#8A8A8A", textDecoration: "line-through" }}>6000 РУБ</span>
                       )}
                       {it.id === 2 && (
-                        <span className="text-[12px] sm:text-[13px] whitespace-nowrap" style={{ color: "#8A8A8A", textDecoration: "line-through" }}>32 000 р.</span>
+                        <span className="text-[12px] whitespace-nowrap" style={{ color: "#8A8A8A", textDecoration: "line-through" }}>32 000 р.</span>
                       )}
-                      <span className="text-[12px] sm:text-[13px] whitespace-nowrap" style={{ color: "#8A8A8A" }}>{it.id === 6 ? "4200руб" : it.id === 2 ? "24 000 р." : splitPrice(it.price).main}</span>
+                      <span className="text-[12px] whitespace-nowrap" style={{ color: "#8A8A8A" }}>{it.id === 6 ? "4200руб" : it.id === 2 ? "24 000 р." : splitPrice(it.price).main}</span>
                       {it.id !== 6 && it.id !== 2 && splitPrice(it.price).sub && (
                         <span className="text-[12px]" style={{ color: "#8A8A8A" }}>{splitPrice(it.price).sub}</span>
                       )}
                     </div>
-                    <div className="flex items-center gap-1 sm:gap-2">
+                    <div className="flex items-center gap-1">
                     <div
                       aria-label="Уменьшить количество"
                       onClick={(e) => {
                         e.stopPropagation()
                         setQty((prev) => ({ ...prev, [it.id]: Math.max(1, (prev[it.id] || 1) - 1) }))
                       }}
-                        className="w-8 h-8 sm:w-9 sm:h-9 rounded-[12px] bg-white border border-gray-300 text-[#232323] text-[16px] sm:text-[18px] flex items-center justify-center cursor-pointer"
+                        className="w-8 h-8 rounded-[12px] bg-white border border-gray-300 text-[#232323] text-[16px] flex items-center justify-center cursor-pointer"
                       >
                         −
                       </div>
-                      <span className="text-[13px] sm:text-[14px]">{qty[it.id] || 1}</span>
+                      <span className="text-[13px]">{qty[it.id] || 1}</span>
                     <div
                       aria-label="Увеличить количество"
                       onClick={(e) => {
                         e.stopPropagation()
                         setQty((prev) => ({ ...prev, [it.id]: (prev[it.id] || 1) + 1 }))
                       }}
-                        className="w-8 h-8 sm:w-9 sm:h-9 rounded-[12px] bg-white border border-gray-300 text-[#232323] text-[16px] sm:text-[18px] flex items-center justify-center cursor-pointer"
+                        className="w-8 h-8 rounded-[12px] bg-white border border-gray-300 text-[#232323] text-[16px] flex items-center justify-center cursor-pointer"
                       >
                         +
                       </div>
@@ -392,7 +396,7 @@ export default function HomePage() {
           </div>
         </section>
         <section className="mt-6">
-          <div className="mt-3 inline-grid grid-cols-2 md:grid-cols-3 gap-3 mx-auto">
+          <div className="mt-3 inline-grid grid-cols-2 gap-3 mx-auto">
             {novelties.map((it, idx) => (
               <div
                 key={it.id}
@@ -430,40 +434,40 @@ export default function HomePage() {
                 </div>
                 <div className="mt-2">
                   <Link href={`/item/${it.id}`} className="block">
-                    <span className="block text-[13px] sm:text-[14px] font-bold leading-tight min-h-[28px] sm:min-h-[32px]" style={{ color: "#000000" }}>{it.title}</span>
+                    <span className="block text-[13px] font-bold leading-tight min-h-[28px]" style={{ color: "#000000" }}>{it.title}</span>
                   </Link>
                   <div className="mt-1 flex items-center justify-between">
                     <div className="flex flex-col">
                       {it.id === 6 && (
-                        <span className="text-[12px] sm:text-[13px] whitespace-nowrap" style={{ color: "#8A8A8A", textDecoration: "line-through" }}>6000 РУБ</span>
+                        <span className="text-[12px] whitespace-nowrap" style={{ color: "#8A8A8A", textDecoration: "line-through" }}>6000 РУБ</span>
                       )}
                       {it.id === 2 && (
-                        <span className="text-[12px] sm:text-[13px] whitespace-nowrap" style={{ color: "#8A8A8A", textDecoration: "line-through" }}>32 000 р.</span>
+                        <span className="text-[12px] whitespace-nowrap" style={{ color: "#8A8A8A", textDecoration: "line-through" }}>32 000 р.</span>
                       )}
-                      <span className="text-[12px] sm:text-[13px] whitespace-nowrap" style={{ color: "#8A8A8A" }}>{it.id === 6 ? "4200руб" : it.id === 2 ? "24 000 р." : splitPrice(it.price).main}</span>
+                      <span className="text-[12px] whitespace-nowrap" style={{ color: "#8A8A8A" }}>{it.id === 6 ? "4200руб" : it.id === 2 ? "24 000 р." : splitPrice(it.price).main}</span>
                       {it.id !== 6 && it.id !== 2 && splitPrice(it.price).sub && (
                         <span className="text-[12px]" style={{ color: "#8A8A8A" }}>{splitPrice(it.price).sub}</span>
                       )}
                     </div>
-                    <div className="flex items-center gap-1 sm:gap-2">
+                    <div className="flex items-center gap-1">
                     <div
                       aria-label="Уменьшить количество"
                       onClick={(e) => {
                         e.stopPropagation()
                         setQty((prev) => ({ ...prev, [it.id]: Math.max(1, (prev[it.id] || 1) - 1) }))
                       }}
-                        className="w-8 h-8 sm:w-9 sm:h-9 rounded-[12px] bg-white border border-gray-300 text-[#232323] text-[16px] sm:text-[18px] flex items-center justify-center cursor-pointer"
+                        className="w-8 h-8 rounded-[12px] bg-white border border-gray-300 text-[#232323] text-[16px] flex items-center justify-center cursor-pointer"
                       >
                         −
                       </div>
-                      <span className="text-[13px] sm:text-[14px]">{qty[it.id] || 1}</span>
+                      <span className="text-[13px]">{qty[it.id] || 1}</span>
                     <div
                       aria-label="Увеличить количество"
                       onClick={(e) => {
                         e.stopPropagation()
                         setQty((prev) => ({ ...prev, [it.id]: (prev[it.id] || 1) + 1 }))
                       }}
-                        className="w-8 h-8 sm:w-9 sm:h-9 rounded-[12px] bg-white border border-gray-300 text-[#232323] text-[16px] sm:text-[18px] flex items-center justify-center cursor-pointer"
+                        className="w-8 h-8 rounded-[12px] bg-white border border-gray-300 text-[#232323] text-[16px] flex items-center justify-center cursor-pointer"
                       >
                         +
                       </div>
@@ -497,19 +501,19 @@ export default function HomePage() {
       </section>
       </div>
       {menuOpen && (
-        <div className="fixed inset-0 z-30 flex justify-end">
+        <div className="fixed inset-0 z-30 flex justify-center">
           <div className="absolute inset-0 bg-black/20" onClick={() => setMenuOpen(false)} />
           <div className={menuView === "grid"
-            ? "relative h-full w-[80vw] max-w-[320px] bg-white rounded-[20px] p-4 overflow-y-auto flex flex-col"
-            : "relative h-full w-full bg-white p-4 overflow-y-auto flex flex-col"
+            ? "relative h-full w-full max-w-[420px] bg-white rounded-[20px] p-4 overflow-y-auto flex flex-col"
+            : "relative h-full w-full max-w-[420px] bg-white p-4 overflow-y-auto flex flex-col"
           }>
             {menuView === "grid" ? (
               <>
-                <div className="grid grid-cols-2 gap-2 sm:gap-3 content-start">
+                <div className="grid grid-cols-2 gap-2 content-start">
                   {menuItems.map((item) => (
                     <button
                       key={item.label}
-                      className="w-full rounded-[16px] bg-[#F1F1F1] px-3 py-2 text-[#232323] text-[13px] sm:text-[14px] text-center"
+                      className="w-full rounded-[16px] bg-[#F1F1F1] px-3 py-2 text-[#232323] text-[13px] text-center"
                       onClick={() => setMenuView(item.key)}
                     >
                       {item.label}
@@ -518,15 +522,15 @@ export default function HomePage() {
                 </div>
                 <div className="mt-3">
                   <button
-                    className="w-full rounded-[16px] bg-[#F1F1F1] px-3 py-3 text-[#232323] text-[14px] sm:text-[15px] text-center"
+                    className="w-full rounded-[16px] bg-[#F1F1F1] px-3 py-3 text-[#232323] text-[14px] text-center"
                     onClick={() => setMenuView("stores")}
                   >
                     Адреса офлайн магазинов
                   </button>
                 </div>
-                <div className="mt-6 sm:mt-4">
-                  <div className="text-[13px] sm:text-[14px] font-semibold" style={{ color: "#000000" }}>Мы в соцсетях</div>
-                  <div className="mt-2 flex items-center gap-3 sm:gap-4">
+                <div className="mt-6">
+                  <div className="text-[13px] font-semibold" style={{ color: "#000000" }}>Мы в соцсетях</div>
+                  <div className="mt-2 flex items-center gap-3">
                     <div
                       role="button"
                       tabIndex={0}
@@ -586,7 +590,7 @@ export default function HomePage() {
                     Назад
                   </button>
                 </div>
-                <div className="rounded-[20px] bg-[#F1F1F1] p-4 text-[#232323] text-[13px] sm:text-[14px] leading-relaxed">
+                <div className="rounded-[20px] bg-[#F1F1F1] p-4 text-[#232323] text-[13px] leading-relaxed">
                   {menuView === "delivery" && (
                     <>
                       <p>Мы делаем доставку через СДЕК. Доставляем нашу продукцию по России и всему СНГ. Обращаем ваше внимание, доставка в СДЕК оплачивается отдельно и зависит от региона доставки и объема посылки.</p>

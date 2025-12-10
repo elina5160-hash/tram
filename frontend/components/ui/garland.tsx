@@ -2,7 +2,7 @@
 
 export default function Garland() {
   return (
-    <div id="Christmas_Lights" className="fixed left-0 right-0 pointer-events-none h-[120px] md:h-[140px] lg:h-[160px]" style={{ zIndex: 1000, top: -16 }}>
+    <div id="Christmas_Lights" className="fixed left-0 right-0 pointer-events-none h-[120px]" style={{ zIndex: 1000, top: -16 }}>
       <svg width="100%" height="100%" viewBox="0 0 1200 150" preserveAspectRatio="xMidYMin meet">
         <path d="M0,30 C300,110 900,10 1200,90" className="light_cord" strokeWidth="3" fill="none" />
         <g>

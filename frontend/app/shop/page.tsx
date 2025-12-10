@@ -51,10 +51,10 @@ export default function Shop() {
     <div className="min-h-screen w-full bg-white flex flex-col items-center justify-start relative pb-24">
       <BackButton />
       
-      <div className="w-full px-0 pt-6">
-        <h1 className="text-xl sm:text-2xl font-semibold">Каталог</h1>
+      <div className="w-full max-w-[420px] mx-auto px-4 pt-6">
+        <h1 className="text-xl font-semibold">Каталог</h1>
         <section className="mt-4">
-          <div className="mt-3 inline-grid grid-cols-2 md:grid-cols-3 gap-3 mx-auto">
+          <div className="mt-3 inline-grid grid-cols-2 gap-3 mx-auto">
             {promos.map((it) => (
               <div
                 key={it.id}
@@ -66,7 +66,9 @@ export default function Shop() {
                   <Link href={`/item/${it.id}`} className="block" aria-label="Открыть товар">
                     <div className="aspect-square bg-[#F1F1F1]">
                       {it.id === 6 ? (
-                        <video src="/видео 1.mp4" muted playsInline autoPlay loop className="w-full h-full object-contain" />
+                        <video muted playsInline autoPlay loop className="w-full h-full object-contain">
+                          <source src="/видео%201.mp4" type="video/mp4" />
+                        </video>
                       ) : (
                         <Image src={it.image} alt={it.title} fill className="object-cover" priority={it.id <= 2} />
                       )}
@@ -92,42 +94,42 @@ export default function Shop() {
                 </div>
                 <div className="mt-2">
                   <Link href={`/item/${it.id}`} className="block">
-                    <span className="block text-[13px] sm:text-[14px] font-bold leading-tight min-h-[28px] sm:min-h-[32px]" style={{ color: "#000000" }}>{it.title}</span>
+                    <span className="block text-[13px] font-bold leading-tight min-h-[28px]" style={{ color: "#000000" }}>{it.title}</span>
                   </Link>
                   <div className="mt-1 flex items-center justify-between">
                     <div className="flex flex-col">
                       {it.id === 6 && (
-                        <span className="text-[12px] sm:text-[13px] whitespace-nowrap" style={{ color: "#8A8A8A", textDecoration: "line-through" }}>6000 РУБ</span>
+                        <span className="text-[12px] whitespace-nowrap" style={{ color: "#8A8A8A", textDecoration: "line-through" }}>6000 РУБ</span>
                       )}
                       {it.id === 2 && (
-                        <span className="text-[12px] sm:text-[13px] whitespace-nowrap" style={{ color: "#8A8A8A", textDecoration: "line-through" }}>32 000 р.</span>
+                        <span className="text-[12px] whitespace-nowrap" style={{ color: "#8A8A8A", textDecoration: "line-through" }}>32 000 р.</span>
                       )}
                       {it.id !== 10 && (
-                        <span className="text-[12px] sm:text-[13px] whitespace-nowrap" style={{ color: "#8A8A8A" }}>{it.id === 6 ? "4200руб" : it.id === 2 ? "24 000 р." : splitPrice(it.price).main}</span>
+                        <span className="text-[12px] whitespace-nowrap" style={{ color: "#8A8A8A" }}>{it.id === 6 ? "4200руб" : it.id === 2 ? "24 000 р." : splitPrice(it.price).main}</span>
                       )}
                       {it.id !== 6 && it.id !== 2 && splitPrice(it.price).sub && (
                         <span className="text-[12px]" style={{ color: "#8A8A8A" }}>{splitPrice(it.price).sub}</span>
                       )}
                     </div>
-                    <div className="flex items-center gap-1 sm:gap-2">
+                    <div className="flex items-center gap-1">
                     <div
                       aria-label="Уменьшить количество"
                       onClick={(e) => {
                         e.stopPropagation()
                         setQty((prev) => ({ ...prev, [it.id]: Math.max(1, (prev[it.id] || 1) - 1) }))
                       }}
-                      className="w-8 h-8 sm:w-9 sm:h-9 rounded-[12px] bg-white border border-gray-300 text-[#232323] text-[16px] sm:text-[18px] flex items-center justify-center cursor-pointer"
+                      className="w-8 h-8 rounded-[12px] bg-white border border-gray-300 text-[#232323] text-[16px] flex items-center justify-center cursor-pointer"
                     >
                       −
                     </div>
-                    <span className="text-[13px] sm:text-[14px]">{qty[it.id] || 1}</span>
+                    <span className="text-[13px]">{qty[it.id] || 1}</span>
                     <div
                       aria-label="Увеличить количество"
                       onClick={(e) => {
                         e.stopPropagation()
                         setQty((prev) => ({ ...prev, [it.id]: (prev[it.id] || 1) + 1 }))
                       }}
-                      className="w-8 h-8 sm:w-9 sm:h-9 rounded-[12px] bg-white border border-gray-300 text-[#232323] text-[16px] sm:text-[18px] flex items-center justify-center cursor-pointer"
+                      className="w-8 h-8 rounded-[12px] bg-white border border-gray-300 text-[#232323] text-[16px] flex items-center justify-center cursor-pointer"
                     >
                       +
                     </div>
@@ -139,7 +141,7 @@ export default function Shop() {
           </div>
         </section>
         <section className="mt-6">
-          <div className="mt-3 inline-grid grid-cols-2 md:grid-cols-3 gap-3 mx-auto">
+          <div className="mt-3 inline-grid grid-cols-2 gap-3 mx-auto">
             {bests.map((it) => (
               <div
                 key={it.id}
@@ -177,40 +179,40 @@ export default function Shop() {
                 </div>
                 <div className="mt-2">
                   <Link href={`/item/${it.id}`} className="block">
-                    <span className="block text-[13px] sm:text-[14px] font-bold leading-tight min-h-[28px] sm:min-h-[32px]" style={{ color: "#000000" }}>{it.title}</span>
+                    <span className="block text-[13px] font-bold leading-tight min-h-[28px]" style={{ color: "#000000" }}>{it.title}</span>
                   </Link>
                   <div className="mt-1 flex items-center justify-between">
                     <div className="flex flex-col">
                       {it.id === 6 && (
-                        <span className="text-[12px] sm:text-[13px] whitespace-nowrap" style={{ color: "#8A8A8A", textDecoration: "line-through" }}>6000 РУБ</span>
+                        <span className="text-[12px] whitespace-nowrap" style={{ color: "#8A8A8A", textDecoration: "line-through" }}>6000 РУБ</span>
                       )}
                       {it.id === 2 && (
-                        <span className="text-[12px] sm:text-[13px] whitespace-nowrap" style={{ color: "#8A8A8A", textDecoration: "line-through" }}>32 000 р.</span>
+                        <span className="text-[12px] whitespace-nowrap" style={{ color: "#8A8A8A", textDecoration: "line-through" }}>32 000 р.</span>
                       )}
-                      <span className="text-[12px] sm:text-[13px] whitespace-nowrap" style={{ color: "#8A8A8A" }}>{it.id === 6 ? "4200руб" : it.id === 2 ? "24 000 р." : splitPrice(it.price).main}</span>
+                      <span className="text-[12px] whitespace-nowrap" style={{ color: "#8A8A8A" }}>{it.id === 6 ? "4200руб" : it.id === 2 ? "24 000 р." : splitPrice(it.price).main}</span>
                       {it.id !== 6 && it.id !== 2 && splitPrice(it.price).sub && (
                         <span className="text-[12px]" style={{ color: "#8A8A8A" }}>{splitPrice(it.price).sub}</span>
                       )}
                     </div>
-                    <div className="flex items-center gap-1 sm:gap-2">
+                    <div className="flex items-center gap-1">
                     <div
                       aria-label="Уменьшить количество"
                       onClick={(e) => {
                         e.stopPropagation()
                         setQty((prev) => ({ ...prev, [it.id]: Math.max(1, (prev[it.id] || 1) - 1) }))
                       }}
-                      className="w-8 h-8 sm:w-9 sm:h-9 rounded-[12px] bg-white border border-gray-300 text-[#232323] text-[16px] sm:text-[18px] flex items-center justify-center cursor-pointer"
+                      className="w-8 h-8 rounded-[12px] bg-white border border-gray-300 text-[#232323] text-[16px] flex items-center justify-center cursor-pointer"
                     >
                       −
                     </div>
-                    <span className="text-[13px] sm:text-[14px]">{qty[it.id] || 1}</span>
+                    <span className="text-[13px]">{qty[it.id] || 1}</span>
                     <div
                       aria-label="Увеличить количество"
                       onClick={(e) => {
                         e.stopPropagation()
                         setQty((prev) => ({ ...prev, [it.id]: (prev[it.id] || 1) + 1 }))
                       }}
-                      className="w-8 h-8 sm:w-9 sm:h-9 rounded-[12px] bg-white border border-gray-300 text-[#232323] text-[16px] sm:text-[18px] flex items-center justify-center cursor-pointer"
+                      className="w-8 h-8 rounded-[12px] bg-white border border-gray-300 text-[#232323] text-[16px] flex items-center justify-center cursor-pointer"
                     >
                       +
                     </div>
@@ -222,7 +224,7 @@ export default function Shop() {
           </div>
         </section>
         <section className="mt-6">
-          <div className="mt-3 inline-grid grid-cols-2 md:grid-cols-3 gap-3 mx-auto">
+          <div className="mt-3 inline-grid grid-cols-2 gap-3 mx-auto">
             {novelties.map((it) => (
               <div
                 key={it.id}
@@ -260,40 +262,40 @@ export default function Shop() {
                 </div>
                 <div className="mt-2">
                   <Link href={`/item/${it.id}`} className="block">
-                    <span className="block text-[13px] sm:text-[14px] font-bold leading-tight min-h-[28px] sm:min-h-[32px]" style={{ color: "#000000" }}>{it.title}</span>
+                    <span className="block text-[13px] font-bold leading-tight min-h-[28px]" style={{ color: "#000000" }}>{it.title}</span>
                   </Link>
                   <div className="mt-1 flex items-center justify-between">
                     <div className="flex flex-col">
                       {it.id === 6 && (
-                        <span className="text-[12px] sm:text-[13px] whitespace-nowrap" style={{ color: "#8A8A8A", textDecoration: "line-through" }}>6000 РУБ</span>
+                        <span className="text-[12px] whitespace-nowrap" style={{ color: "#8A8A8A", textDecoration: "line-through" }}>6000 РУБ</span>
                       )}
                       {it.id === 2 && (
-                        <span className="text-[12px] sm:text-[13px] whitespace-nowrap" style={{ color: "#8A8A8A", textDecoration: "line-through" }}>32 000 р.</span>
+                        <span className="text-[12px] whitespace-nowrap" style={{ color: "#8A8A8A", textDecoration: "line-through" }}>32 000 р.</span>
                       )}
-                      <span className="text-[12px] sm:text-[13px] whitespace-nowrap" style={{ color: "#8A8A8A" }}>{it.id === 6 ? "4200руб" : it.id === 2 ? "24 000 р." : splitPrice(it.price).main}</span>
+                      <span className="text-[12px] whitespace-nowrap" style={{ color: "#8A8A8A" }}>{it.id === 6 ? "4200руб" : it.id === 2 ? "24 000 р." : splitPrice(it.price).main}</span>
                       {it.id !== 6 && it.id !== 2 && splitPrice(it.price).sub && (
                         <span className="text-[12px]" style={{ color: "#8A8A8A" }}>{splitPrice(it.price).sub}</span>
                       )}
                     </div>
-                    <div className="flex items-center gap-1 sm:gap-2">
+                    <div className="flex items-center gap-1">
                     <div
                       aria-label="Уменьшить количество"
                       onClick={(e) => {
                         e.stopPropagation()
                         setQty((prev) => ({ ...prev, [it.id]: Math.max(1, (prev[it.id] || 1) - 1) }))
                       }}
-                      className="w-8 h-8 sm:w-9 sm:h-9 rounded-[12px] bg-white border border-gray-300 text-[#232323] text-[16px] sm:text-[18px] flex items-center justify-center cursor-pointer"
+                      className="w-8 h-8 rounded-[12px] bg-white border border-gray-300 text-[#232323] text-[16px] flex items-center justify-center cursor-pointer"
                     >
                       −
                     </div>
-                    <span className="text-[13px] sm:text-[14px]">{qty[it.id] || 1}</span>
+                    <span className="text-[13px]">{qty[it.id] || 1}</span>
                     <div
                       aria-label="Увеличить количество"
                       onClick={(e) => {
                         e.stopPropagation()
                         setQty((prev) => ({ ...prev, [it.id]: (prev[it.id] || 1) + 1 }))
                       }}
-                      className="w-8 h-8 sm:w-9 sm:h-9 rounded-[12px] bg-white border border-gray-300 text-[#232323] text-[16px] sm:text-[18px] flex items-center justify-center cursor-pointer"
+                      className="w-8 h-8 rounded-[12px] bg-white border border-gray-300 text-[#232323] text-[16px] flex items-center justify-center cursor-pointer"
                     >
                       +
                     </div>

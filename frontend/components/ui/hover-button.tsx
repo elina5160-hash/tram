@@ -64,12 +64,12 @@ const HoverButton = React.forwardRef<HTMLButtonElement, HoverButtonProps>(
       })
     }, [circles])
 
-    const mergedStyle = { ...(style || {}) } as React.CSSProperties
-    if ((mergedStyle as any)["--circle-start"] === undefined) {
-      ;(mergedStyle as any)["--circle-start"] = "var(--circle-start, #B388FF)"
+    const mergedStyle: React.CSSProperties & { [key: string]: string | number } = { ...(style || {}) }
+    if (mergedStyle["--circle-start"] === undefined) {
+      mergedStyle["--circle-start"] = "var(--circle-start, #B388FF)"
     }
-    if ((mergedStyle as any)["--circle-end"] === undefined) {
-      ;(mergedStyle as any)["--circle-end"] = "var(--circle-end, #6800E9)"
+    if (mergedStyle["--circle-end"] === undefined) {
+      mergedStyle["--circle-end"] = "var(--circle-end, #6800E9)"
     }
 
     return (
@@ -81,7 +81,7 @@ const HoverButton = React.forwardRef<HTMLButtonElement, HoverButtonProps>(
         }}
         className={cn(
           "relative isolate px-3 py-2 rounded-[12px]",
-          "text-[13px] sm:text-[14px] font-medium leading-6",
+          "text-[13px] font-medium leading-6",
           "backdrop-blur-lg",
           "cursor-pointer overflow-hidden",
           "before:content-[''] before:absolute before:inset-0",

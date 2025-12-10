@@ -70,24 +70,26 @@ export default function Cart() {
   return (
     <div className="min-h-screen w-full bg-white flex flex-col justify-start relative pb-24">
       <BackButton />
-      <button
-        aria-label="Очистить корзину"
-        onClick={() => {
-          clearCart()
-          setItems([])
-          router.push("/home")
-        }}
-        className="absolute top-4 right-4 w-10 h-10 rounded-[12px] bg-white border border-gray-300 flex items-center justify-center"
-      >
-        <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M6 7H18" stroke="#E53935" strokeWidth="2" strokeLinecap="round" />
-          <path d="M9 7V5C9 4.448 9.448 4 10 4H14C14.552 4 15 4.448 15 5V7" stroke="#E53935" strokeWidth="2" strokeLinecap="round" />
-          <path d="M7 7L8 20C8 21.105 8.895 22 10 22H14C15.105 22 16 21.105 16 20L17 7" stroke="#E53935" strokeWidth="2" strokeLinecap="round" />
-          <path d="M10 11V17" stroke="#E53935" strokeWidth="2" strokeLinecap="round" />
-          <path d="M14 11V17" stroke="#E53935" strokeWidth="2" strokeLinecap="round" />
-        </svg>
-      </button>
-      <div className="w-full max-w-5xl px-4 pt-6">
+      <div className="w-full max-w-[420px] mx-auto px-4 pt-6">
+        <div className="flex items-center justify-end">
+          <button
+            aria-label="Очистить корзину"
+            onClick={() => {
+              clearCart()
+              setItems([])
+              router.push("/home")
+            }}
+            className="w-10 h-10 rounded-[12px] bg-white border border-gray-300 flex items-center justify-center"
+          >
+            <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M6 7H18" stroke="#E53935" strokeWidth="2" strokeLinecap="round" />
+              <path d="M9 7V5C9 4.448 9.448 4 10 4H14C14.552 4 15 4.448 15 5V7" stroke="#E53935" strokeWidth="2" strokeLinecap="round" />
+              <path d="M7 7L8 20C8 21.105 8.895 22 10 22H14C15.105 22 16 21.105 16 20L17 7" stroke="#E53935" strokeWidth="2" strokeLinecap="round" />
+              <path d="M10 11V17" stroke="#E53935" strokeWidth="2" strokeLinecap="round" />
+              <path d="M14 11V17" stroke="#E53935" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+          </button>
+        </div>
         {items.length === 0 ? (
           <div className="flex items-center justify-center py-16">
             <div className="text-[35px] font-bold" style={{ color: "#000000" }}>
@@ -103,7 +105,9 @@ export default function Cart() {
                   <div className="w-14 h-14 rounded-[12px] overflow-hidden bg-[#F1F1F1] flex items-center justify-center">
                     {info ? (
                       info.image.endsWith(".mp4") ? (
-                        <video src={info.image} muted playsInline autoPlay loop className="w-full h-full object-contain" />
+                        <video muted playsInline autoPlay loop className="w-full h-full object-contain">
+                          <source src={info.image} type="video/mp4" />
+                        </video>
                       ) : (
                         <Image src={info.image} alt={it.title} width={56} height={56} className="object-cover" />
                       )
@@ -172,7 +176,7 @@ export default function Cart() {
                   <span style={{ color: "#000000" }}>{totalWithDiscount.toLocaleString("ru-RU")} руб.</span>
                 </div>
                 <HoverButton
-                  className="w-full rounded-[12px] border px-3 py-3 text-[13px] sm:text-[14px] active:scale-105 bg-[#6800E9] text-white"
+                  className="w-full rounded-[12px] border px-3 py-3 text-[13px] active:scale-105 bg-[#6800E9] text-white"
                   onClick={async () => {
                     const refCode = typeof window !== "undefined" ? (window.localStorage.getItem("referral_code") || "") : ""
                     const res = await fetch("/api/robokassa/create", {
@@ -205,7 +209,9 @@ export default function Cart() {
                     <div key={s.id} className="min-w-[220px] rounded-[16px] border border-gray-200 p-3 bg-white flex flex-col">
                       <div className="relative w-full h-[120px] rounded-[12px] overflow-hidden bg-[#F1F1F1]">
                         {s.image.endsWith(".mp4") ? (
-                          <video src={s.image} muted playsInline autoPlay loop className="w-full h-full object-contain" />
+                          <video muted playsInline autoPlay loop className="w-full h-full object-contain">
+                            <source src={s.image} type="video/mp4" />
+                          </video>
                         ) : (
                           <Image src={s.image} alt={s.title} fill className="object-cover" />
                         )}
