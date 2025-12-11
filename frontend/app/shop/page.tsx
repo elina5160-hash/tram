@@ -41,7 +41,7 @@ export default function Shop() {
 
   
   return (
-    <div className="min-h-screen w-full bg-white flex flex-col items-center justify-start relative pb-32">
+    <div className="min-h-screen w-full bg-white flex flex-col items-center justify-start relative pb-40">
       
       <div className="w-full max-w-[420px] mx-auto px-4 pt-6">
         <h1 className="text-xl font-semibold">Каталог</h1>

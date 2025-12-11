@@ -69,7 +69,7 @@ export default function HomePage() {
   }, [])
 
   return (
-    <div className="min-h-screen w-full bg-[#FAFAFA] flex flex-col justify-start relative pb-32">
+    <div className="min-h-screen w-full bg-[#FAFAFA] flex flex-col justify-start relative pb-40">
       <div className="w-full max-w-[420px] mx-auto px-4 pt-6">
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-semibold">Главная</h1>
@@ -109,7 +109,7 @@ export default function HomePage() {
             <h2 className="text-lg font-semibold">Скидки и акции</h2>
             <Link href="/catalog" className="text-[13px]" style={{ color: "#267A2D" }}>Смотреть все</Link>
           </div>
-          <div className="mt-3 -mx-4 px-4 overflow-x-auto flex gap-3 snap-x snap-mandatory">
+          <div className="mt-3 overflow-x-auto flex gap-3 snap-x snap-mandatory pb-2">
             {promos.map((it, idx) => (
               <div
                 key={it.id}
@@ -201,7 +201,7 @@ export default function HomePage() {
         
         <section className="mt-6">
           <h2 className="text-lg font-semibold">Выбор покупателей</h2>
-          <div className="mt-3 -mx-4 px-4 overflow-x-auto flex gap-3 snap-x snap-mandatory">
+          <div className="mt-3 overflow-x-auto flex gap-3 snap-x snap-mandatory pb-2">
             {bests.map((it) => {
               return (
               <div
@@ -288,7 +288,7 @@ export default function HomePage() {
         </section>
         <section className="mt-6">
           <h2 className="text-lg font-semibold">Новинки</h2>
-          <div className="mt-3 -mx-4 px-4 overflow-x-auto flex gap-3 snap-x snap-mandatory">
+          <div className="mt-3 overflow-x-auto flex gap-3 snap-x snap-mandatory pb-2">
             {novelties.map((it, idx) => {
               return (
               <div
