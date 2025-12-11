@@ -375,6 +375,8 @@ export default function HomePage() {
             })}
           </div>
         </section>
+
+
       </div>
       {menuOpen && (
         <div className="fixed inset-0 z-30 flex justify-end">
