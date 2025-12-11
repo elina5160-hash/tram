@@ -1,0 +1,53 @@
+import useSWR, { mutate } from 'swr';
+
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
+
+export function useProducts() {
+  const { data, error, isLoading } = useSWR('/api/products', fetcher);
+
+  const addProduct = async (product: any) => {
+    const res = await fetch('/api/products', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(product),
+    });
+    if (res.ok) {
+      mutate('/api/products');
+      return await res.json();
+    }
+    throw new Error('Failed to add product');
+  };
+
+  const updateProduct = async (id: number, updates: any) => {
+    const res = await fetch(`/api/products/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updates),
+    });
+    if (res.ok) {
+      mutate('/api/products');
+      return await res.json();
+    }
+    throw new Error('Failed to update product');
+  };
+
+  const deleteProduct = async (id: number) => {
+    const res = await fetch(`/api/products/${id}`, {
+      method: 'DELETE',
+    });
+    if (res.ok) {
+      mutate('/api/products');
+      return true;
+    }
+    throw new Error('Failed to delete product');
+  };
+
+  return {
+    products: data || [],
+    isLoading,
+    isError: error,
+    addProduct,
+    updateProduct,
+    deleteProduct,
+  };
+}

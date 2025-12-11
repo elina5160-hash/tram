@@ -13,12 +13,7 @@
 html, body { height: 100%; }
 *, *::before, *::after { box-sizing: border-box; }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+ 
 
 /* disable OS dark scheme override to keep white background */
 
@@ -87,11 +82,18 @@ html, body { overflow-x: hidden; }
 
 @keyframes marqueeLeft {
   0% { transform: translateX(100%); }
-  100% { transform: translateX(-100%); }
+  100% { transform: translateX(-120%); }
 }
 .marquee-left {
   animation: marqueeLeft 14s linear infinite;
+  will-change: transform;
 }
+
+@keyframes marqueeScroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.marquee-track { animation: marqueeScroll 14s linear infinite; will-change: transform; }
 
 /* Icon utilities for PNG to appear white on dark backgrounds */
 .icon-white { filter: brightness(0) invert(1); }

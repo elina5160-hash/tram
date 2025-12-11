@@ -25,16 +25,31 @@ export default function Cart() {
 
   const catalog = useMemo(
     () => [
-      { id: 1, title: "Закваска ПРАЭнзим", image: "/1.png", price: 3000 },
-      { id: 2, title: "Курс Смена Миркобиома", image: "/2.png", price: 16000 },
-      { id: 3, title: "Чистое Утро", image: "/4.png", price: 2400 },
-      { id: 4, title: "Бифидум Фаната", image: "/5.png", price: 1200 },
-      { id: 5, title: "Набор МЕГА КОМПЛЕКТ", image: "/главная4.png", price: 4400 },
+      { id: 1, title: "Закваска ПРАЭнзим", image: "/1500x2000 3-4 Zakvaska.mp4", price: 3000 },
+      { id: 2, title: "🎉 АКЦИЯ ДВА КУРСА смены микробиома 🎉", image: "/афиша.png", price: 24000 },
+      { id: 3, title: "💫 Чистое утро", image: "/4.png", price: 2400 },
+      { id: 4, title: "БифидумФаната﻿🍊﻿", image: "/ETRA Bottle Fanta2.mp4", price: 1200 },
       { id: 6, title: "Набор СЕЗОННЫЙ", image: "/главная4.png", price: 4200 },
       { id: 7, title: "Бак для приготовления энзимных напитков", image: "/2.png", price: 53000 },
       { id: 8, title: "Супер пробка", image: "/пробка.jpg", price: 950 },
-      { id: 9, title: "Курс Чистка Микробиома", image: "/2.png", price: 16000 },
+      { id: 9, title: "☀️ Курс Чистка Микробиома 🌛", image: "/афиша.png", price: 16000 },
       { id: 10, title: "Сыродавленные масла", image: "/9.png", price: 0 },
+      { id: 11, title: "Энзимный напиток Еловый", image: "/Eloviy PROMO strz 2.mp4", price: 750 },
+      { id: 12, title: "Энзимный напиток Детский", image: "/Etra PROMO strz Detskii.mp4", price: 750 },
+      { id: 13, title: "Энзимный напиток Хмель", image: "/хмель1.png", price: 900 },
+      { id: 1013, title: "Энзимный напиток Хмель 0.5л", image: "/хмель1.png", price: 490 },
+      { id: 14, title: "Энзимный напиток Розлинг", image: "/розлинг1.jpg", price: 800 },
+      { id: 1014, title: "Энзимный напиток Розлинг 0.5л", image: "/розлинг1.jpg", price: 490 },
+      { id: 15, title: "Полезный энергетик", image: "/2 51.png", price: 750 },
+      { id: 1015, title: "Полезный энергетик 0.5л", image: "/2 51.png", price: 490 },
+      { id: 16, title: "Энзимный напиток Рислинг", image: "/рислинг1.png", price: 800 },
+      { id: 17, title: "Энзимный напиток Апельсин", image: "/Etra PROMO ORANGE-2.mp4", price: 800 },
+      { id: 18, title: "Антипаразитарные пребиотики ПАРАЗИТОФФ", image: "/PARAZITOFF 1500x2667 9-16 PROMO-4_1.mp4", price: 750 },
+      { id: 19, title: "Каша ЭТРАсУТРА 200гр", image: "/KASHA PROMO Demo.mp4", price: 750 },
+      { id: 1019, title: "Каша ЭТРАсУТРА 2кг", image: "/KASHA PROMO Demo.mp4", price: 6300 },
+      { id: 20, title: "НАБОР СЕМЕЙНЫЙ", image: "/Набор семейный.png", price: 4200 },
+      { id: 21, title: "Набор для бани", image: "/баня.PNG", price: 4200 },
+      { id: 22, title: "Супер Квас", image: "/1500x2000 3-4 SK.mp4", price: 750 },
     ],
     []
   )
@@ -49,6 +64,10 @@ export default function Cart() {
     return items.reduce((sum, it) => sum + (priceMap[it.id] || 0) * (it.qty || 1), 0)
   }, [items, priceMap])
 
+  const totalQty = useMemo(() => {
+    return items.reduce((sum, it) => sum + (it.qty || 1), 0)
+  }, [items])
+
   const discount = useMemo(() => {
     const code = promoCode.trim().toUpperCase()
     if (!code) return 0
@@ -59,6 +78,15 @@ export default function Cart() {
   }, [promoCode, total])
 
   const totalWithDiscount = useMemo(() => Math.max(0, total - discount), [total, discount])
+
+  function declOfNum(n: number, text_forms: string[]) {
+    n = Math.abs(n) % 100
+    const n1 = n % 10
+    if (n > 10 && n < 20) { return text_forms[2] }
+    if (n1 > 1 && n1 < 5) { return text_forms[1] }
+    if (n1 === 1) { return text_forms[0] }
+    return text_forms[2]
+  }
 
   function formatRub(n: number) {
     return `${n.toLocaleString("ru-RU")} руб.`
@@ -71,7 +99,8 @@ export default function Cart() {
     <div className="min-h-screen w-full bg-white flex flex-col justify-start relative pb-24">
       <BackButton />
       <div className="w-full max-w-[420px] mx-auto px-4 pt-6">
-        <div className="flex items-center justify-end">
+        <div className="flex items-center justify-between mb-4">
+          <h1 className="text-xl font-bold">Корзина</h1>
           <button
             aria-label="Очистить корзину"
             onClick={() => {
@@ -101,56 +130,58 @@ export default function Cart() {
             {items.map((it) => {
               const info = catalog.find((c) => c.id === it.id)
               return (
-                <div key={it.id} className="rounded-[16px] border border-gray-200 p-3 flex items-center gap-3">
-                  <div className="w-14 h-14 rounded-[12px] overflow-hidden bg-[#F1F1F1] flex items-center justify-center">
+                <div key={it.id} className="rounded-[16px] border border-gray-200 p-3 flex items-start gap-3 relative">
+                  <div className="w-24 h-24 shrink-0 rounded-[12px] overflow-hidden bg-[#F1F1F1] flex items-center justify-center relative">
                     {info ? (
                       info.image.endsWith(".mp4") ? (
-                        <video muted playsInline autoPlay loop className="w-full h-full object-contain">
+                        <video muted playsInline autoPlay loop className="w-full h-full object-cover">
                           <source src={info.image} type="video/mp4" />
                         </video>
                       ) : (
-                        <Image src={info.image} alt={it.title} width={56} height={56} className="object-cover" />
+                        <Image src={info.image} alt={it.title} fill className="object-cover" />
                       )
                     ) : (
                       <span className="text-[12px]">{it.title[0] || "?"}</span>
                     )}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-[14px] font-medium truncate" style={{ color: "#000000" }}>{it.title}</div>
-                    <div className="text-[12px]" style={{ color: "#8A8A8A" }}>{formatRub((priceMap[it.id] || 0) * (it.qty || 1))}</div>
+                  <div className="flex-1 min-w-0 flex flex-col gap-1">
+                    <div className="text-[14px] font-medium leading-tight" style={{ color: "#000000" }}>{it.title}</div>
+                    <div className="text-[12px] font-bold" style={{ color: "#000000" }}>{formatRub((priceMap[it.id] || 0) * (it.qty || 1))}</div>
+                    <div className="flex items-center gap-2 mt-auto">
+                      <button
+                        aria-label="Уменьшить"
+                        onClick={() => incrementQty(it.id, -1)}
+                        className="w-8 h-8 rounded-[12px] bg-white border border-gray-300 text-[#232323] text-[16px] flex items-center justify-center"
+                      >
+                        −
+                      </button>
+                      <span className="text-[14px] w-6 text-center">{it.qty}</span>
+                      <button
+                        aria-label="Увеличить"
+                        onClick={() => incrementQty(it.id, 1)}
+                        className="w-8 h-8 rounded-[12px] bg-white border border-gray-300 text-[#232323] text-[16px] flex items-center justify-center"
+                      >
+                        +
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      aria-label="Уменьшить"
-                      onClick={() => incrementQty(it.id, -1)}
-                      className="w-9 h-9 rounded-[12px] bg-white border border-gray-300 text-[#232323] text-[18px] flex items-center justify-center"
-                    >
-                      −
-                    </button>
-                    <span className="text-[14px] w-6 text-center">{it.qty}</span>
-                    <button
-                      aria-label="Увеличить"
-                      onClick={() => incrementQty(it.id, 1)}
-                      className="w-9 h-9 rounded-[12px] bg-white border border-gray-300 text-[#232323] text-[18px] flex items-center justify-center"
-                    >
-                      +
-                    </button>
-                    <button
-                      aria-label="Удалить"
-                      onClick={() => removeFromCart(it.id)}
-                      className="ml-2 w-9 h-9 rounded-[12px] bg-white border border-gray-300 text-[#232323] text-[16px] flex items-center justify-center"
-                    >
-                      ×
-                    </button>
-                  </div>
+                  <button
+                    aria-label="Удалить"
+                    onClick={() => removeFromCart(it.id)}
+                    className="shrink-0 w-8 h-8 rounded-[12px] bg-white border border-gray-300 text-[#232323] text-[16px] flex items-center justify-center self-center"
+                  >
+                    ×
+                  </button>
                 </div>
               )
             })}
 
             <div className="mt-2 rounded-[16px] border border-gray-200 p-3">
-              <div className="flex items-center justify-between">
-                <div className="text-[14px]" style={{ color: "#000000" }}>Итог</div>
-                <div className="text-[16px] font-semibold" style={{ color: "#000000" }}>{formatRub(total)}</div>
+              <div className="flex flex-col gap-1 mb-2">
+                <div className="text-[16px] font-bold" style={{ color: "#000000" }}>Итого</div>
+                <div className="text-[13px]" style={{ color: "#000000" }}>
+                  {totalQty} {declOfNum(totalQty, ["товар", "товара", "товаров"])} на сумму {formatRub(total)}
+                </div>
               </div>
               <div className="mt-3 flex flex-col gap-2">
                 <input
@@ -209,7 +240,7 @@ export default function Cart() {
                     <div key={s.id} className="min-w-[220px] rounded-[16px] border border-gray-200 p-3 bg-white flex flex-col">
                       <div className="relative w-full h-[120px] rounded-[12px] overflow-hidden bg-[#F1F1F1]">
                         {s.image.endsWith(".mp4") ? (
-                          <video muted playsInline autoPlay loop className="w-full h-full object-contain">
+                          <video muted playsInline autoPlay loop className="w-full h-full object-cover">
                             <source src={s.image} type="video/mp4" />
                           </video>
                         ) : (
@@ -217,7 +248,7 @@ export default function Cart() {
                         )}
                       </div>
                       <div className="mt-2 text-[13px] font-semibold" style={{ color: "#000000" }}>{s.title}</div>
-                      <div className="text-[12px]" style={{ color: "#8A8A8A" }}>{formatRub(s.price)}</div>
+                      <div className="text-[12px] font-semibold" style={{ color: "#000000" }}>{formatRub(s.price)}</div>
                       <button
                         className="mt-2 rounded-[12px] bg-white border border-gray-300 px-3 py-2 text-[13px] active:scale-105"
                         onClick={() => addToCart({ id: s.id, title: s.title, qty: 1 })}

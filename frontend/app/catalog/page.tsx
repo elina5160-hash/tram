@@ -3,23 +3,33 @@ import { useEffect, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import BackButton from "@/components/ui/back-button"
 import BottomBanner from "@/components/ui/bottom-banner"
-import { addToCart } from "@/lib/cart"
+import { addToCart, incrementQty } from "@/lib/cart"
 
 export default function Catalog() {
   const router = useRouter()
   const items = [
-    { id: 1, title: "Закваска ПРАЭнзим", price: "3 000 руб / 1л", image: "/1.png" },
-    { id: 2, title: "Курс Смена Миркобиома", price: "16 000руб / 12л", image: "/2.png" },
-    { id: 3, title: "Чистое Утро", price: "2400 руб / 2 л + 100гр", image: "/4.png" },
-    { id: 4, title: "Бифидум Фаната", price: "1 200 руб / 1л", image: "/5.png" },
-    { id: 5, title: "Набор МЕГА КОМПЛЕКТ", price: "4 400 руб / 5л", image: "/главная4.png" },
+    { id: 1, title: "Закваска ПРАЭнзим", price: "3 000 руб / 1л", image: "/1500x2000 3-4 Zakvaska.mp4" },
+    { id: 2, title: "🎉 АКЦИЯ ДВА КУРСА смены микробиома 🎉", price: "24 000 руб", image: "/афиша.png" },
+    { id: 3, title: "💫 Чистое утро", price: "2400 руб / 2 л + 100гр", image: "/4.png" },
+    { id: 4, title: "БифидумФаната﻿🍊﻿", price: "1 200 руб / 1л", image: "/ETRA Bottle Fanta2.mp4" },
     { id: 6, title: "Набор СЕЗОННЫЙ", price: "4 200 руб / 6л", image: "/главная4.png" },
     { id: 7, title: "Бак для приготовления энзимных напитков", price: "53 000 руб / 19л", image: "/2.png" },
     { id: 8, title: "Супер пробка", price: "950 руб.", image: "/пробка.jpg" },
-    { id: 9, title: "Курс Чистка Микробиома", price: "16 000 руб", image: "/2.png" },
+    { id: 9, title: "☀️ Курс Чистка Микробиома 🌛", price: "16 000 руб", image: "/афиша.png" },
     { id: 10, title: "Сыродавленные масла", price: "", image: "/9.png" },
+    { id: 11, title: "Энзимный напиток Еловый", price: "750 руб.", image: "/Eloviy PROMO strz 2.mp4" },
+    { id: 12, title: "Энзимный напиток Детский", price: "750 руб.", image: "/Etra PROMO strz Detskii.mp4" },
+    { id: 13, title: "Энзимный напиток Хмель", price: "900 руб / 1л", image: "/хмель1.png" },
+    { id: 14, title: "Энзимный напиток Розлинг", price: "800 руб / 1л", image: "/розлинг1.jpg" },
+    { id: 15, title: "Полезный энергетик", price: "750 руб / 1л", image: "/2 51.png" },
+    { id: 16, title: "Энзимный напиток Рислинг", price: "800 руб.", image: "/рислинг1.png" },
+    { id: 17, title: "Энзимный напиток Апельсин", price: "800 руб.", image: "/Etra PROMO ORANGE-2.mp4" },
+    { id: 18, title: "Антипаразитарные пребиотики ПАРАЗИТОФФ", price: "750 руб.", image: "/PARAZITOFF 1500x2667 9-16 PROMO-4_1.mp4" },
+    { id: 19, title: "Каша ЭТРАсУТРА", price: "750 руб / 200гр", image: "/KASHA PROMO Demo.mp4" },
+    { id: 20, title: "НАБОР СЕМЕЙНЫЙ", price: "4 200 руб.", image: "/Набор семейный.png" },
+    { id: 21, title: "Набор для бани", price: "4 200 руб.", image: "/баня.PNG" },
+    { id: 22, title: "Супер Квас", price: "750 руб.", image: "/1500x2000 3-4 SK.mp4" },
   ]
   function splitPrice(s: string) {
     const m = s.match(/^(.*?руб\.?)/i)
@@ -46,7 +56,6 @@ export default function Catalog() {
 
   return (
     <div className="min-h-screen w-full bg-white flex flex-col justify-start relative pb-24">
-      <BackButton />
       <div className="w-full max-w-[420px] mx-auto px-4 pt-6">
         <div className="flex items-center gap-2">
           <h1 className="text-xl font-semibold">Товары</h1>
@@ -66,9 +75,9 @@ export default function Catalog() {
               <div className="relative rounded-[16px] overflow-hidden">
                 <Link href={`/item/${it.id}`} className="block" aria-label="Открыть товар">
                   <div className="aspect-square bg-[#F1F1F1]">
-                    {it.id === 6 ? (
-                      <video muted playsInline autoPlay loop className="w-full h-full object-contain">
-                        <source src="/видео%201.mp4" type="video/mp4" />
+                    {it.id === 6 || it.image.endsWith(".mp4") ? (
+                      <video muted playsInline autoPlay loop className="w-full h-full object-cover">
+                        <source src={it.id === 6 ? "/видео%201.mp4" : it.image} type="video/mp4" />
                       </video>
                     ) : (
                       <Image src={it.image} alt={it.title} fill className="object-cover" priority={it.id <= 2} />
@@ -99,16 +108,16 @@ export default function Catalog() {
                 <div className="mt-1 flex items-center justify-between">
                   <div className="flex flex-col">
                     {it.id === 6 && (
-                      <span className="text-[12px] whitespace-nowrap" style={{ color: "#8A8A8A", textDecoration: "line-through" }}>6000 РУБ</span>
+                      <span className="text-[12px] whitespace-nowrap font-bold" style={{ color: "#8A8A8A", textDecoration: "line-through" }}>6000 РУБ</span>
                     )}
                     {it.id === 2 && (
-                      <span className="text-[12px] whitespace-nowrap" style={{ color: "#8A8A8A", textDecoration: "line-through" }}>32 000 р.</span>
+                      <span className="text-[12px] whitespace-nowrap font-bold" style={{ color: "#8A8A8A", textDecoration: "line-through" }}>32 000 р.</span>
                     )}
                     {it.id !== 10 && (
-                      <span className="text-[12px] whitespace-nowrap" style={{ color: "#8A8A8A" }}>{it.id === 6 ? "4200руб" : it.id === 2 ? "24 000 р." : splitPrice(it.price).main}</span>
+                      <span className="text-[12px] whitespace-nowrap font-bold" style={{ color: "#000000" }}>{it.id === 6 ? "4200руб" : it.id === 2 ? "24 000 р." : splitPrice(it.price).main}</span>
                     )}
                     {it.id !== 6 && it.id !== 2 && splitPrice(it.price).sub && (
-                      <span className="text-[12px]" style={{ color: "#8A8A8A" }}>{splitPrice(it.price).sub}</span>
+                      <span className="text-[12px] font-bold" style={{ color: "#8A8A8A" }}>{splitPrice(it.price).sub}</span>
                     )}
                   </div>
                   <div className="flex items-center gap-1">
@@ -117,6 +126,7 @@ export default function Catalog() {
                       onClick={(e) => {
                         e.stopPropagation()
                         setQty((prev) => ({ ...prev, [it.id]: Math.max(1, (prev[it.id] || 1) - 1) }))
+                        incrementQty(it.id, -1)
                       }}
                       className="w-8 h-8 rounded-[12px] bg-white border border-gray-300 text-[#232323] text-[16px] flex items-center justify-center cursor-pointer"
                     >
@@ -128,6 +138,7 @@ export default function Catalog() {
                       onClick={(e) => {
                         e.stopPropagation()
                         setQty((prev) => ({ ...prev, [it.id]: (prev[it.id] || 1) + 1 }))
+                        addToCart({ id: it.id, title: it.title, qty: 1 })
                       }}
                       className="w-8 h-8 rounded-[12px] bg-white border border-gray-300 text-[#232323] text-[16px] flex items-center justify-center cursor-pointer"
                     >

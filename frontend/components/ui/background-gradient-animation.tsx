@@ -109,7 +109,7 @@ export function BackgroundGradientAnimation({
         </defs>
       </svg>
       <div className={className}>{children}</div>
-      <div className={`gradients-container h-full w-full ${isSafari ? "blur-2xl" : "[filter:url(#blurMe)_blur(40px)]"}`}>
+      <div className={`gradients-container absolute inset-0 z-0 pointer-events-none h-full w-full ${isSafari ? "blur-2xl" : "[filter:url(#blurMe)_blur(40px)]"}`}>
         <div className={
           [
             "absolute",
@@ -203,4 +203,3 @@ export function BackgroundGradientAnimation({
     </div>
   )
 }
-

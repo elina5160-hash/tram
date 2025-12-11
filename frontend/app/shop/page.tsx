@@ -3,39 +3,32 @@ import { useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { addToCart } from "@/lib/cart"
- 
-import BackButton from "@/components/ui/back-button"
+import { addToCart, incrementQty } from "@/lib/cart"
+import { getPriceValue, splitPrice } from "@/lib/price"
+import { useProducts } from "@/hooks/useProducts"
+import { staticItems } from "@/data/staticItems"
+
 import BottomBanner from "@/components/ui/bottom-banner"
 
 export default function Shop() {
   const router = useRouter()
-  const items = [
-    { id: 1, title: "Закваска ПРАЭнзим", price: "3 000 руб / 1л", image: "/1.png" },
-    { id: 2, title: "Курс Смена Миркобиома", price: "16 000руб / 12л", image: "/2.png" },
-    { id: 3, title: "Чистое Утро", price: "2400 руб / 2 л + 100гр", image: "/4.png" },
-    { id: 4, title: "Бифидум Фаната", price: "1 200 руб / 1л", image: "/5.png" },
-    { id: 5, title: "Набор МЕГА КОМПЛЕКТ", price: "4 400 руб / 5л", image: "/главная4.png" },
-    { id: 6, title: "Набор СЕЗОННЫЙ", price: "4 200 руб / 6л", image: "/главная4.png" },
-    { id: 7, title: "Бак для приготовления энзимных напитков", price: "53 000 руб / 19л", image: "/2.png" },
-    { id: 8, title: "Супер пробка", price: "950 руб.", image: "/пробка.jpg" },
-    { id: 9, title: "Курс Чистка Микробиома", price: "16 000 руб", image: "/2.png" },
-    { id: 10, title: "Сыродавленные масла", price: "", image: "/9.png" },
-  ]
-  const promos = items.filter((it) => [5, 6, 8].includes(it.id))
-  const bests = items.filter((it) => [1, 5, 7].includes(it.id))
-  const novelties = items.filter((it) => [1, 2, 3, 4, 9, 10].includes(it.id))
-  function splitPrice(s: string) {
-    const m = s.match(/^(.*?руб\.?)/i)
-    if (m) {
-      const main = m[1].trim()
-      let rest = s.slice(m[1].length).trim()
-      if (rest.startsWith("/")) rest = rest.slice(1).trim()
-      return { main, sub: rest }
-    }
-    const parts = s.split("/")
-    return { main: (parts[0] || "").trim(), sub: (parts[1] || "").trim() }
-  }
+  const { products: fetchedProducts } = useProducts()
+
+  const items = (fetchedProducts && fetchedProducts.length > 0 ? fetchedProducts : staticItems) as any[]
+
+  const promos = items.filter((it: any) => {
+    const priceVal = getPriceValue(it.price)
+    const isCheap = priceVal > 0 && priceVal < 1000
+    // Check for hardcoded discounted items (IDs 2 and 6 have old prices shown in JSX)
+    // Also check title for "акция" keyword
+    const isDiscounted = [2, 6].includes(it.id) || it.title.toLowerCase().includes("акция")
+    // Keep original manual IDs [6, 8] (8 is cheap, 6 is discounted)
+    return isCheap || isDiscounted || [6, 8].includes(it.id)
+  })
+  
+  const bests = items.filter((it: any) => [1, 7, 3, 4].includes(it.id))
+  const novelties = items.filter((it: any) => [1, 2, 3, 4, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22].includes(it.id))
+  
   const [qty, setQty] = useState<Record<number, number>>(() => {
     const initial: Record<number, number> = {}
     items.forEach((it) => (initial[it.id] = 1))
@@ -49,7 +42,6 @@ export default function Shop() {
   
   return (
     <div className="min-h-screen w-full bg-white flex flex-col items-center justify-start relative pb-24">
-      <BackButton />
       
       <div className="w-full max-w-[420px] mx-auto px-4 pt-6">
         <h1 className="text-xl font-semibold">Каталог</h1>
@@ -65,9 +57,9 @@ export default function Shop() {
                 <div className="relative rounded-[16px] overflow-hidden">
                   <Link href={`/item/${it.id}`} className="block" aria-label="Открыть товар">
                     <div className="aspect-square bg-[#F1F1F1]">
-                      {it.id === 6 ? (
-                        <video muted playsInline autoPlay loop className="w-full h-full object-contain">
-                          <source src="/видео%201.mp4" type="video/mp4" />
+                      {it.id === 6 || it.image.endsWith(".mp4") ? (
+                        <video muted playsInline autoPlay loop className="w-full h-full object-cover">
+                          <source src={it.id === 6 ? "/видео%201.mp4" : it.image} type="video/mp4" />
                         </video>
                       ) : (
                         <Image src={it.image} alt={it.title} fill className="object-cover" priority={it.id <= 2} />
@@ -99,16 +91,16 @@ export default function Shop() {
                   <div className="mt-1 flex items-center justify-between">
                     <div className="flex flex-col">
                       {it.id === 6 && (
-                        <span className="text-[12px] whitespace-nowrap" style={{ color: "#8A8A8A", textDecoration: "line-through" }}>6000 РУБ</span>
+                        <span className="text-[12px] whitespace-nowrap font-bold" style={{ color: "#8A8A8A", textDecoration: "line-through" }}>6000 РУБ</span>
                       )}
                       {it.id === 2 && (
-                        <span className="text-[12px] whitespace-nowrap" style={{ color: "#8A8A8A", textDecoration: "line-through" }}>32 000 р.</span>
+                        <span className="text-[12px] whitespace-nowrap font-bold" style={{ color: "#8A8A8A", textDecoration: "line-through" }}>32 000 р.</span>
                       )}
                       {it.id !== 10 && (
-                        <span className="text-[12px] whitespace-nowrap" style={{ color: "#8A8A8A" }}>{it.id === 6 ? "4200руб" : it.id === 2 ? "24 000 р." : splitPrice(it.price).main}</span>
+                        <span className="text-[12px] whitespace-nowrap font-bold" style={{ color: "#000000" }}>{it.id === 6 ? "4200руб" : it.id === 2 ? "24 000 р." : splitPrice(it.price).main}</span>
                       )}
                       {it.id !== 6 && it.id !== 2 && splitPrice(it.price).sub && (
-                        <span className="text-[12px]" style={{ color: "#8A8A8A" }}>{splitPrice(it.price).sub}</span>
+                        <span className="text-[12px] font-bold" style={{ color: "#8A8A8A" }}>{splitPrice(it.price).sub}</span>
                       )}
                     </div>
                     <div className="flex items-center gap-1">
@@ -117,6 +109,7 @@ export default function Shop() {
                       onClick={(e) => {
                         e.stopPropagation()
                         setQty((prev) => ({ ...prev, [it.id]: Math.max(1, (prev[it.id] || 1) - 1) }))
+                        incrementQty(it.id, -1)
                       }}
                       className="w-8 h-8 rounded-[12px] bg-white border border-gray-300 text-[#232323] text-[16px] flex items-center justify-center cursor-pointer"
                     >
@@ -128,6 +121,7 @@ export default function Shop() {
                       onClick={(e) => {
                         e.stopPropagation()
                         setQty((prev) => ({ ...prev, [it.id]: (prev[it.id] || 1) + 1 }))
+                        addToCart({ id: it.id, title: it.title, qty: 1 })
                       }}
                       className="w-8 h-8 rounded-[12px] bg-white border border-gray-300 text-[#232323] text-[16px] flex items-center justify-center cursor-pointer"
                     >
@@ -152,8 +146,8 @@ export default function Shop() {
                 <div className="relative rounded-[16px] overflow-hidden">
                   <Link href={`/item/${it.id}`} className="block" aria-label="Открыть товар">
                     <div className="aspect-square bg-[#F1F1F1]">
-                      {it.id === 6 ? (
-                        <video src="/видео 1.mp4" muted playsInline autoPlay loop className="w-full h-full object-contain" />
+                      {it.id === 6 || it.image.endsWith(".mp4") ? (
+                        <video src={it.id === 6 ? "/видео 1.mp4" : it.image} muted playsInline autoPlay loop className="w-full h-full object-cover" />
                       ) : (
                         <Image src={it.image} alt={it.title} fill className="object-cover" priority={it.id <= 2} />
                       )}
@@ -184,14 +178,14 @@ export default function Shop() {
                   <div className="mt-1 flex items-center justify-between">
                     <div className="flex flex-col">
                       {it.id === 6 && (
-                        <span className="text-[12px] whitespace-nowrap" style={{ color: "#8A8A8A", textDecoration: "line-through" }}>6000 РУБ</span>
+                        <span className="text-[12px] whitespace-nowrap font-bold" style={{ color: "#8A8A8A", textDecoration: "line-through" }}>6000 РУБ</span>
                       )}
                       {it.id === 2 && (
-                        <span className="text-[12px] whitespace-nowrap" style={{ color: "#8A8A8A", textDecoration: "line-through" }}>32 000 р.</span>
+                        <span className="text-[12px] whitespace-nowrap font-bold" style={{ color: "#8A8A8A", textDecoration: "line-through" }}>32 000 р.</span>
                       )}
-                      <span className="text-[12px] whitespace-nowrap" style={{ color: "#8A8A8A" }}>{it.id === 6 ? "4200руб" : it.id === 2 ? "24 000 р." : splitPrice(it.price).main}</span>
+                      <span className="text-[12px] whitespace-nowrap font-bold" style={{ color: "#000000" }}>{it.id === 6 ? "4200руб" : it.id === 2 ? "24 000 р." : splitPrice(it.price).main}</span>
                       {it.id !== 6 && it.id !== 2 && splitPrice(it.price).sub && (
-                        <span className="text-[12px]" style={{ color: "#8A8A8A" }}>{splitPrice(it.price).sub}</span>
+                        <span className="text-[12px] font-bold" style={{ color: "#8A8A8A" }}>{splitPrice(it.price).sub}</span>
                       )}
                     </div>
                     <div className="flex items-center gap-1">
@@ -200,6 +194,7 @@ export default function Shop() {
                       onClick={(e) => {
                         e.stopPropagation()
                         setQty((prev) => ({ ...prev, [it.id]: Math.max(1, (prev[it.id] || 1) - 1) }))
+                        incrementQty(it.id, -1)
                       }}
                       className="w-8 h-8 rounded-[12px] bg-white border border-gray-300 text-[#232323] text-[16px] flex items-center justify-center cursor-pointer"
                     >
@@ -211,6 +206,7 @@ export default function Shop() {
                       onClick={(e) => {
                         e.stopPropagation()
                         setQty((prev) => ({ ...prev, [it.id]: (prev[it.id] || 1) + 1 }))
+                        addToCart({ id: it.id, title: it.title, qty: 1 })
                       }}
                       className="w-8 h-8 rounded-[12px] bg-white border border-gray-300 text-[#232323] text-[16px] flex items-center justify-center cursor-pointer"
                     >
@@ -235,8 +231,8 @@ export default function Shop() {
                 <div className="relative rounded-[16px] overflow-hidden">
                   <Link href={`/item/${it.id}`} className="block" aria-label="Открыть товар">
                     <div className="aspect-square bg-[#F1F1F1]">
-                      {it.id === 6 ? (
-                        <video src="/видео 1.mp4" muted playsInline autoPlay loop className="w-full h-full object-contain" />
+                      {it.id === 6 || it.image.endsWith(".mp4") ? (
+                        <video src={it.id === 6 ? "/видео 1.mp4" : it.image} muted playsInline autoPlay loop className="w-full h-full object-cover" />
                       ) : (
                         <Image src={it.image} alt={it.title} fill className="object-cover" priority={it.id <= 2} />
                       )}
@@ -267,14 +263,14 @@ export default function Shop() {
                   <div className="mt-1 flex items-center justify-between">
                     <div className="flex flex-col">
                       {it.id === 6 && (
-                        <span className="text-[12px] whitespace-nowrap" style={{ color: "#8A8A8A", textDecoration: "line-through" }}>6000 РУБ</span>
+                        <span className="text-[12px] whitespace-nowrap font-bold" style={{ color: "#8A8A8A", textDecoration: "line-through" }}>6000 РУБ</span>
                       )}
                       {it.id === 2 && (
-                        <span className="text-[12px] whitespace-nowrap" style={{ color: "#8A8A8A", textDecoration: "line-through" }}>32 000 р.</span>
+                        <span className="text-[12px] whitespace-nowrap font-bold" style={{ color: "#8A8A8A", textDecoration: "line-through" }}>32 000 р.</span>
                       )}
-                      <span className="text-[12px] whitespace-nowrap" style={{ color: "#8A8A8A" }}>{it.id === 6 ? "4200руб" : it.id === 2 ? "24 000 р." : splitPrice(it.price).main}</span>
+                      <span className="text-[12px] whitespace-nowrap font-bold" style={{ color: "#000000" }}>{it.id === 6 ? "4200руб" : it.id === 2 ? "24 000 р." : splitPrice(it.price).main}</span>
                       {it.id !== 6 && it.id !== 2 && splitPrice(it.price).sub && (
-                        <span className="text-[12px]" style={{ color: "#8A8A8A" }}>{splitPrice(it.price).sub}</span>
+                        <span className="text-[12px] font-bold" style={{ color: "#8A8A8A" }}>{splitPrice(it.price).sub}</span>
                       )}
                     </div>
                     <div className="flex items-center gap-1">
@@ -283,6 +279,7 @@ export default function Shop() {
                       onClick={(e) => {
                         e.stopPropagation()
                         setQty((prev) => ({ ...prev, [it.id]: Math.max(1, (prev[it.id] || 1) - 1) }))
+                        incrementQty(it.id, -1)
                       }}
                       className="w-8 h-8 rounded-[12px] bg-white border border-gray-300 text-[#232323] text-[16px] flex items-center justify-center cursor-pointer"
                     >
@@ -294,6 +291,7 @@ export default function Shop() {
                       onClick={(e) => {
                         e.stopPropagation()
                         setQty((prev) => ({ ...prev, [it.id]: (prev[it.id] || 1) + 1 }))
+                        addToCart({ id: it.id, title: it.title, qty: 1 })
                       }}
                       className="w-8 h-8 rounded-[12px] bg-white border border-gray-300 text-[#232323] text-[16px] flex items-center justify-center cursor-pointer"
                     >
