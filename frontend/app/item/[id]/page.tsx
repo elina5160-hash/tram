@@ -71,7 +71,7 @@ export default function ItemPage() {
   }
 
   return (
-    <div className="min-h-screen w-full bg-white flex flex-col justify-start relative pb-24">
+    <div className="min-h-screen w-full bg-white flex flex-col justify-start relative pb-32">
       <BackButton />
       <div className="w-full max-w-[420px] mx-auto px-4 pt-6">
 

@@ -69,7 +69,7 @@ export default function HomePage() {
   }, [])
 
   return (
-    <div className="min-h-screen w-full bg-[#FAFAFA] flex flex-col justify-start relative pb-24">
+    <div className="min-h-screen w-full bg-[#FAFAFA] flex flex-col justify-start relative pb-32">
       <div className="w-full max-w-[420px] mx-auto px-4 pt-6">
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-semibold">Главная</h1>
