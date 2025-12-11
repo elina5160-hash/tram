@@ -17,8 +17,9 @@ function saveProducts(products: any[]) {
   fs.writeFileSync(dataPath, JSON.stringify(products, null, 2), 'utf8');
 }
 
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
+export async function PUT(request: Request, props: { params: Promise<{ id: string }> }) {
   try {
+    const params = await props.params;
     const id = Number(params.id);
     const updates = await request.json();
     const products = getProducts();
@@ -37,8 +38,9 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   }
 }
 
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+export async function DELETE(request: Request, props: { params: Promise<{ id: string }> }) {
   try {
+    const params = await props.params;
     const id = Number(params.id);
     const products = getProducts();
     
