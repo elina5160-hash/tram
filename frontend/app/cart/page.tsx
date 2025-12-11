@@ -213,7 +213,14 @@ export default function Cart() {
                     const res = await fetch("/api/robokassa/create", {
                       method: "POST",
                       headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ outSum: totalWithDiscount, description: "Оплата заказа", email, promoCode, refCode }),
+                      body: JSON.stringify({ 
+                        outSum: totalWithDiscount, 
+                        description: "Оплата заказа", 
+                        email, 
+                        promoCode, 
+                        refCode,
+                        items // Передаем товары для сохранения в базе
+                      }),
                     })
                     const data = await res.json()
                     if (data?.url) {
