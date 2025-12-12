@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import crypto from "node:crypto"
-import { supabase } from "@/lib/supabase"
+import { getSupabaseClient } from "@/lib/supabase"
 
 export async function POST(req: Request) {
   const merchant = process.env.ROBO_MERCHANT_LOGIN
@@ -31,8 +31,9 @@ export async function POST(req: Request) {
   const email = body.email || ""
   const invId = Date.now()
   
-  // Сохраняем заказ в Supabase
-  const { error } = await supabase.from("orders").insert({
+  // Сохраняем заказ в Supabase (если настроены переменные окружения)
+  const client = getSupabaseClient()
+  const { error } = client ? await client.from("orders").insert({
     id: invId,
     total_amount: outSum,
     items: body.items || [],
@@ -40,7 +41,7 @@ export async function POST(req: Request) {
     promo_code: body.promoCode,
     ref_code: body.refCode,
     status: 'pending'
-  })
+  }) : { error: null }
 
   if (error) {
     console.error("Error creating order in Supabase:", error)
