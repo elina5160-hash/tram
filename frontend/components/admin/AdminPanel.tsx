@@ -175,7 +175,7 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
             </div>
             )
         ) : (
-            <BottomBannerEditor />
+            <BottomBannerEditor onBack={() => { setActiveTab('products'); setMode('initial') }} />
         )}
       </div>
     </div>

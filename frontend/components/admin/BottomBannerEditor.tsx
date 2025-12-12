@@ -1,7 +1,11 @@
 import { useState, useEffect } from "react"
 import { useBottomBanner, BannerItem } from "@/hooks/useBottomBanner"
 
-export function BottomBannerEditor() {
+interface Props {
+  onBack?: () => void
+}
+
+export function BottomBannerEditor({ onBack }: Props) {
   const { items, isLoading, updateBanner } = useBottomBanner()
   const [formData, setFormData] = useState<BannerItem[]>([])
   const [isSaving, setIsSaving] = useState(false)
@@ -34,6 +38,15 @@ export function BottomBannerEditor() {
 
   return (
     <div className="flex-1 flex flex-col overflow-y-auto">
+      <div className="sticky top-0 z-10 bg-white pt-1 pb-3 -mt-1 border-b flex items-center justify-between">
+        <button
+          onClick={() => onBack && onBack()}
+          className="text-gray-600 hover:text-gray-900 flex items-center gap-2"
+        >
+          ← Назад
+        </button>
+        <div className="text-sm text-gray-500">Редактор нижней панели</div>
+      </div>
       <div className="space-y-4">
         {formData.map((item, index) => (
           <div key={item.id} className="p-4 border rounded-lg bg-gray-50">
@@ -74,7 +87,7 @@ export function BottomBannerEditor() {
         ))}
       </div>
 
-      <div className="mt-6 flex justify-end">
+      <div className="sticky bottom-0 z-10 bg-white mt-6 flex justify-end pt-4 border-t">
         <button
           onClick={handleSave}
           disabled={isSaving}

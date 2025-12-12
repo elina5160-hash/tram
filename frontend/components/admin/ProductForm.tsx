@@ -60,7 +60,17 @@ export function ProductForm({ initialData, onSubmit, onCancel }: ProductFormProp
 
   return (
     <form onSubmit={handleSubmit} className="flex-1 flex flex-col gap-4 overflow-y-auto pr-2">
-      <div className="grid grid-cols-2 gap-4">
+      <div className="sticky top-0 z-10 bg-white pt-1 pb-3 -mt-1 border-b flex items-center justify-between">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="text-gray-600 hover:text-gray-900 flex items-center gap-2"
+        >
+          ← Назад
+        </button>
+        <div className="text-sm text-gray-500">{initialData ? "Изменение товара" : "Добавление товара"}</div>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium mb-1">Название *</label>
           <input
@@ -141,7 +151,7 @@ export function ProductForm({ initialData, onSubmit, onCancel }: ProductFormProp
         />
       </div>
 
-      <div className="flex justify-end gap-3 mt-auto pt-4 border-t">
+      <div className="sticky bottom-0 z-10 bg-white flex justify-end gap-3 mt-auto pt-4 border-t">
         <button
           type="button"
           onClick={onCancel}
