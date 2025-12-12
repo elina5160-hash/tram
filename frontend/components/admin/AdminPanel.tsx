@@ -139,7 +139,7 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
             />
             ) : (
             <div className="flex-1 flex flex-col">
-                <div className="flex justify-between items-center mb-4">
+                <div className="sticky top-0 z-10 bg-white pt-1 pb-3 -mt-1 border-b flex justify-between items-center">
                   <button
                     onClick={() => setMode('initial')}
                     className="text-gray-600 hover:text-gray-900 flex items-center gap-2"
