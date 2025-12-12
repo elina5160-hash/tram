@@ -69,12 +69,29 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
                 </button>
             </div>
           </div>
-          <button 
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 p-2"
-          >
-            ✕ Закрыть
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => {
+                if (activeTab === 'bottom-banner') {
+                  setActiveTab('products')
+                  setMode('initial')
+                } else {
+                  setEditingProduct(null)
+                  setIsCreating(false)
+                  setMode('initial')
+                }
+              }}
+              className="text-gray-600 hover:text-gray-900 p-2"
+            >
+              ← Назад
+            </button>
+            <button 
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 p-2"
+            >
+              ✕ Закрыть
+            </button>
+          </div>
         </div>
 
         {activeTab === 'products' ? (
