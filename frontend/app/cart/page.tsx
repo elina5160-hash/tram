@@ -210,22 +210,47 @@ export default function Cart() {
                   className="w-full rounded-[12px] border px-3 py-3 text-[13px] active:scale-105 bg-[#6800E9] text-white"
                   onClick={async () => {
                     const refCode = typeof window !== "undefined" ? (window.localStorage.getItem("referral_code") || "") : ""
-                    const res = await fetch("/api/robokassa/create", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ 
-                        outSum: totalWithDiscount, 
-                        description: "Оплата заказа", 
-                        email, 
-                        promoCode, 
-                        refCode,
-                        items // Передаем товары для сохранения в базе
-                      }),
-                    })
-                    const data = await res.json()
-                    if (data?.url) {
-                      window.location.href = data.url
+                    const invoiceItems = items.map((it) => ({
+                      name: it.title,
+                      quantity: it.qty || 1,
+                      cost: priceMap[it.id] || 0,
+                      tax: "vat0",
+                      paymentMethod: "full_prepayment",
+                      paymentObject: "commodity",
+                    }))
+                    let res: Response
+                    try {
+                      res = await fetch("/api/robokassa/invoice/create", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ 
+                          outSum: totalWithDiscount, 
+                          description: "Оплата заказа", 
+                          email, 
+                          promoCode, 
+                          refCode,
+                          invoiceItems,
+                          invId: Date.now()
+                        }),
+                      })
+                    } catch (e) {
+                      alert("Ошибка соединения. Проверьте интернет и попробуйте ещё раз.")
+                      return
                     }
+                    let data: any = null
+                    try {
+                      data = await res.json()
+                    } catch {}
+                    if (res.ok && data?.url) {
+                      window.location.href = data.url
+                      return
+                    }
+                    if (!res.ok) {
+                      const msg = (data && (data.error || data.message)) || "Ошибка создания счёта Robokassa"
+                      alert(msg)
+                      return
+                    }
+                    alert("Не удалось получить ссылку на оплату. Попробуйте позже.")
                   }}
                 >
                   К оформлению
