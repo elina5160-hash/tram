@@ -5,13 +5,18 @@ export default function FailPage() {
   return (
     <div className="min-h-screen w-full bg-white flex flex-col justify-start relative pb-24">
       <div className="w-full max-w-[420px] mx-auto px-4 pt-6">
-        <h1 className="text-xl font-semibold">Оплата не прошла</h1>
-        <div className="mt-4">
+        <h1 className="text-xl font-semibold">Оплата не удалась</h1>
+        <p className="mt-2 text-[13px] text-[#232323]">Попробуйте ещё раз или выберите другой способ.</p>
+        <div className="mt-4 flex gap-2">
+          <Link href="/cart" className="inline-block">
+            <HoverButton className="rounded-[12px] bg-white border px-4 py-2">Вернуться в корзину</HoverButton>
+          </Link>
           <Link href="/home" className="inline-block">
-            <HoverButton className="rounded-[12px] bg-[#6800E9] text-white px-4 py-2">Вернуться на главную</HoverButton>
+            <HoverButton className="rounded-[12px] bg-[#6800E9] text-white px-4 py-2">На главную</HoverButton>
           </Link>
         </div>
       </div>
     </div>
   )
 }
+

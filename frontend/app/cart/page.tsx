@@ -237,16 +237,21 @@ export default function Cart() {
                       alert("Ошибка соединения. Проверьте интернет и попробуйте ещё раз.")
                       return
                     }
-                    let data: any = null
+                    let data: unknown = null
                     try {
                       data = await res.json()
                     } catch {}
-                    if (res.ok && data?.url) {
-                      window.location.href = data.url
+                    if (res.ok && typeof data === 'object' && data && 'url' in data) {
+                      const d = data as { url: string; invId?: number | string }
+                      const url = `/pay/confirm?url=${encodeURIComponent(d.url)}&invId=${encodeURIComponent(String(d.invId || ''))}`
+                      router.push(url)
                       return
                     }
                     if (!res.ok) {
-                      const msg = (data && (data.error || data.message)) || "Ошибка создания счёта Robokassa"
+                      type ErrorData = { error?: string; message?: string }
+                      const msg = typeof data === 'object' && data && ('error' in data || 'message' in data)
+                        ? ((data as ErrorData).error || (data as ErrorData).message || "Ошибка создания счёта Robokassa")
+                        : "Ошибка создания счёта Robokassa"
                       alert(msg)
                       return
                     }
