@@ -151,7 +151,7 @@ export async function POST(req: Request) {
         comments: "",
         quantity: (body.invoiceItems || []).reduce((sum, it) => sum + (it.quantity || 1), 0),
         // Additional requested fields mapped to null/empty for now
-        user_id_link: customer.client_id ? `https://t.me/${customer.client_id}` : null,
+        user_id_link: "https://t.me/gdzodzgozg_bot/app",
         username_link: customer.username ? `https://t.me/${customer.username}` : null,
         tracking_sent: false,
         categories: "",
