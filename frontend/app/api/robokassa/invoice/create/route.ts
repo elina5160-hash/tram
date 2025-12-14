@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import crypto from "node:crypto"
-import { getSupabaseClient } from "@/lib/supabase"
+import { getSupabaseClient, getServiceSupabaseClient } from "@/lib/supabase"
 import { sendTelegramMessage } from "@/lib/telegram"
 
 function toBase64Url(input: string) {
@@ -108,7 +108,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    const client = getSupabaseClient()
+    const client = getServiceSupabaseClient() || getSupabaseClient()
     if (client) {
       // 1. Insert into original schema (backward compatibility)
       await client.from("orders").insert({
@@ -144,6 +144,7 @@ export async function POST(req: Request) {
         first_name: customer.name || null,
         order_date: customer.order_time || new Date().toISOString(),
         product: productsStr,
+        total: outSum,
         partner_promo: body.promoCode || null,
         status: "Создан",
         tracking_number: "",
@@ -157,7 +158,7 @@ export async function POST(req: Request) {
         categories: "",
         shipping_cost: 0,
         verification: "",
-        ok: ""
+        ok: "true"
       }).eq('id', invId)
 
       // Send Telegram notification
