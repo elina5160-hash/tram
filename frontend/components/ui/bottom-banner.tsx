@@ -76,7 +76,6 @@ export default function BottomBanner() {
   return (
     <div className="fixed inset-x-0 bottom-0 z-20 w-full flex items-center justify-center px-3">
       <div className="relative w-full max-w-[420px] h-[52px] rounded-[20px] bg-[#232323]/80 backdrop-blur-md border border-gray-500/70 shadow-inner mb-[12px] px-4 flex items-center justify-between overflow-hidden">
-        <div aria-hidden className="pointer-events-none absolute top-0 left-0 right-0 h-1/2 rounded-t-[20px] bg-gradient-to-b from-white/20 via-white/10 to-transparent" />
         
         {homeItem?.enabled !== false && (
           <Item

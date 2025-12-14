@@ -72,23 +72,6 @@ export default function Shop() {
                       )}
                     </div>
                   </Link>
-                
-                  <div
-                    aria-label="Добавить в корзину"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      addToCart({ id: it.id, title: it.title, qty: qty[it.id] || 1 })
-                    }}
-                    onMouseDown={() => setPressedId(it.id)}
-                    onMouseUp={() => setPressedId(null)}
-                    onMouseLeave={() => setPressedId(null)}
-                    onTouchStart={() => setPressedId(it.id)}
-                    onTouchEnd={() => setPressedId(null)}
-                    className="absolute bottom-2 right-2 rounded-[12px] border px-2 py-1 active:scale-105 cursor-pointer"
-                    style={{ backgroundColor: pressedId === it.id ? "#6800E9" : "#FFFFFF", borderColor: pressedId === it.id ? "#6800E9" : "#D1D5DB" }}
-                  >
-                    <Image src="/маг.png" alt="Добавить в корзину" width={18} height={18} />
-                  </div>
                 </div>
                 <div className="mt-2">
                   <Link href={`/item/${it.id}`} className="block">
@@ -159,23 +142,6 @@ export default function Shop() {
                       )}
                     </div>
                   </Link>
-                
-                  <div
-                    aria-label="Добавить в корзину"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      addToCart({ id: it.id, title: it.title, qty: qty[it.id] || 1 })
-                    }}
-                    onMouseDown={() => setPressedId(it.id)}
-                    onMouseUp={() => setPressedId(null)}
-                    onMouseLeave={() => setPressedId(null)}
-                    onTouchStart={() => setPressedId(it.id)}
-                    onTouchEnd={() => setPressedId(null)}
-                    className="absolute bottom-2 right-2 rounded-[12px] border px-2 py-1 active:scale-105 cursor-pointer"
-                    style={{ backgroundColor: pressedId === it.id ? "#6800E9" : "#FFFFFF", borderColor: pressedId === it.id ? "#6800E9" : "#D1D5DB" }}
-                  >
-                    <Image src="/маг.png" alt="Добавить в корзину" width={18} height={18} />
-                  </div>
                 </div>
                 <div className="mt-2">
                   <Link href={`/item/${it.id}`} className="block">
@@ -244,23 +210,6 @@ export default function Shop() {
                       )}
                     </div>
                   </Link>
-                
-                  <div
-                    aria-label="Добавить в корзину"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      addToCart({ id: it.id, title: it.title, qty: qty[it.id] || 1 })
-                    }}
-                    onMouseDown={() => setPressedId(it.id)}
-                    onMouseUp={() => setPressedId(null)}
-                    onMouseLeave={() => setPressedId(null)}
-                    onTouchStart={() => setPressedId(it.id)}
-                    onTouchEnd={() => setPressedId(null)}
-                    className="absolute bottom-2 right-2 rounded-[12px] border px-2 py-1 active:scale-105 cursor-pointer"
-                    style={{ backgroundColor: pressedId === it.id ? "#6800E9" : "#FFFFFF", borderColor: pressedId === it.id ? "#6800E9" : "#D1D5DB" }}
-                  >
-                    <Image src="/маг.png" alt="Добавить в корзину" width={18} height={18} />
-                  </div>
                 </div>
                 <div className="mt-2">
                   <Link href={`/item/${it.id}`} className="block">
