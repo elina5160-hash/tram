@@ -163,10 +163,12 @@ bot.start(async (ctx) => {
 
   const refLink = `https://t.me/${botUsername || ctx.botInfo.username}?start=ref_${userId}`
 
+  const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(refLink)}&text=${encodeURIComponent('Присоединяйся к конкурсу "Дари Здоровье" и выигрывай призы!')}`
+
   const keyboard = Markup.inlineKeyboard([
     [Markup.button.webApp('🎁 Мои билеты и Конкурс', safeContestUrl)],
     [Markup.button.webApp('🛒 Магазин', safeUrlWithId)],
-    [Markup.button.url('🔗 Поделиться ссылкой', `https://t.me/share/url?url=${refLink}&text=Присоединяйся к конкурсу "Дари Здоровье" и выигрывай призы!`)]
+    [Markup.button.url('🔗 Поделиться ссылкой', shareUrl)]
   ])
 
   ctx.replyWithHTML(
@@ -195,6 +197,8 @@ bot.command('contest', async (ctx) => {
     
     const refLink = `https://t.me/${botUsername || ctx.botInfo.username}?start=ref_${userId}`
     
+    const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(refLink)}&text=${encodeURIComponent('Присоединяйся к конкурсу "Дари Здоровье" и выигрывай призы!')}`
+
     ctx.replyWithHTML(
         `🏆 <b>Твой профиль участника</b>\n\n` +
         `🎫 Билетов: <b>${user.tickets}</b>\n` +
@@ -202,7 +206,7 @@ bot.command('contest', async (ctx) => {
         `🔗 Ссылка: <code>${refLink}</code>`,
         Markup.inlineKeyboard([
             [Markup.button.webApp('Открыть подробности', safeContestUrl)],
-            [Markup.button.url('🔗 Поделиться ссылкой', `https://t.me/share/url?url=${refLink}&text=Присоединяйся к конкурсу "Дари Здоровье" и выигрывай призы!`)]
+            [Markup.button.url('🔗 Поделиться ссылкой', shareUrl)]
         ])
     )
 })
