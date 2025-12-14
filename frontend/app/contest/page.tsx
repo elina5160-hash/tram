@@ -1,12 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { db } from '@/lib/db'
 import BackButton from '@/components/ui/back-button'
 import { motion } from 'framer-motion'
 
-export default function ContestPage() {
+function ContestContent() {
     const searchParams = useSearchParams()
     const [clientId, setClientId] = useState<string | null>(null)
     const [user, setUser] = useState<any>(null)
@@ -163,5 +163,13 @@ export default function ContestPage() {
                 </div>
             )}
         </main>
+    )
+}
+
+export default function ContestPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen bg-[#FDF8F5] flex items-center justify-center">Загрузка...</div>}>
+            <ContestContent />
+        </Suspense>
     )
 }

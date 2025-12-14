@@ -1,4 +1,5 @@
 "use client"
+import { Suspense } from "react"
 import { useEffect, useMemo, useState } from "react"
 import Image from "next/image"
 import { HoverButton } from "@/components/ui/hover-button"
@@ -7,7 +8,7 @@ import { addToCart, clearCart, getCart, incrementQty, removeFromCart } from "@/l
 import BackButton from "@/components/ui/back-button"
 import BottomBanner from "@/components/ui/bottom-banner"
 
-export default function Cart() {
+function CartContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [items, setItems] = useState<{ id: number; title: string; qty: number }[]>(() => getCart())
@@ -466,5 +467,13 @@ export default function Cart() {
       </div>
       <BottomBanner />
     </div>
+  )
+}
+
+export default function Cart() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-white flex items-center justify-center">Loading...</div>}>
+      <CartContent />
+    </Suspense>
   )
 }

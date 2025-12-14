@@ -1,12 +1,12 @@
 "use client"
-import { useMemo } from "react"
+import { useMemo, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import BackButton from "@/components/ui/back-button"
 import BottomBanner from "@/components/ui/bottom-banner"
 import { HoverButton } from "@/components/ui/hover-button"
 import { getCart } from "@/lib/cart"
 
-export default function ConfirmPage() {
+function ConfirmContent() {
   const params = useSearchParams()
   const router = useRouter()
   const payUrl = params.get("url") || ""
@@ -92,5 +92,13 @@ export default function ConfirmPage() {
       </div>
       <BottomBanner />
     </div>
+  )
+}
+
+export default function ConfirmPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-white flex items-center justify-center">Loading...</div>}>
+      <ConfirmContent />
+    </Suspense>
   )
 }

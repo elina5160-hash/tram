@@ -1,5 +1,5 @@
 "use client"
-import { useState } from "react"
+import { useState, Suspense } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -47,7 +47,9 @@ export default function Shop() {
       <div className="w-full max-w-[420px] mx-auto px-4 pt-6">
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-semibold">Каталог</h1>
-          <ContestBadge />
+          <Suspense fallback={null}>
+            <ContestBadge />
+          </Suspense>
         </div>
         <section className="mt-4">
           <div className="mt-3 inline-grid grid-cols-2 gap-3 mx-auto">
