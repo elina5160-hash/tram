@@ -161,12 +161,13 @@ bot.start(async (ctx) => {
   const safeUrlWithId = `${safeWebAppUrl}${safeSeparator}client_id=${userId}`
   const safeContestUrl = `${safeWebAppUrl}/contest${safeSeparator}client_id=${userId}`
 
+  const refLink = `https://t.me/${botUsername || ctx.botInfo.username}?start=ref_${userId}`
+
   const keyboard = Markup.inlineKeyboard([
     [Markup.button.webApp('🎁 Мои билеты и Конкурс', safeContestUrl)],
     [Markup.button.webApp('🛒 Магазин', safeUrlWithId)],
+    [Markup.button.url('🔗 Поделиться ссылкой', `https://t.me/share/url?url=${refLink}&text=Присоединяйся к конкурсу "Дари Здоровье" и выигрывай призы!`)]
   ])
-
-  const refLink = `https://t.me/${botUsername || ctx.botInfo.username}?start=ref_${userId}`
 
   ctx.replyWithHTML(
     `🎄 Привет, ${user.first_name}! \n\n` +
@@ -174,7 +175,8 @@ bot.start(async (ctx) => {
     `🎫 Твои билеты: <b>${user.tickets}</b>\n` +
     `🔖 Твой промокод для друзей: <code>${user.personal_promo_code}</code> (-15%)\n` +
     `🔗 Твоя ссылка: <code>${refLink}</code>\n\n` +
-    `Приглашай друзей и получай подарки!`,
+    `билеты начисляются когда заказ куплен, на 1000р - 1 билет, на 2000- 2 и так далее\n` +
+    `а если человек зашел по реферальной ссылки и купил что-то, то тому кто дал ссылку +1 билет`,
     keyboard
   )
 })
@@ -199,7 +201,8 @@ bot.command('contest', async (ctx) => {
         `🔖 Промокод: <code>${user.personal_promo_code}</code>\n` +
         `🔗 Ссылка: <code>${refLink}</code>`,
         Markup.inlineKeyboard([
-            [Markup.button.webApp('Открыть подробности', safeContestUrl)]
+            [Markup.button.webApp('Открыть подробности', safeContestUrl)],
+            [Markup.button.url('🔗 Поделиться ссылкой', `https://t.me/share/url?url=${refLink}&text=Присоединяйся к конкурсу "Дари Здоровье" и выигрывай призы!`)]
         ])
     )
 })
