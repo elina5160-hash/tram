@@ -2,13 +2,14 @@
 import { useEffect, useMemo, useState } from "react"
 import Image from "next/image"
 import { HoverButton } from "@/components/ui/hover-button"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { addToCart, clearCart, getCart, incrementQty, removeFromCart } from "@/lib/cart"
 import BackButton from "@/components/ui/back-button"
 import BottomBanner from "@/components/ui/bottom-banner"
 
 export default function Cart() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [items, setItems] = useState<{ id: number; title: string; qty: number }[]>(() => getCart())
   const [email, setEmail] = useState<string>("")
   const [name, setName] = useState<string>("")
@@ -16,14 +17,19 @@ export default function Cart() {
   const [cdek, setCdek] = useState<string>("")
   const [address, setAddress] = useState<string>("")
   const [promoCode, setPromoCode] = useState<string>("")
+  const [discountAmount, setDiscountAmount] = useState<number>(0)
+  const [isCheckingPromo, setIsCheckingPromo] = useState<boolean>(false)
   const [clientId, setClientId] = useState<number | string>("")
 
   useEffect(() => {
-    // Try to get Telegram user ID
-    if (typeof window !== "undefined" && (window as any).Telegram?.WebApp?.initDataUnsafe?.user?.id) {
+    // Try to get Telegram user ID from URL (priority) or WebApp initData
+    const idFromUrl = searchParams.get('client_id')
+    if (idFromUrl) {
+      setClientId(idFromUrl)
+    } else if (typeof window !== "undefined" && (window as any).Telegram?.WebApp?.initDataUnsafe?.user?.id) {
       setClientId((window as any).Telegram.WebApp.initDataUnsafe.user.id)
     }
-  }, [])
+  }, [searchParams])
 
   useEffect(() => {
     const update = () => setItems(getCart())
@@ -80,16 +86,51 @@ export default function Cart() {
     return items.reduce((sum, it) => sum + (it.qty || 1), 0)
   }, [items])
 
-  const discount = useMemo(() => {
-    const code = promoCode.trim().toUpperCase()
-    if (!code) return 0
-    if (code === "PROMO10" || code === "PRA10") return Math.round(total * 0.1)
-    if (code === "PROMO5" || code === "PRA5") return Math.round(total * 0.05)
-    if (code === "PROMO200" || code === "PRA200") return 200
-    return 0
+  useEffect(() => {
+    // Debounce promo code check
+    const checkPromo = async () => {
+        if (!promoCode || promoCode.length < 3) {
+            setDiscountAmount(0)
+            return
+        }
+
+        const code = promoCode.trim().toUpperCase()
+        
+        setIsCheckingPromo(true)
+        try {
+            const res = await fetch('/api/promocode', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code })
+            })
+            const data = await res.json()
+            
+            if (data.valid) {
+                if (data.type === 'percent') {
+                    setDiscountAmount(Math.round(total * (data.value / 100)))
+                } else if (data.type === 'fixed') {
+                    setDiscountAmount(Number(data.value))
+                }
+            } else {
+                // Fallback to old hardcoded logic
+                if (code === "PROMO10" || code === "PRA10") setDiscountAmount(Math.round(total * 0.1))
+                else if (code === "PROMO5" || code === "PRA5") setDiscountAmount(Math.round(total * 0.05))
+                else if (code === "PROMO200" || code === "PRA200") setDiscountAmount(200)
+                else setDiscountAmount(0)
+            }
+        } catch (e) {
+            console.error("Error checking promo", e)
+            setDiscountAmount(0)
+        } finally {
+            setIsCheckingPromo(false)
+        }
+    }
+
+    const timer = setTimeout(checkPromo, 800) // Debounce 800ms
+    return () => clearTimeout(timer)
   }, [promoCode, total])
 
-  const totalWithDiscount = useMemo(() => Math.max(0, total - discount), [total, discount])
+  const totalWithDiscount = useMemo(() => Math.max(0, total - discountAmount), [total, discountAmount])
 
   function declOfNum(n: number, text_forms: string[]) {
     n = Math.abs(n) % 100
@@ -240,7 +281,7 @@ export default function Cart() {
                 />
                 <div className="flex items-center justify-between text-[13px]">
                   <span style={{ color: "#000000" }}>Скидка</span>
-                  <span style={{ color: "#000000" }}>{discount.toLocaleString("ru-RU")} руб.</span>
+                  <span style={{ color: "#000000" }}>{discountAmount.toLocaleString("ru-RU")} руб.</span>
                 </div>
                 <div className="flex items-center justify-between text-[13px]">
                   <span style={{ color: "#000000" }}>К оплате</span>

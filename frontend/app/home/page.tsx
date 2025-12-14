@@ -89,7 +89,7 @@ export default function HomePage() {
           <Image src="/2 51.png" alt="Афиша" fill className="object-contain rounded-[20px]" priority />
         </div>
 
-        <div className="mt-2 -mx-4 h-[34px] relative overflow-hidden [background:linear-gradient(40deg,_rgb(28,_28,_28),_rgb(64,_0,_120))]">
+        <div className="mt-2 -mx-4 h-[34px] relative overflow-hidden bg-[#0E1C1D]">
           <div className="absolute inset-0 overflow-hidden flex items-center">
             <div className="marquee-track h-full flex items-center whitespace-nowrap" style={{ animationDuration: "12s" }}>
               <span className="pl-4 pr-8 text-white text-[12px]">Добро пожаловать в магазин ETRA🤗</span>

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import crypto from "node:crypto"
 import { getSupabaseClient } from "@/lib/supabase"
+import { sendTelegramMessage } from "@/lib/telegram"
 
 function toBase64Url(input: string) {
   return Buffer.from(input, "utf8").toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "")
@@ -118,6 +119,28 @@ export async function POST(req: Request) {
         ref_code: body.refCode,
         status: "pending",
       })
+
+      // Send Telegram notification
+      const customer = body.customerInfo || {}
+      const itemsList = (body.invoiceItems || [])
+        .map((it) => `- ${it.name} x${it.quantity} (${it.cost} руб.)`)
+        .join("\n")
+
+      const msg = `
+📦 <b>Новый заказ #${invId}</b>
+💰 Сумма: <b>${outSum} руб.</b>
+👤 Клиент: ${customer.name || "Не указан"}
+📞 Телефон: ${customer.phone || "Не указан"}
+📧 Email: ${customer.email || body.email || "Не указан"}
+📍 Доставка: ${customer.cdek ? `СДЭК: ${customer.cdek}` : customer.address || "Не указан"}
+${body.promoCode ? `🎫 Промокод: ${body.promoCode}` : ""}
+
+🛒 <b>Товары:</b>
+${itemsList}
+      `.trim()
+
+      // Send asynchronously without waiting
+      sendTelegramMessage(msg).catch(e => console.error("BG Telegram send error", e))
     }
   } catch {}
 

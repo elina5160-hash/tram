@@ -9,6 +9,7 @@ import { useProducts } from "@/hooks/useProducts"
 import { staticItems } from "@/data/staticItems"
 
 import BottomBanner from "@/components/ui/bottom-banner"
+import ContestBadge from "@/components/ui/contest-badge"
 
 export default function Shop() {
   const router = useRouter()
@@ -44,7 +45,10 @@ export default function Shop() {
     <div className="min-h-screen w-full bg-white flex flex-col items-center justify-start relative pb-40">
       
       <div className="w-full max-w-[420px] mx-auto px-4 pt-6">
-        <h1 className="text-xl font-semibold">Каталог</h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-xl font-semibold">Каталог</h1>
+          <ContestBadge />
+        </div>
         <section className="mt-4">
           <div className="mt-3 inline-grid grid-cols-2 gap-3 mx-auto">
             {promos.map((it) => (

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import crypto from "node:crypto"
-import { getSupabaseClient } from "@/lib/supabase"
+import { getServiceSupabaseClient } from "@/lib/supabase"
+import { addTickets } from "@/lib/contest"
 
 function verifySignature(outSum: string, invId: string, signature: string, password2: string) {
   const base = `${outSum}:${invId}:${password2}`
@@ -12,40 +13,83 @@ function ack(invId: string) {
   return new Response(`OK${invId}`)
 }
 
+async function processOrder(invId: string, outSum: string) {
+    const client = getServiceSupabaseClient()
+    if (!client) return
+
+    try {
+        const { data: order } = await client.from("orders").select('*').eq("id", Number(invId)).single()
+        
+        if (order && order.status !== 'paid') {
+             // Mark as paid
+             await client.from("orders").update({ status: "paid" }).eq("id", Number(invId))
+             
+             // --- CONTEST LOGIC ---
+             const amount = Number(outSum)
+             const tickets = Math.floor(amount / 1000)
+             // Check client_id in customer_info (jsonb)
+             const clientId = order.customer_info?.client_id
+             
+             // 1. Buyer Tickets
+             if (tickets > 0 && clientId) {
+                 await addTickets(clientId, tickets, 'purchase_reward', invId)
+             }
+             
+             // 2. Promo Code Referrer (Method 3: +2 tickets)
+             const promoCode = order.promo_code
+             if (promoCode) {
+                 const { data: owner } = await client.from('contest_participants').select('user_id').eq('personal_promo_code', promoCode).single()
+                 // Prevent self-referral bonus if they used their own code (if allowed)
+                 if (owner && String(owner.user_id) !== String(clientId)) {
+                     await addTickets(owner.user_id, 2, 'friend_purchase_promo', invId)
+                 }
+             }
+             
+             // 3. Referral Link Bonus (Method 2 Bonus: +1 ticket)
+             if (clientId) {
+                 const { data: referral } = await client.from('contest_referrals').select('referrer_id').eq('referee_id', clientId).single()
+                 if (referral) {
+                      await addTickets(referral.referrer_id, 1, 'referral_purchase_bonus', invId)
+                 }
+             }
+        }
+    } catch (e) {
+        console.error("Error processing order", e)
+    }
+}
+
 export async function GET(req: Request) {
   const url = new URL(req.url)
   const outSum = url.searchParams.get("OutSum") || ""
   const invId = url.searchParams.get("InvId") || ""
   const signature = url.searchParams.get("SignatureValue") || ""
   const password2 = process.env.ROBO_PASSWORD2 || ""
+  
   if (!password2) return NextResponse.json({ error: "Missing password2" }, { status: 500 })
   if (!outSum || !invId || !signature) return NextResponse.json({ error: "Bad params" }, { status: 400 })
   if (!verifySignature(outSum, invId, signature, password2)) return NextResponse.json({ error: "Bad signature" }, { status: 400 })
-  try {
-    const client = getSupabaseClient()
-    if (client) {
-      await client.from("orders").update({ status: "paid" }).eq("id", Number(invId))
-    }
-  } catch {}
+  
+  await processOrder(invId, outSum)
+  
   return ack(invId)
 }
 
 export async function POST(req: Request) {
   const password2 = process.env.ROBO_PASSWORD2 || ""
   if (!password2) return NextResponse.json({ error: "Missing password2" }, { status: 500 })
+  
   let bodyText = ""
   try { bodyText = await req.text() } catch {}
   const params = new URLSearchParams(bodyText)
+  
   const outSum = params.get("OutSum") || ""
   const invId = params.get("InvId") || ""
   const signature = params.get("SignatureValue") || ""
+  
   if (!outSum || !invId || !signature) return NextResponse.json({ error: "Bad params" }, { status: 400 })
   if (!verifySignature(outSum, invId, signature, password2)) return NextResponse.json({ error: "Bad signature" }, { status: 400 })
-  try {
-    const client = getSupabaseClient()
-    if (client) {
-      await client.from("orders").update({ status: "paid" }).eq("id", Number(invId))
-    }
-  } catch {}
+  
+  await processOrder(invId, outSum)
+  
   return ack(invId)
 }
