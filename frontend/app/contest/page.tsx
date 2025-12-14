@@ -63,7 +63,7 @@ function ContestContent() {
             <BackButton href="/catalog" />
             
             {/* Header */}
-            <div className="pt-6 px-4 mb-6 relative z-10">
+            <div className="pt-16 px-4 mb-6 relative z-10">
                 <h1 className="text-3xl font-serif text-[#232323] mb-2">Конкурс</h1>
                 <p className="text-[#232323]/60 text-sm">Дари здоровье — получай подарки! 🎁</p>
             </div>

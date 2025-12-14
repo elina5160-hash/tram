@@ -46,7 +46,7 @@ function ConfirmContent() {
   return (
     <div className="min-h-screen w-full bg-white flex flex-col justify-start relative pb-24">
       <BackButton />
-      <div className="w-full max-w-[420px] mx-auto px-4 pt-6">
+      <div className="w-full max-w-[420px] mx-auto px-4 pt-16">
         <h1 className="text-xl font-semibold">Подтверждение заказа</h1>
         <div className="mt-2 text-[13px] text-[#232323]">№ {invId || "—"}</div>
 

@@ -152,7 +152,7 @@ function CartContent() {
   return (
     <div className="min-h-screen w-full bg-white flex flex-col justify-start relative pb-24">
       <BackButton />
-      <div className="w-full max-w-[420px] mx-auto px-4 pt-6">
+      <div className="w-full max-w-[420px] mx-auto px-4 pt-16">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-xl font-bold">Корзина</h1>
           <button
