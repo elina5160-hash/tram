@@ -21,6 +21,7 @@ function CartContent() {
   const [discountAmount, setDiscountAmount] = useState<number>(0)
   const [isCheckingPromo, setIsCheckingPromo] = useState<boolean>(false)
   const [clientId, setClientId] = useState<number | string>("")
+  const [username, setUsername] = useState<string>("")
 
   useEffect(() => {
     // Try to get Telegram user ID from URL (priority) or WebApp initData
@@ -28,7 +29,9 @@ function CartContent() {
     if (idFromUrl) {
       setClientId(idFromUrl)
     } else if (typeof window !== "undefined" && (window as any).Telegram?.WebApp?.initDataUnsafe?.user?.id) {
-      setClientId((window as any).Telegram.WebApp.initDataUnsafe.user.id)
+      const user = (window as any).Telegram.WebApp.initDataUnsafe.user
+      setClientId(user.id)
+      if (user.username) setUsername(user.username)
     }
   }, [searchParams])
 
@@ -316,6 +319,7 @@ function CartContent() {
                             address, 
                             email,
                             client_id: clientId,
+                            username: username,
                             order_time: new Date().toISOString()
                           },
                           promoCode, 

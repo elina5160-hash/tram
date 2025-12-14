@@ -110,6 +110,7 @@ export async function POST(req: Request) {
   try {
     const client = getSupabaseClient()
     if (client) {
+      // 1. Insert into original schema (backward compatibility)
       await client.from("orders").insert({
         id: invId,
         total_amount: outSum,
@@ -120,8 +121,48 @@ export async function POST(req: Request) {
         status: "pending",
       })
 
-      // Send Telegram notification
+      // 2. Insert/Update fields for new schema (Whalesync sync)
+      // Note: This assumes the table 'orders' has been updated with these new columns.
+      // If columns don't exist, this might fail or be ignored depending on Supabase settings.
+      // We do an update here because the row was just created.
       const customer = body.customerInfo || {}
+      const productsStr = (body.invoiceItems || [])
+        .map((it) => `${it.name} x${it.quantity}`)
+        .join(", ")
+      
+      const shippingData = {
+        name: customer.name || "",
+        phone: customer.phone || "",
+        email: customer.email || body.email || "",
+        cdek: customer.cdek || "",
+        address: customer.address || ""
+      }
+
+      await client.from("orders").update({
+        user_id: customer.client_id ? String(customer.client_id) : null,
+        username: customer.username || null,
+        first_name: customer.name || null,
+        order_date: customer.order_time || new Date().toISOString(),
+        product: productsStr,
+        partner_promo: body.promoCode || null,
+        status: "Создан",
+        tracking_number: "",
+        shipping_data: JSON.stringify(shippingData),
+        comments: "",
+        quantity: (body.invoiceItems || []).reduce((sum, it) => sum + (it.quantity || 1), 0),
+        // Additional requested fields mapped to null/empty for now
+        user_id_link: customer.client_id ? `https://t.me/${customer.client_id}` : null,
+        username_link: customer.username ? `https://t.me/${customer.username}` : null,
+        tracking_sent: false,
+        categories: "",
+        shipping_cost: 0,
+        verification: "",
+        ok: ""
+      }).eq('id', invId)
+
+      // Send Telegram notification
+      // Reuse 'customer' from above or redefine if needed (commented out to avoid linter error)
+      // const customer = body.customerInfo || {} 
       const itemsList = (body.invoiceItems || [])
         .map((it) => `- ${it.name} x${it.quantity} (${it.cost} руб.)`)
         .join("\n")
