@@ -20,9 +20,12 @@ async function processOrder(invId: string, outSum: string) {
     try {
         const { data: order } = await client.from("orders").select('*').eq("id", Number(invId)).single()
         
-        if (order && order.status !== 'paid') {
+        if (order && order.status !== 'paid' && order.status !== 'Оплачен') {
              // Mark as paid
-             await client.from("orders").update({ status: "paid" }).eq("id", Number(invId))
+             await client.from("orders").update({ 
+                 status: "Оплачен",
+                 ok: "true" 
+             }).eq("id", Number(invId))
              
              // --- CONTEST LOGIC ---
              const amount = Number(outSum)
