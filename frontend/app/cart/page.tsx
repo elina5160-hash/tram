@@ -11,7 +11,19 @@ export default function Cart() {
   const router = useRouter()
   const [items, setItems] = useState<{ id: number; title: string; qty: number }[]>(() => getCart())
   const [email, setEmail] = useState<string>("")
+  const [name, setName] = useState<string>("")
+  const [phone, setPhone] = useState<string>("")
+  const [cdek, setCdek] = useState<string>("")
+  const [address, setAddress] = useState<string>("")
   const [promoCode, setPromoCode] = useState<string>("")
+  const [clientId, setClientId] = useState<number | string>("")
+
+  useEffect(() => {
+    // Try to get Telegram user ID
+    if (typeof window !== "undefined" && (window as any).Telegram?.WebApp?.initDataUnsafe?.user?.id) {
+      setClientId((window as any).Telegram.WebApp.initDataUnsafe.user.id)
+    }
+  }, [])
 
   useEffect(() => {
     const update = () => setItems(getCart())
@@ -185,11 +197,39 @@ export default function Cart() {
               </div>
               <div className="mt-3 flex flex-col gap-2">
                 <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full rounded-[12px] bg-white border border-gray-300 px-3 py-2 text-[13px]"
+                  placeholder="ФИО"
+                />
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="w-full rounded-[12px] bg-white border border-gray-300 px-3 py-2 text-[13px]"
+                  placeholder="Телефон"
+                />
+                <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full rounded-[12px] bg-white border border-gray-300 px-3 py-2 text-[13px]"
-                  placeholder="Email для квитанции"
+                  placeholder="Email"
+                />
+                <input
+                  type="text"
+                  value={cdek}
+                  onChange={(e) => setCdek(e.target.value)}
+                  className="w-full rounded-[12px] bg-white border border-gray-300 px-3 py-2 text-[13px]"
+                  placeholder="Пункт выдачи СДЭК"
+                />
+                <input
+                  type="text"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  className="w-full rounded-[12px] bg-white border border-gray-300 px-3 py-2 text-[13px]"
+                  placeholder="Адрес доставки (если не СДЭК)"
                 />
                 <input
                   type="text"
@@ -226,7 +266,16 @@ export default function Cart() {
                         body: JSON.stringify({ 
                           outSum: totalWithDiscount, 
                           description: "Оплата заказа", 
-                          email, 
+                          email,
+                          customerInfo: { 
+                            name, 
+                            phone, 
+                            cdek, 
+                            address, 
+                            email,
+                            client_id: clientId,
+                            order_time: new Date().toISOString()
+                          },
                           promoCode, 
                           refCode,
                           invoiceItems,
@@ -243,9 +292,21 @@ export default function Cart() {
                     } catch {}
                     if (res.ok && typeof data === 'object' && data && 'url' in data) {
                       const d = data as { url: string; invId?: number | string }
-                      const url = `/pay/confirm?url=${encodeURIComponent(d.url)}&invId=${encodeURIComponent(String(d.invId || ''))}`
-                      router.push(url)
-                      return
+                      const pay = (d.url || "").trim()
+                      if (pay) {
+                        const url = `/pay/confirm?url=${encodeURIComponent(pay)}&invId=${encodeURIComponent(String(d.invId || ''))}`
+                        router.push(url)
+                        return
+                      }
+                    }
+                    if (res.ok && typeof data === 'object' && data && 'raw' in data) {
+                      const d = data as { raw?: string; invId?: number | string }
+                      const m = (d.raw || '').match(/https?:\/\/\S+/)
+                      if (m) {
+                        const url = `/pay/confirm?url=${encodeURIComponent(m[0])}&invId=${encodeURIComponent(String(d.invId || ''))}`
+                        router.push(url)
+                        return
+                      }
                     }
                     if (!res.ok) {
                       type ErrorData = { error?: string; message?: string }
@@ -253,8 +314,70 @@ export default function Cart() {
                         ? ((data as ErrorData).error || (data as ErrorData).message || "Ошибка создания счёта Robokassa")
                         : "Ошибка создания счёта Robokassa"
                       alert(msg)
+                      // Попробуем классический API
+                      try {
+                        const res2 = await fetch("/api/robokassa/create", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            outSum: totalWithDiscount,
+                            description: "Оплата заказа",
+                            email,
+                            customerInfo: { 
+                              name, 
+                              phone, 
+                              cdek, 
+                              address, 
+                              email,
+                              client_id: clientId,
+                              order_time: new Date().toISOString()
+                            },
+                            promoCode,
+                            refCode,
+                            items,
+                          }),
+                        })
+                        let data2: any = null
+                        try { data2 = await res2.json() } catch {}
+                        if (res2.ok && data2?.url) {
+                          const url = `/pay/confirm?url=${encodeURIComponent(data2.url)}&invId=${encodeURIComponent(String(data2.invId || ''))}`
+                          router.push(url)
+                          return
+                        }
+                      } catch {}
                       return
                     }
+                    // Если InvoiceService не вернул ссылку, попробуем классический API
+                    try {
+                      const res2 = await fetch("/api/robokassa/create", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          outSum: totalWithDiscount,
+                          description: "Оплата заказа",
+                          email,
+                          customerInfo: { 
+                            name, 
+                            phone, 
+                            cdek, 
+                            address, 
+                            email,
+                            client_id: clientId,
+                            order_time: new Date().toISOString()
+                          },
+                          promoCode,
+                          refCode,
+                          items,
+                        }),
+                      })
+                      let data2: any = null
+                      try { data2 = await res2.json() } catch {}
+                      if (res2.ok && data2?.url) {
+                        const url = `/pay/confirm?url=${encodeURIComponent(data2.url)}&invId=${encodeURIComponent(String(data2.invId || ''))}`
+                        router.push(url)
+                        return
+                      }
+                    } catch {}
                     alert("Не удалось получить ссылку на оплату. Попробуйте позже.")
                   }}
                 >

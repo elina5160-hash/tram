@@ -13,6 +13,7 @@ export async function POST(req: Request) {
     outSum?: number; 
     description?: string; 
     email?: string; 
+    customerInfo?: any;
     promoCode?: string; 
     refCode?: string;
     items?: any[] 
@@ -37,7 +38,7 @@ export async function POST(req: Request) {
     id: invId,
     total_amount: outSum,
     items: body.items || [],
-    customer_info: { email },
+    customer_info: body.customerInfo || { email },
     promo_code: body.promoCode,
     ref_code: body.refCode,
     status: 'pending'

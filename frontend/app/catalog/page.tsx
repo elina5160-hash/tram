@@ -44,7 +44,7 @@ export default function Catalog() {
   }
   const [qty, setQty] = useState<Record<number, number>>(() => {
     const initial: Record<number, number> = {}
-    items.forEach((it) => (initial[it.id] = 1))
+    items.forEach((it) => (initial[it.id] = 0))
     return initial
   })
   const [pressedId, setPressedId] = useState<number | null>(null)
@@ -125,19 +125,19 @@ export default function Catalog() {
                       aria-label="Уменьшить количество"
                       onClick={(e) => {
                         e.stopPropagation()
-                        setQty((prev) => ({ ...prev, [it.id]: Math.max(1, (prev[it.id] || 1) - 1) }))
+                        setQty((prev) => ({ ...prev, [it.id]: Math.max(0, (prev[it.id] || 0) - 1) }))
                         incrementQty(it.id, -1)
                       }}
                       className="w-8 h-8 rounded-[12px] bg-white border border-gray-300 text-[#232323] text-[16px] flex items-center justify-center cursor-pointer"
                     >
                       −
                     </div>
-                    <span className="text-[13px]">{qty[it.id] || 1}</span>
+                    <span className="text-[13px]">{qty[it.id] || 0}</span>
                     <div
                       aria-label="Увеличить количество"
                       onClick={(e) => {
                         e.stopPropagation()
-                        setQty((prev) => ({ ...prev, [it.id]: (prev[it.id] || 1) + 1 }))
+                        setQty((prev) => ({ ...prev, [it.id]: (prev[it.id] || 0) + 1 }))
                         addToCart({ id: it.id, title: it.title, qty: 1 })
                       }}
                       className="w-8 h-8 rounded-[12px] bg-white border border-gray-300 text-[#232323] text-[16px] flex items-center justify-center cursor-pointer"

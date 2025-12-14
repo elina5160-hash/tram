@@ -17,6 +17,7 @@ export async function POST(req: Request) {
     outSum?: number
     description?: string
     email?: string
+    customerInfo?: any
     promoCode?: string
     refCode?: string
     invoiceItems?: { name: string; quantity: number; cost: number; tax?: string; paymentMethod?: string; paymentObject?: string }[]
@@ -112,7 +113,7 @@ export async function POST(req: Request) {
         id: invId,
         total_amount: outSum,
         items: (body.invoiceItems || []).map((it) => ({ title: it.name, qty: it.quantity, price: it.cost })),
-        customer_info: { email: body.email || "" },
+        customer_info: body.customerInfo || { email: body.email || "" },
         promo_code: body.promoCode,
         ref_code: body.refCode,
         status: "pending",

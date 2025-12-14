@@ -9,7 +9,7 @@ function verifySignature(outSum: string, invId: string, signature: string, passw
 }
 
 function ack(invId: string) {
-  return NextResponse.text(`OK${invId}`)
+  return new Response(`OK${invId}`)
 }
 
 export async function GET(req: Request) {
@@ -49,4 +49,3 @@ export async function POST(req: Request) {
   } catch {}
   return ack(invId)
 }
-
