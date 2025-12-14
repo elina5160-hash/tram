@@ -2,10 +2,10 @@
 
 import { useRouter } from "next/navigation"
 
-export default function BackButton() {
+export default function BackButton({ href = "/shop" }: { href?: string }) {
   const router = useRouter()
   const onClick = () => {
-    router.push("/shop")
+    router.push(href)
   }
 
   return (

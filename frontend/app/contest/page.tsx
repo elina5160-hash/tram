@@ -60,7 +60,7 @@ function ContestContent() {
 
     return (
         <main className="min-h-screen bg-[#FDF8F5] pb-20 relative overflow-hidden">
-            <BackButton />
+            <BackButton href="/catalog" />
             
             {/* Header */}
             <div className="pt-6 px-4 mb-6 relative z-10">
