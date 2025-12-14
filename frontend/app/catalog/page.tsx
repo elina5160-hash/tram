@@ -63,11 +63,11 @@ export default function Catalog() {
             <path d="M11.7391 0H0.586957C0.26413 0 0 0.26413 0 0.586957V11.7391C0 12.062 0.26413 12.3261 0.586957 12.3261H11.7391C12.062 12.3261 12.3261 12.062 12.3261 11.7391V0.586957C12.3261 0.26413 12.062 0 11.7391 0ZM9.83152 9.83152H2.49457V2.49457H9.83152V9.83152ZM26.413 0H15.2609C14.938 0 14.6739 0.26413 14.6739 0.586957V11.7391C14.6739 12.062 14.938 12.3261 15.2609 12.3261H26.413C26.7359 12.3261 27 12.062 27 11.7391V0.586957C27 0.26413 26.7359 0 26.413 0ZM24.5054 9.83152H17.1685V2.49457H24.5054V9.83152ZM11.7391 14.6739H0.586957C0.26413 14.6739 0 14.938 0 15.2609V26.413C0 26.7359 0.26413 27 0.586957 27H11.7391C12.062 27 12.3261 26.7359 12.3261 26.413V15.2609C12.3261 14.938 12.062 14.6739 11.7391 14.6739ZM9.83152 24.5054H2.49457V17.1685H9.83152V24.5054ZM26.413 14.6739H15.2609C14.938 14.6739 14.6739 14.938 14.6739 15.2609V26.413C14.6739 26.7359 14.938 27 15.2609 27H26.413C26.7359 27 27 26.7359 27 26.413V15.2609C27 14.938 26.7359 14.6739 26.413 14.6739ZM24.5054 24.5054H17.1685V17.1685H24.5054V24.5054Z" fill="#B7B1B1" />
           </svg>
         </div>
-        <div className="mt-3 inline-grid grid-cols-2 gap-3 mx-auto">
+        <div className="mt-3 inline-grid grid-cols-2 gap-2 mx-auto">
           {items.map((it, idx) => (
             <div
               key={it.id}
-              className={`bg-white rounded-[20px] border border-gray-300 p-3 transition-all duration-500 ease-out transform-gpu ${catalogEntered ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-3"}`}
+              className={`bg-white rounded-[20px] border border-gray-300 p-2 transition-all duration-500 ease-out transform-gpu ${catalogEntered ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-3"}`}
               style={{ transitionDelay: `${idx * 60}ms` }}
               onClick={() => router.push(`/item/${it.id}`)}
               aria-label="Открыть товар"
@@ -110,24 +110,24 @@ export default function Catalog() {
                       onClick={(e) => {
                         e.stopPropagation()
                         setQty((prev) => ({ ...prev, [it.id]: Math.max(0, (prev[it.id] || 0) - 1) }))
-                        incrementQty(it.id, -1)
-                      }}
-                      className="w-8 h-8 rounded-[12px] bg-white border border-gray-300 text-[#232323] text-[16px] flex items-center justify-center cursor-pointer"
-                    >
-                      −
-                    </div>
-                    <span className="text-[13px]">{qty[it.id] || 0}</span>
-                    <div
-                      aria-label="Увеличить количество"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setQty((prev) => ({ ...prev, [it.id]: (prev[it.id] || 0) + 1 }))
-                        addToCart({ id: it.id, title: it.title, qty: 1 })
-                      }}
-                      className="w-8 h-8 rounded-[12px] bg-white border border-gray-300 text-[#232323] text-[16px] flex items-center justify-center cursor-pointer"
-                    >
-                      +
-                    </div>
+                      incrementQty(it.id, -1)
+                    }}
+                    className="w-7 h-7 rounded-[10px] bg-white border border-gray-300 text-[#232323] text-[16px] flex items-center justify-center cursor-pointer"
+                  >
+                    −
+                  </div>
+                  <span className="text-[13px]">{qty[it.id] || 0}</span>
+                  <div
+                    aria-label="Увеличить количество"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setQty((prev) => ({ ...prev, [it.id]: (prev[it.id] || 0) + 1 }))
+                      addToCart({ id: it.id, title: it.title, qty: 1 })
+                    }}
+                    className="w-7 h-7 rounded-[10px] bg-white border border-gray-300 text-[#232323] text-[16px] flex items-center justify-center cursor-pointer"
+                  >
+                    +
+                  </div>
                   </div>
                 </div>
               </div>

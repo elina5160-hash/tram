@@ -52,11 +52,11 @@ export default function Shop() {
           </Suspense>
         </div>
         <section className="mt-4">
-          <div className="mt-3 inline-grid grid-cols-2 gap-3 mx-auto">
+          <div className="mt-3 inline-grid grid-cols-2 gap-2 mx-auto">
             {promos.map((it) => (
               <div
                 key={it.id}
-                className="bg-white rounded-[20px] border border-gray-300 p-3"
+                className="bg-white rounded-[20px] border border-gray-300 p-2"
                 onClick={() => router.push(`/item/${it.id}`)}
                 aria-label="Открыть товар"
               >
@@ -100,7 +100,7 @@ export default function Shop() {
                         setQty((prev) => ({ ...prev, [it.id]: Math.max(0, (prev[it.id] || 0) - 1) }))
                         incrementQty(it.id, -1)
                       }}
-                      className="w-8 h-8 rounded-[12px] bg-white border border-gray-300 text-[#232323] text-[16px] flex items-center justify-center cursor-pointer"
+                      className="w-7 h-7 rounded-[10px] bg-white border border-gray-300 text-[#232323] text-[16px] flex items-center justify-center cursor-pointer"
                     >
                       −
                     </div>
@@ -112,7 +112,7 @@ export default function Shop() {
                         setQty((prev) => ({ ...prev, [it.id]: (prev[it.id] || 0) + 1 }))
                         addToCart({ id: it.id, title: it.title, qty: 1 })
                       }}
-                      className="w-8 h-8 rounded-[12px] bg-white border border-gray-300 text-[#232323] text-[16px] flex items-center justify-center cursor-pointer"
+                      className="w-7 h-7 rounded-[10px] bg-white border border-gray-300 text-[#232323] text-[16px] flex items-center justify-center cursor-pointer"
                     >
                       +
                     </div>
@@ -124,11 +124,11 @@ export default function Shop() {
           </div>
         </section>
         <section className="mt-6">
-          <div className="mt-3 inline-grid grid-cols-2 gap-3 mx-auto">
+          <div className="mt-3 inline-grid grid-cols-2 gap-2 mx-auto">
             {bests.map((it) => (
               <div
                 key={it.id}
-                className="bg-white rounded-[20px] border border-gray-300 p-3"
+                className="bg-white rounded-[20px] border border-gray-300 p-2"
                 onClick={() => router.push(`/item/${it.id}`)}
                 aria-label="Открыть товар"
               >
@@ -168,7 +168,7 @@ export default function Shop() {
                         setQty((prev) => ({ ...prev, [it.id]: Math.max(0, (prev[it.id] || 0) - 1) }))
                         incrementQty(it.id, -1)
                       }}
-                      className="w-8 h-8 rounded-[12px] bg-white border border-gray-300 text-[#232323] text-[16px] flex items-center justify-center cursor-pointer"
+                      className="w-7 h-7 rounded-[10px] bg-white border border-gray-300 text-[#232323] text-[16px] flex items-center justify-center cursor-pointer"
                     >
                       −
                     </div>
@@ -180,7 +180,7 @@ export default function Shop() {
                         setQty((prev) => ({ ...prev, [it.id]: (prev[it.id] || 0) + 1 }))
                         addToCart({ id: it.id, title: it.title, qty: 1 })
                       }}
-                      className="w-8 h-8 rounded-[12px] bg-white border border-gray-300 text-[#232323] text-[16px] flex items-center justify-center cursor-pointer"
+                      className="w-7 h-7 rounded-[10px] bg-white border border-gray-300 text-[#232323] text-[16px] flex items-center justify-center cursor-pointer"
                     >
                       +
                     </div>
@@ -192,11 +192,11 @@ export default function Shop() {
           </div>
         </section>
         <section className="mt-6">
-          <div className="mt-3 inline-grid grid-cols-2 gap-3 mx-auto">
+          <div className="mt-3 inline-grid grid-cols-2 gap-2 mx-auto">
             {novelties.map((it) => (
               <div
                 key={it.id}
-                className="bg-white rounded-[20px] border border-gray-300 p-3"
+                className="bg-white rounded-[20px] border border-gray-300 p-2"
                 onClick={() => router.push(`/item/${it.id}`)}
                 aria-label="Открыть товар"
               >
@@ -236,7 +236,7 @@ export default function Shop() {
                         setQty((prev) => ({ ...prev, [it.id]: Math.max(0, (prev[it.id] || 0) - 1) }))
                         incrementQty(it.id, -1)
                       }}
-                      className="w-8 h-8 rounded-[12px] bg-white border border-gray-300 text-[#232323] text-[16px] flex items-center justify-center cursor-pointer"
+                      className="w-7 h-7 rounded-[10px] bg-white border border-gray-300 text-[#232323] text-[16px] flex items-center justify-center cursor-pointer"
                     >
                       −
                     </div>
@@ -248,7 +248,7 @@ export default function Shop() {
                         setQty((prev) => ({ ...prev, [it.id]: (prev[it.id] || 0) + 1 }))
                         addToCart({ id: it.id, title: it.title, qty: 1 })
                       }}
-                      className="w-8 h-8 rounded-[12px] bg-white border border-gray-300 text-[#232323] text-[16px] flex items-center justify-center cursor-pointer"
+                      className="w-7 h-7 rounded-[10px] bg-white border border-gray-300 text-[#232323] text-[16px] flex items-center justify-center cursor-pointer"
                     >
                       +
                     </div>

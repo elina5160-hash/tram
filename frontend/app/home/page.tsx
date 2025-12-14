@@ -113,7 +113,7 @@ export default function HomePage() {
             {promos.map((it, idx) => (
               <div
                 key={it.id}
-                className={`bg-white rounded-[20px] border border-gray-300 p-2 transition-all duration-500 ease-out transform-gpu ${catalogEntered ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-3"} min-w-[180px] snap-start`}
+                className={`bg-white rounded-[20px] border border-gray-300 p-2 transition-all duration-500 ease-out transform-gpu ${catalogEntered ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-3"} min-w-[155px] snap-start`}
                 style={{ transitionDelay: `${idx * 60}ms` }}
                 onClick={() => router.push(`/item/${it.id}`)}
                 aria-label="Открыть товар"
@@ -155,7 +155,7 @@ export default function HomePage() {
                           setQty((prev) => ({ ...prev, [it.id]: Math.max(0, (prev[it.id] || 0) - 1) }))
                           incrementQty(it.id, -1)
                         }}
-                        className="w-8 h-8 rounded-[12px] bg-white border border-gray-300 text-[#232323] text-[16px] flex items-center justify-center cursor-pointer"
+                        className="w-7 h-7 rounded-[10px] bg-white border border-gray-300 text-[#232323] text-[16px] flex items-center justify-center cursor-pointer"
                       >
                         −
                       </div>
@@ -167,7 +167,7 @@ export default function HomePage() {
                           setQty((prev) => ({ ...prev, [it.id]: (prev[it.id] || 0) + 1 }))
                           addToCart({ id: it.id, title: it.title, qty: 1 })
                         }}
-                        className="w-8 h-8 rounded-[12px] bg-white border border-gray-300 text-[#232323] text-[16px] flex items-center justify-center cursor-pointer"
+                        className="w-7 h-7 rounded-[10px] bg-white border border-gray-300 text-[#232323] text-[16px] flex items-center justify-center cursor-pointer"
                       >
                         +
                       </div>
@@ -190,7 +190,7 @@ export default function HomePage() {
               return (
               <div
                 key={it.id}
-                className="bg-white rounded-[20px] border border-gray-300 p-2 min-w-[180px] snap-start"
+                className="bg-white rounded-[20px] border border-gray-300 p-2 min-w-[155px] snap-start"
                 onClick={() => router.push(`/item/${it.id}`)}
                 aria-label="Открыть товар"
               >
