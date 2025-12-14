@@ -44,7 +44,7 @@ function ConfirmContent() {
   const total = items.reduce((sum, it) => sum + (catalogPrices[it.id] || 0) * (it.qty || 1), 0)
 
   return (
-    <div className="min-h-screen w-full bg-white flex flex-col justify-start relative pb-24">
+    <div className="min-h-screen w-full bg-white flex flex-col justify-start relative pb-56">
       <BackButton />
       <div className="w-full max-w-[420px] mx-auto px-4 pt-16">
         <h1 className="text-xl font-semibold">Подтверждение заказа</h1>

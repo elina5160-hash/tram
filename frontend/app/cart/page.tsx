@@ -150,7 +150,7 @@ function CartContent() {
   const suggestions = catalog.filter((c) => !inCartIds.has(c.id))
 
   return (
-    <div className="min-h-screen w-full bg-white flex flex-col justify-start relative pb-24">
+    <div className="min-h-screen w-full bg-white flex flex-col justify-start relative pb-56">
       <BackButton />
       <div className="w-full max-w-[420px] mx-auto px-4 pt-16">
         <div className="flex items-center justify-between mb-4">
