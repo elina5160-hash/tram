@@ -134,6 +134,7 @@ export default function Catalog() {
             </div>
           ))}
         </div>
+        <div className="h-24 w-full" />
       </div>
       <BottomBanner />
     </div>

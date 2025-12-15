@@ -259,9 +259,9 @@ export default function Shop() {
             ))}
           </div>
         </section>
-        <BottomBanner />
+        <div className="h-24 w-full" />
       </div>
-      
+      <BottomBanner />
     </div>
   )
 }
