@@ -46,6 +46,9 @@ export async function POST(req: Request) {
   const client = getServiceSupabaseClient()
   
   if (client) {
+    // Получаем текущее время в формате HH:mm:ss для поля updated_at (тип time)
+    const currentTime = new Date().toISOString().split('T')[1].split('.')[0];
+    
     const { error } = await client.from("orders").insert({
       id: invId,
       total_amount: outSum,
@@ -53,7 +56,8 @@ export async function POST(req: Request) {
       customer_info: body.customerInfo || { email: body.email },
       promo_code: body.promoCode,
       ref_code: body.refCode,
-      status: 'pending'
+      status: 'pending',
+      updated_at: currentTime
     })
 
     if (error) {
