@@ -325,7 +325,7 @@ function CartContent() {
                           promoCode, 
                           refCode,
                           invoiceItems,
-                          invId: Date.now()
+                          invId: Math.floor(Date.now() / 1000)
                         }),
                       })
                     } catch (e) {

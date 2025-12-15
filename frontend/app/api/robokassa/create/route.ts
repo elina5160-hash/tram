@@ -30,7 +30,7 @@ export async function POST(req: Request) {
   
   const description = body.description || "Оплата заказа"
   const email = body.email || ""
-  const invId = Date.now()
+  const invId = Math.floor(Date.now() / 1000)
   
   // Сохраняем заказ в Supabase (если настроены переменные окружения)
   const client = getSupabaseClient()

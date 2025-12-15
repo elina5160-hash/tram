@@ -34,7 +34,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid amount" }, { status: 400 })
   }
 
-  const invId = body.invId && typeof body.invId === "number" ? body.invId : Date.now()
+  const invId = body.invId && typeof body.invId === "number" ? body.invId : Math.floor(Date.now() / 1000)
   const description = body.description || "Оплата заказа"
 
   const headerJson = { typ: "JWT", alg: "MD5" }
