@@ -42,8 +42,9 @@ export async function POST(req: Request) {
   const description = body.description || "Оплата заказа"
 
   // Сохраняем заказ в Supabase
-  // Используем обычный клиент (как было раньше), так как Service Key может отсутствовать на Vercel
-  const client = getSupabaseClient()
+  // Используем Service Role Client для обхода RLS (гарантированная запись)
+  const client = getServiceSupabaseClient()
+  
   if (client) {
     const { error } = await client.from("orders").insert({
       id: invId,
@@ -58,6 +59,8 @@ export async function POST(req: Request) {
     if (error) {
       console.error("Error creating order in Supabase:", error)
     }
+  } else {
+    console.error("Failed to create Supabase Service Client - check SUPABASE_SERVICE_ROLE_KEY")
   }
 
   const headerJson = { typ: "JWT", alg: "MD5" }

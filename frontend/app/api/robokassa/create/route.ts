@@ -40,7 +40,8 @@ export async function POST(req: Request) {
   const invId = body.invId && typeof body.invId === "number" ? body.invId : Math.floor(Date.now() / 1000)
   
   // Сохраняем заказ в Supabase (если настроены переменные окружения)
-  const client = getSupabaseClient()
+  // Используем Service Role Client для обхода RLS
+  const client = getServiceSupabaseClient()
   if (client) {
     const { error } = await client.from("orders").insert({
       id: invId,
