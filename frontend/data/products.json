@@ -19,5 +19,6 @@
   { "id": 19, "title": "Каша ЭТРАсУТРА", "price": "750 руб / 200гр", "image": "/KASHA PROMO Demo.mp4", "category": "food" },
   { "id": 20, "title": "НАБОР СЕМЕЙНЫЙ", "price": "4 200 руб.", "image": "/Набор семейный.png", "category": "sets" },
   { "id": 21, "title": "Набор для бани", "price": "4 200 руб.", "image": "/баня.PNG", "category": "sets" },
-  { "id": 22, "title": "Супер Квас", "price": "750 руб.", "image": "/1500x2000 3-4 SK.mp4", "category": "drinks" }
+  { "id": 22, "title": "Супер Квас", "price": "750 руб.", "image": "/1500x2000 3-4 SK.mp4", "category": "drinks" },
+  { "id": 999, "title": "Тестовый товар", "price": "1 руб.", "image": "/главная4.png", "category": "sets" }
 ]
