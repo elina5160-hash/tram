@@ -56,7 +56,7 @@ export default function Catalog() {
 
   return (
     <div className="min-h-screen w-full bg-white flex flex-col justify-start relative pb-56">
-      <div className="w-full max-w-[420px] mx-auto px-4 pt-6">
+      <div className="w-full max-w-[420px] mx-auto px-6 pt-6">
         <div className="flex items-center gap-2">
           <h1 className="text-xl font-semibold">Товары</h1>
           <svg width="27" height="27" viewBox="0 0 27 27" fill="none" xmlns="http://www.w3.org/2000/svg">

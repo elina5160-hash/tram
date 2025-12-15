@@ -44,7 +44,7 @@ export default function Shop() {
   return (
     <div className="min-h-screen w-full bg-white flex flex-col items-center justify-start relative pb-56">
       
-      <div className="w-full max-w-[420px] mx-auto px-4 pt-6">
+      <div className="w-full max-w-[420px] mx-auto px-6 pt-6">
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-semibold">Каталог</h1>
           <Suspense fallback={null}>

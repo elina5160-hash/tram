@@ -113,7 +113,7 @@ export default function HomePage() {
             {promos.map((it, idx) => (
               <div
                 key={it.id}
-                className={`bg-white rounded-[20px] border border-gray-300 p-2 transition-all duration-500 ease-out transform-gpu ${catalogEntered ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-3"} min-w-[155px] snap-start`}
+                className={`bg-white rounded-[20px] border border-gray-300 p-2 transition-all duration-500 ease-out transform-gpu ${catalogEntered ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-3"} min-w-[140px] snap-start`}
                 style={{ transitionDelay: `${idx * 60}ms` }}
                 onClick={() => router.push(`/item/${it.id}`)}
                 aria-label="Открыть товар"
@@ -190,7 +190,7 @@ export default function HomePage() {
               return (
               <div
                 key={it.id}
-                className="bg-white rounded-[20px] border border-gray-300 p-2 min-w-[155px] snap-start"
+                className="bg-white rounded-[20px] border border-gray-300 p-2 min-w-[140px] snap-start"
                 onClick={() => router.push(`/item/${it.id}`)}
                 aria-label="Открыть товар"
               >
