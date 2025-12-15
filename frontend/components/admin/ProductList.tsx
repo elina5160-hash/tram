@@ -25,7 +25,7 @@ export function ProductList({ products, onEdit, onDelete }: ProductListProps) {
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
-      <div className="sticky top-0 z-10 bg-white pt-2 pb-3 -mt-2 border-b mb-2">
+      <div className="sticky top-0 z-10 bg-white pt-2 pb-3 -mt-2 border-b mb-3">
         <input
           type="text"
           placeholder="Поиск товара..."
