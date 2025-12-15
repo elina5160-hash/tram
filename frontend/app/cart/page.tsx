@@ -72,6 +72,7 @@ function CartContent() {
       { id: 20, title: "НАБОР СЕМЕЙНЫЙ", image: "/Набор семейный.png", price: 4200 },
       { id: 21, title: "Набор для бани", image: "/баня.PNG", price: 4200 },
       { id: 22, title: "Супер Квас", image: "/1500x2000 3-4 SK.mp4", price: 750 },
+      { id: 999, title: "Тестовый товар", image: "/главная4.png", price: 5 },
     ],
     []
   )
