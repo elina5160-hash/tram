@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import crypto from "node:crypto"
-import { getSupabaseClient } from "@/lib/supabase"
+import { getSupabaseClient, getServiceSupabaseClient } from "@/lib/supabase"
 
 export async function POST(req: Request) {
   const merchant = process.env.ROBO_MERCHANT_LOGIN?.trim()
@@ -40,20 +40,21 @@ export async function POST(req: Request) {
   const invId = body.invId && typeof body.invId === "number" ? body.invId : Math.floor(Date.now() / 1000)
   
   // Сохраняем заказ в Supabase (если настроены переменные окружения)
-  const client = getSupabaseClient()
-  const { error } = client ? await client.from("orders").insert({
-    id: invId,
-    total_amount: outSum,
-    items: body.items || [],
-    customer_info: body.customerInfo || { email },
-    promo_code: body.promoCode,
-    ref_code: body.refCode,
-    status: 'pending'
-  }) : { error: null }
-
-  if (error) {
-    console.error("Error creating order in Supabase:", error)
-    // Можно вернуть ошибку, если критично
+  const client = getServiceSupabaseClient()
+  if (client) {
+    const { error } = await client.from("orders").insert({
+      id: invId,
+      total_amount: outSum,
+      items: body.items || [],
+      customer_info: body.customerInfo || { email },
+      promo_code: body.promoCode,
+      ref_code: body.refCode,
+      status: 'pending'
+    })
+    
+    if (error) {
+      console.error("Error creating order in Supabase:", error)
+    }
   }
 
   const out = outSum.toFixed(2)

@@ -42,19 +42,24 @@ export async function POST(req: Request) {
   const description = body.description || "Оплата заказа"
 
   // Сохраняем заказ в Supabase (как в классическом методе)
-  const client = getSupabaseClient()
-  const { error } = client ? await client.from("orders").insert({
-    id: invId,
-    total_amount: outSum,
-    items: body.invoiceItems || [],
-    customer_info: body.customerInfo || { email: body.email },
-    promo_code: body.promoCode,
-    ref_code: body.refCode,
-    status: 'pending'
-  }) : { error: null }
+  // Используем Service Role Client для обхода RLS
+  const client = getServiceSupabaseClient()
+  if (client) {
+    const { error } = await client.from("orders").insert({
+      id: invId,
+      total_amount: outSum,
+      items: body.invoiceItems || [],
+      customer_info: body.customerInfo || { email: body.email },
+      promo_code: body.promoCode,
+      ref_code: body.refCode,
+      status: 'pending'
+    })
 
-  if (error) {
-    console.error("Error creating order in Supabase:", error)
+    if (error) {
+      console.error("Error creating order in Supabase:", error)
+    }
+  } else {
+    console.error("Supabase Service Client creation failed")
   }
 
   const headerJson = { typ: "JWT", alg: "MD5" }
