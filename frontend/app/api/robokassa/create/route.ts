@@ -50,7 +50,17 @@ export async function POST(req: Request) {
   }
 
   const out = outSum.toFixed(2)
-  const signature = crypto.createHash("md5").update([merchant, out, invId, password1].join(":"), "utf8").digest("hex")
+
+  const shp: Record<string, string> = {}
+  if (body.promoCode) shp.Shp_promo = body.promoCode.trim()
+  if (body.refCode) shp.Shp_ref = body.refCode.trim()
+
+  const sortedKeys = Object.keys(shp).sort()
+  const shpString = sortedKeys.map((k) => `${k}=${shp[k]}`).join(":")
+
+  const base = [merchant, out, invId, password1].join(":")
+  const signatureBase = shpString ? `${base}:${shpString}` : base
+  const signature = crypto.createHash("md5").update(signatureBase, "utf8").digest("hex")
   
   const params = new URLSearchParams()
   params.set("MerchantLogin", merchant)
@@ -60,8 +70,7 @@ export async function POST(req: Request) {
   params.set("SignatureValue", signature)
   
   if (email) params.set("Email", email)
-  if (body.promoCode) params.set("Shp_promo", body.promoCode.trim())
-  if (body.refCode) params.set("Shp_ref", body.refCode.trim())
+  sortedKeys.forEach((k) => params.set(k, shp[k]))
   if (process.env.ROBO_IS_TEST === "1") params.set("isTest", "1")
   
   params.set("Culture", "ru")

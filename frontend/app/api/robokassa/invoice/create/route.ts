@@ -75,7 +75,7 @@ export async function POST(req: Request) {
       Name: it.name,
       Quantity: it.quantity,
       Cost: it.cost,
-      Tax: it.tax || "vat0",
+      Tax: it.tax || "none",
       PaymentMethod: it.paymentMethod || "full_prepayment",
       PaymentObject: it.paymentObject || "commodity",
     }))
@@ -85,12 +85,13 @@ export async function POST(req: Request) {
   const compact = `${header}.${payload}`
   const key = `${merchant}:${password1}`
   const signature = crypto.createHmac("md5", key).update(compact, "utf8").digest("base64")
-  const token = `"${compact}.${signature}"`
+    .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "")
+  const token = `${compact}.${signature}`
 
   const res = await fetch("https://services.robokassa.ru/InvoiceServiceWebApi/api/CreateInvoice", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: token,
+    body: JSON.stringify(token),
   })
 
   const text = await res.text()
