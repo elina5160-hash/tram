@@ -62,7 +62,7 @@ export async function POST(req: Request) {
   if (email) params.set("Email", email)
   if (body.promoCode) params.set("Shp_promo", body.promoCode.trim())
   if (body.refCode) params.set("Shp_ref", body.refCode.trim())
-  if (process.env.ROBO_IS_TEST) params.set("isTest", "1")
+  if (process.env.ROBO_IS_TEST === "1") params.set("isTest", "1")
   
   params.set("Culture", "ru")
   
