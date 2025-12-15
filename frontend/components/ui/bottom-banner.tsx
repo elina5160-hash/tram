@@ -74,7 +74,7 @@ export default function BottomBanner() {
   const supportItem = getItem('support')
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-20 w-full flex items-center justify-center px-3">
+    <div className="fixed inset-x-0 bottom-0 z-20 w-full flex items-center justify-center px-3 pb-[env(safe-area-inset-bottom)]">
       <div className="relative w-full max-w-[420px] h-[52px] rounded-[20px] bg-[#232323]/60 backdrop-blur-xl border border-gray-500/70 shadow-inner mb-[12px] px-4 flex items-center justify-between overflow-hidden">
         
         {homeItem?.enabled !== false && (

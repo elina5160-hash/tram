@@ -55,8 +55,8 @@ export default function Catalog() {
   }, [])
 
   return (
-    <div className="min-h-screen w-full bg-white flex flex-col justify-start relative pb-56">
-      <div className="w-full max-w-[420px] mx-auto px-6 pt-6">
+    <div className="min-h-[100dvh] w-full bg-white flex flex-col justify-start relative pb-56">
+      <div className="w-full max-w-[420px] mx-auto px-6 pt-[calc(1.5rem+env(safe-area-inset-top))]">
         <div className="flex items-center gap-2">
           <h1 className="text-xl font-semibold">Товары</h1>
           <svg width="27" height="27" viewBox="0 0 27 27" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -89,11 +89,11 @@ export default function Catalog() {
                 <Link href={`/item/${it.id}`} className="block">
                   <span className="block text-[13px] font-bold leading-tight min-h-[28px]" style={{ color: "#000000" }}>{it.title}</span>
                 </Link>
-                <div className="mt-1 flex items-center justify-between">
-                  <div className="flex flex-col">
-                    {it.id === 6 && (
-                      <span className="text-[12px] whitespace-nowrap font-bold" style={{ color: "#8A8A8A", textDecoration: "line-through" }}>6000 РУБ</span>
-                    )}
+                <div className="mt-1 flex flex-col gap-2">
+                    <div className="flex flex-col">
+                      {it.id === 6 && (
+                        <span className="text-[12px] whitespace-nowrap font-bold" style={{ color: "#8A8A8A", textDecoration: "line-through" }}>6000 РУБ</span>
+                      )}
                     {it.id === 2 && (
                       <span className="text-[12px] whitespace-nowrap font-bold" style={{ color: "#8A8A8A", textDecoration: "line-through" }}>32 000 р.</span>
                     )}
@@ -112,7 +112,7 @@ export default function Catalog() {
                         setQty((prev) => ({ ...prev, [it.id]: Math.max(0, (prev[it.id] || 0) - 1) }))
                       incrementQty(it.id, -1)
                     }}
-                    className="w-7 h-7 rounded-[10px] bg-white border border-gray-300 text-[#232323] text-[16px] flex items-center justify-center cursor-pointer"
+                    className="w-7 h-7 rounded-[10px] bg-white border border-gray-300 text-[#232323] text-[14px] flex items-center justify-center cursor-pointer shrink-0"
                   >
                     −
                   </div>
@@ -124,7 +124,7 @@ export default function Catalog() {
                       setQty((prev) => ({ ...prev, [it.id]: (prev[it.id] || 0) + 1 }))
                       addToCart({ id: it.id, title: it.title, qty: 1 })
                     }}
-                    className="w-7 h-7 rounded-[10px] bg-white border border-gray-300 text-[#232323] text-[16px] flex items-center justify-center cursor-pointer"
+                    className="w-7 h-7 rounded-[10px] bg-white border border-gray-300 text-[#232323] text-[14px] flex items-center justify-center cursor-pointer shrink-0"
                   >
                     +
                   </div>

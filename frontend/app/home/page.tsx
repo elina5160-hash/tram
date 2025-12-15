@@ -69,8 +69,8 @@ export default function HomePage() {
   }, [])
 
   return (
-    <div className="min-h-screen w-full bg-[#FAFAFA] flex flex-col justify-start relative pb-56">
-      <div className="w-full max-w-[420px] mx-auto px-4 pt-6">
+    <div className="min-h-[100dvh] w-full bg-[#FAFAFA] flex flex-col justify-start relative pb-56">
+      <div className="w-full max-w-[420px] mx-auto px-4 pt-[calc(1.5rem+env(safe-area-inset-top))]">
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-semibold">Главная</h1>
           <button
@@ -113,7 +113,7 @@ export default function HomePage() {
             {promos.map((it, idx) => (
               <div
                 key={it.id}
-                className={`bg-white rounded-[20px] border border-gray-300 p-2 transition-all duration-500 ease-out transform-gpu ${catalogEntered ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-3"} min-w-[140px] snap-start`}
+                className={`bg-white rounded-[20px] border border-gray-300 p-2 transition-all duration-500 ease-out transform-gpu ${catalogEntered ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-3"} min-w-[180px] snap-start`}
                 style={{ transitionDelay: `${idx * 60}ms` }}
                 onClick={() => router.push(`/item/${it.id}`)}
                 aria-label="Открыть товар"
@@ -132,7 +132,10 @@ export default function HomePage() {
                   </Link>
                 </div>
                 <div className="mt-2">
-                  <div className="mt-1 flex items-center justify-between">
+                  <Link href={`/item/${it.id}`} className="block">
+                    <span className="block text-[13px] font-bold leading-tight min-h-[28px]" style={{ color: "#000000" }}>{it.title}</span>
+                  </Link>
+                  <div className="mt-1 flex flex-col gap-2">
                     <div className="flex flex-col">
                       {it.id === 6 && (
                         <span className="text-[12px] whitespace-nowrap" style={{ color: "#8A8A8A", textDecoration: "line-through" }}>6000 РУБ</span>
@@ -155,7 +158,7 @@ export default function HomePage() {
                           setQty((prev) => ({ ...prev, [it.id]: Math.max(0, (prev[it.id] || 0) - 1) }))
                           incrementQty(it.id, -1)
                         }}
-                        className="w-7 h-7 rounded-[10px] bg-white border border-gray-300 text-[#232323] text-[16px] flex items-center justify-center cursor-pointer"
+                        className="w-7 h-7 rounded-[10px] bg-white border border-gray-300 text-[#232323] text-[14px] flex items-center justify-center cursor-pointer shrink-0"
                       >
                         −
                       </div>
@@ -167,15 +170,12 @@ export default function HomePage() {
                           setQty((prev) => ({ ...prev, [it.id]: (prev[it.id] || 0) + 1 }))
                           addToCart({ id: it.id, title: it.title, qty: 1 })
                         }}
-                        className="w-7 h-7 rounded-[10px] bg-white border border-gray-300 text-[#232323] text-[16px] flex items-center justify-center cursor-pointer"
+                        className="w-7 h-7 rounded-[10px] bg-white border border-gray-300 text-[#232323] text-[14px] flex items-center justify-center cursor-pointer shrink-0"
                       >
                         +
                       </div>
                     </div>
                   </div>
-                  <Link href={`/item/${it.id}`} className="block">
-                    <span className="block text-[13px] font-bold leading-tight min-h-[28px]" style={{ color: "#000000" }}>{it.title}</span>
-                  </Link>
                 </div>
               </div>
             ))}
@@ -190,7 +190,7 @@ export default function HomePage() {
               return (
               <div
                 key={it.id}
-                className="bg-white rounded-[20px] border border-gray-300 p-2 min-w-[140px] snap-start"
+                className="bg-white rounded-[20px] border border-gray-300 p-2 min-w-[180px] snap-start"
                 onClick={() => router.push(`/item/${it.id}`)}
                 aria-label="Открыть товар"
               >
@@ -206,7 +206,10 @@ export default function HomePage() {
                   </Link>
                 </div>
                 <div className="mt-2">
-                  <div className="mt-1 flex items-center justify-between">
+                  <Link href={`/item/${it.id}`} className="block">
+                    <span className="block text-[13px] font-bold leading-tight min-h-[28px]" style={{ color: "#000000" }}>{it.title}</span>
+                  </Link>
+                  <div className="mt-1 flex flex-col gap-2">
                     <div className="flex flex-col">
                       {it.id === 6 && (
                         <span className="text-[12px] whitespace-nowrap" style={{ color: "#8A8A8A", textDecoration: "line-through" }}>6000 РУБ</span>
@@ -227,7 +230,7 @@ export default function HomePage() {
                         setQty((prev) => ({ ...prev, [it.id]: Math.max(0, (prev[it.id] || 0) - 1) }))
                         incrementQty(it.id, -1)
                       }}
-                        className="w-8 h-8 rounded-[12px] bg-white border border-gray-300 text-[#232323] text-[16px] flex items-center justify-center cursor-pointer"
+                        className="w-7 h-7 rounded-[10px] bg-white border border-gray-300 text-[#232323] text-[14px] flex items-center justify-center cursor-pointer shrink-0"
                       >
                         −
                       </div>
@@ -239,15 +242,12 @@ export default function HomePage() {
                         setQty((prev) => ({ ...prev, [it.id]: (prev[it.id] || 0) + 1 }))
                         addToCart({ id: it.id, title: it.title, qty: 1 })
                       }}
-                        className="w-8 h-8 rounded-[12px] bg-white border border-gray-300 text-[#232323] text-[16px] flex items-center justify-center cursor-pointer"
+                        className="w-7 h-7 rounded-[10px] bg-white border border-gray-300 text-[#232323] text-[14px] flex items-center justify-center cursor-pointer shrink-0"
                       >
                         +
                       </div>
                     </div>
                   </div>
-                  <Link href={`/item/${it.id}`} className="block">
-                    <span className="block text-[13px] font-bold leading-tight min-h-[28px]" style={{ color: "#000000" }}>{it.title}</span>
-                  </Link>
                 </div>
               </div>
               )
@@ -279,7 +279,10 @@ export default function HomePage() {
                   <div className="absolute top-2 left-2 px-2 py-1 rounded-[10px] text-[11px]" style={{ backgroundColor: "#E8F8E8", color: "#267A2D" }}>Новинка</div>
                 </div>
                 <div className="mt-2">
-                  <div className="mt-1 flex items-center justify-between">
+                  <Link href={`/item/${it.id}`} className="block">
+                    <span className="block text-[13px] font-bold leading-tight min-h-[28px]" style={{ color: "#000000" }}>{it.title}</span>
+                  </Link>
+                  <div className="mt-1 flex flex-col gap-2">
                     <div className="flex flex-col">
                       {it.id === 6 && (
                         <span className="text-[12px] whitespace-nowrap" style={{ color: "#8A8A8A", textDecoration: "line-through" }}>6000 РУБ</span>
@@ -300,7 +303,7 @@ export default function HomePage() {
                         setQty((prev) => ({ ...prev, [it.id]: Math.max(0, (prev[it.id] || 0) - 1) }))
                         incrementQty(it.id, -1)
                       }}
-                        className="w-8 h-8 rounded-[12px] bg-white border border-gray-300 text-[#232323] text-[16px] flex items-center justify-center cursor-pointer"
+                        className="w-7 h-7 rounded-[10px] bg-white border border-gray-300 text-[#232323] text-[14px] flex items-center justify-center cursor-pointer shrink-0"
                       >
                         −
                       </div>
@@ -312,15 +315,12 @@ export default function HomePage() {
                         setQty((prev) => ({ ...prev, [it.id]: (prev[it.id] || 0) + 1 }))
                         addToCart({ id: it.id, title: it.title, qty: 1 })
                       }}
-                        className="w-8 h-8 rounded-[12px] bg-white border border-gray-300 text-[#232323] text-[16px] flex items-center justify-center cursor-pointer"
+                        className="w-7 h-7 rounded-[10px] bg-white border border-gray-300 text-[#232323] text-[14px] flex items-center justify-center cursor-pointer shrink-0"
                       >
                         +
+                      </div>
                     </div>
                   </div>
-                  </div>
-                  <Link href={`/item/${it.id}`} className="block">
-                    <span className="block text-[13px] font-bold leading-tight min-h-[28px]" style={{ color: "#000000" }}>{it.title}</span>
-                  </Link>
                 </div>
               </div>
               )

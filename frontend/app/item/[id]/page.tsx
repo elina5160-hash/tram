@@ -60,7 +60,7 @@ export default function ItemPage() {
 
   if (!item) {
     return (
-      <div className="min-h-screen w-full bg-white flex flex-col justify-start relative pb-24">
+      <div className="min-h-[100dvh] w-full bg-white flex flex-col justify-start relative pb-24">
         <BackButton />
         <div className="flex-1 w-full flex items-center justify-center">
           <h1 className="text-xl">Товар не найден</h1>
@@ -71,9 +71,9 @@ export default function ItemPage() {
   }
 
   return (
-    <div className="min-h-screen w-full bg-white flex flex-col justify-start relative pb-56">
+    <div className="min-h-[100dvh] w-full bg-white flex flex-col justify-start relative pb-56">
       <BackButton />
-      <div className="w-full max-w-[420px] mx-auto px-4 pt-16">
+      <div className="w-full max-w-[420px] mx-auto px-4 pt-[calc(4rem+env(safe-area-inset-top))]">
 
         <div className="mt-4 bg-white rounded-[20px] border border-gray-300 p-3">
           <div className="relative rounded-[16px] overflow-hidden">
@@ -236,14 +236,14 @@ export default function ItemPage() {
                 <>
                   <div className="flex gap-2 mt-2">
                     <HoverButton
-                      className={`flex-1 inline-flex items-center justify-center h-9 px-3 rounded-[12px] border transition-colors duration-150 text-[12px] ${volume === "1l" ? "bg-[#6800E9] text-white border-[#6800E9] shadow-[0_1px_2px_rgba(0,0,0,0.08)]" : "bg-white text-[#232323] border-[#E5E5E5] hover:bg-[#F7F7F7]"}`}
+                      className={`flex-1 inline-flex items-center justify-center h-9 px-3 rounded-[12px] border transition-colors duration-150 text-[11px] ${volume === "1l" ? "bg-[#6800E9] text-white border-[#6800E9] shadow-[0_1px_2px_rgba(0,0,0,0.08)]" : "bg-white text-[#232323] border-[#E5E5E5] hover:bg-[#F7F7F7]"}`}
                       aria-pressed={volume === "1l"}
                       onClick={() => setVolume("1l")}
                     >
                       1Л
                     </HoverButton>
                     <HoverButton
-                      className={`flex-1 inline-flex items-center justify-center h-9 px-3 rounded-[12px] border transition-colors duration-150 text-[12px] ${volume === "0.5l" ? "bg-[#6800E9] text-white border-[#6800E9] shadow-[0_1px_2px_rgba(0,0,0,0.08)]" : "bg-white text-[#232323] border-[#E5E5E5] hover:bg-[#F7F7F7]"}`}
+                      className={`flex-1 inline-flex items-center justify-center h-9 px-3 rounded-[12px] border transition-colors duration-150 text-[11px] ${volume === "0.5l" ? "bg-[#6800E9] text-white border-[#6800E9] shadow-[0_1px_2px_rgba(0,0,0,0.08)]" : "bg-white text-[#232323] border-[#E5E5E5] hover:bg-[#F7F7F7]"}`}
                       aria-pressed={volume === "0.5l"}
                       onClick={() => setVolume("0.5l")}
                     >
@@ -256,14 +256,14 @@ export default function ItemPage() {
                 <>
                   <div className="flex gap-2 mt-2">
                     <HoverButton
-                      className={`flex-1 inline-flex items-center justify-center h-9 px-3 rounded-[12px] border transition-colors duration-150 text-[12px] ${volume === "200g" ? "bg-[#6800E9] text-white border-[#6800E9] shadow-[0_1px_2px_rgba(0,0,0,0.08)]" : "bg-white text-[#232323] border-[#E5E5E5] hover:bg-[#F7F7F7]"}`}
+                      className={`flex-1 inline-flex items-center justify-center h-9 px-3 rounded-[12px] border transition-colors duration-150 text-[11px] ${volume === "200g" ? "bg-[#6800E9] text-white border-[#6800E9] shadow-[0_1px_2px_rgba(0,0,0,0.08)]" : "bg-white text-[#232323] border-[#E5E5E5] hover:bg-[#F7F7F7]"}`}
                       aria-pressed={volume === "200g"}
                       onClick={() => setVolume("200g")}
                     >
                       200 ГР
                     </HoverButton>
                     <HoverButton
-                      className={`flex-1 inline-flex items-center justify-center h-9 px-3 rounded-[12px] border transition-colors duration-150 text-[12px] ${volume === "2kg" ? "bg-[#6800E9] text-white border-[#6800E9] shadow-[0_1px_2px_rgba(0,0,0,0.08)]" : "bg-white text-[#232323] border-[#E5E5E5] hover:bg-[#F7F7F7]"}`}
+                      className={`flex-1 inline-flex items-center justify-center h-9 px-3 rounded-[12px] border transition-colors duration-150 text-[11px] ${volume === "2kg" ? "bg-[#6800E9] text-white border-[#6800E9] shadow-[0_1px_2px_rgba(0,0,0,0.08)]" : "bg-white text-[#232323] border-[#E5E5E5] hover:bg-[#F7F7F7]"}`}
                       aria-pressed={volume === "2kg"}
                       onClick={() => setVolume("2kg")}
                     >
@@ -276,14 +276,14 @@ export default function ItemPage() {
                 <>
                   <div className="flex gap-2">
                     <HoverButton
-                      className={`flex-1 inline-flex items-center justify-center h-9 px-3 rounded-[12px] border transition-colors duration-150 text-[12px] ${tariff === "self" ? "bg-[#6800E9] text-white border-[#6800E9] shadow-[0_1px_2px_rgba(0,0,0,0.08)]" : "bg-white text-[#232323] border-[#E5E5E5] hover:bg-[#F7F7F7]"}`}
+                      className={`flex-1 inline-flex items-center justify-center min-h-[36px] h-auto py-1 px-3 rounded-[12px] border transition-colors duration-150 text-[12px] ${tariff === "self" ? "bg-[#6800E9] text-white border-[#6800E9] shadow-[0_1px_2px_rgba(0,0,0,0.08)]" : "bg-white text-[#232323] border-[#E5E5E5] hover:bg-[#F7F7F7]"}`}
                       aria-pressed={tariff === "self"}
                       onClick={() => setTariff("self")}
                     >
                       Тариф КТО ГОТОВИТ САМ
                     </HoverButton>
                     <HoverButton
-                      className={`flex-1 inline-flex items-center justify-center h-9 px-3 rounded-[12px] border transition-colors duration-150 text-[12px] ${tariff === "basic" ? "bg-[#6800E9] text-white border-[#6800E9] shadow-[0_1px_2px_rgba(0,0,0,0.08)]" : "bg-white text-[#232323] border-[#E5E5E5] hover:bg-[#F7F7F7]"}`}
+                      className={`flex-1 inline-flex items-center justify-center min-h-[36px] h-auto py-1 px-3 rounded-[12px] border transition-colors duration-150 text-[12px] ${tariff === "basic" ? "bg-[#6800E9] text-white border-[#6800E9] shadow-[0_1px_2px_rgba(0,0,0,0.08)]" : "bg-white text-[#232323] border-[#E5E5E5] hover:bg-[#F7F7F7]"}`}
                       aria-pressed={tariff === "basic"}
                       onClick={() => setTariff("basic")}
                     >
@@ -291,7 +291,7 @@ export default function ItemPage() {
                     </HoverButton>
                   </div>
                   <HoverButton
-                    className={`mt-2 w-full inline-flex items-center justify-center h-9 px-3 rounded-[12px] border transition-colors duration-150 text-[12px] ${tariff === "vip" ? "bg-[#6800E9] text-white border-[#6800E9] shadow-[0_1px_2px_rgba(0,0,0,0.08)]" : "bg-white text-[#232323] border-[#E5E5E5] hover:bg-[#F7F7F7]"}`}
+                    className={`mt-2 w-full inline-flex items-center justify-center min-h-[36px] h-auto py-1 px-3 rounded-[12px] border transition-colors duration-150 text-[12px] ${tariff === "vip" ? "bg-[#6800E9] text-white border-[#6800E9] shadow-[0_1px_2px_rgba(0,0,0,0.08)]" : "bg-white text-[#232323] border-[#E5E5E5] hover:bg-[#F7F7F7]"}`}
                     aria-pressed={tariff === "vip"}
                     onClick={() => setTariff("vip")}
                   >
