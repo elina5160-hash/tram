@@ -41,9 +41,9 @@ export async function POST(req: Request) {
   const invId = body.invId && typeof body.invId === "number" ? body.invId : Math.floor(Date.now() / 1000)
   const description = body.description || "Оплата заказа"
 
-  // Сохраняем заказ в Supabase (как в классическом методе)
-  // Используем Service Role Client для обхода RLS
-  const client = getServiceSupabaseClient()
+  // Сохраняем заказ в Supabase
+  // Используем обычный клиент (как было раньше), так как Service Key может отсутствовать на Vercel
+  const client = getSupabaseClient()
   if (client) {
     const { error } = await client.from("orders").insert({
       id: invId,
@@ -58,8 +58,6 @@ export async function POST(req: Request) {
     if (error) {
       console.error("Error creating order in Supabase:", error)
     }
-  } else {
-    console.error("Supabase Service Client creation failed")
   }
 
   const headerJson = { typ: "JWT", alg: "MD5" }
