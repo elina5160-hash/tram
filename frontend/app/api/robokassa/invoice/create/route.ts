@@ -87,7 +87,7 @@ export async function POST(req: Request) {
 
   const payload = toBase64Url(JSON.stringify(payloadJson))
   const compact = `${header}.${payload}`
-  const key = `${merchant}:${password1}`
+  const key = crypto.createHash("md5").update(`${merchant}:${password1}`).digest("hex")
   const signature = crypto.createHmac("md5", key).update(compact, "utf8").digest("base64")
     .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "")
   const token = `${compact}.${signature}`
