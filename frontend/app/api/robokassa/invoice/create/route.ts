@@ -91,34 +91,11 @@ export async function POST(req: Request) {
   const signature = crypto.createHmac("md5", key).update(compact, "utf8").digest("base64")
     .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "")
   const token = `${compact}.${signature}`
-
-  // Try standard JSON object wrapping again, but with correct content type?
-  // Or try raw string?
-  // Actually, let's try just sending the object WITHOUT JWT, as I suspected in previous thought?
-  // No, the previous thought result was "Could not convert to String", so it WANTS a string.
-  
-  // So I will send the JWT token.
-  // I will try wrapping it in quotes as a raw string body, ensuring Content-Type is application/json.
-  // BUT I will also try to fix the "Invalid start" issue.
-  // Maybe "Invalid start" was because I used MD5 before? Unlikely.
-  
-  // Let's try sending as simple object: { request: token }
-  // And if that fails, I'll log the error.
-  
-  // Wait, if "The JSON value could not be converted to System.String" happens with { request: token },
-  // it means the API expects the ROOT to be a string.
-  // So I MUST send a string.
-  
-  // So I will send `JSON.stringify(token)`.
-  // And if I get "Invalid start", I will assume it's because the token format is wrong?
-  // No, "Invalid start" usually means JSON parsing error.
-  
-  // Let's try sending it as `text/json`?
-  
+ 
   const res = await fetch("https://services.robokassa.ru/InvoiceServiceWebApi/api/CreateInvoice", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(token),
+    body: `"${token}"`,
   })
 
   const text = await res.text()
