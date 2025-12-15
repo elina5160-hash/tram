@@ -41,6 +41,22 @@ export async function POST(req: Request) {
   const invId = body.invId && typeof body.invId === "number" ? body.invId : Math.floor(Date.now() / 1000)
   const description = body.description || "Оплата заказа"
 
+  // Сохраняем заказ в Supabase (как в классическом методе)
+  const client = getSupabaseClient()
+  const { error } = client ? await client.from("orders").insert({
+    id: invId,
+    total_amount: outSum,
+    items: body.invoiceItems || [],
+    customer_info: body.customerInfo || { email: body.email },
+    promo_code: body.promoCode,
+    ref_code: body.refCode,
+    status: 'pending'
+  }) : { error: null }
+
+  if (error) {
+    console.error("Error creating order in Supabase:", error)
+  }
+
   const headerJson = { typ: "JWT", alg: "MD5" }
   const header = toBase64Url(JSON.stringify(headerJson))
 
