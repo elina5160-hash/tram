@@ -123,9 +123,9 @@ export default function HomePage() {
                 <div className="relative rounded-[16px] overflow-hidden">
                   <Link href={`/item/${it.id}`} className="block" aria-label="Открыть товар">
                     <div className="aspect-square bg-[#F1F1F1]">
-                      {it.id === 6 || it.image.endsWith(".mp4") ? (
+                      {it.image.endsWith(".mp4") ? (
                         <LazyVideo 
-                          src={it.id === 6 ? "/видео%201.mp4" : it.image} 
+                          src={it.image} 
                           className="w-full h-full object-cover" 
                         />
                       ) : (
@@ -200,9 +200,9 @@ export default function HomePage() {
                 <div className="relative rounded-[16px] overflow-hidden">
                   <Link href={`/item/${it.id}`} className="block" aria-label="Открыть товар">
                     <div className="aspect-square bg-[#F1F1F1]">
-                      {it.id === 6 || it.image.endsWith(".mp4") ? (
+                      {it.image.endsWith(".mp4") ? (
                         <LazyVideo 
-                          src={it.id === 6 ? "/видео 1.mp4" : it.image} 
+                          src={it.image} 
                           className="w-full h-full object-cover" 
                         />
                       ) : (
@@ -275,9 +275,9 @@ export default function HomePage() {
                 <div className="relative rounded-[16px] overflow-hidden">
                   <Link href={`/item/${it.id}`} className="block" aria-label="Открыть товар">
                     <div className="aspect-square bg-[#F1F1F1]">
-                      {it.id === 6 || it.image.endsWith(".mp4") ? (
+                      {it.image.endsWith(".mp4") ? (
                         <LazyVideo 
-                          src={it.id === 6 ? "/видео 1.mp4" : it.image} 
+                          src={it.image} 
                           className="w-full h-full object-cover" 
                         />
                       ) : (
