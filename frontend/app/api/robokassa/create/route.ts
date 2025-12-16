@@ -68,8 +68,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Ошибка сохранения заказа. Пожалуйста, обратитесь в поддержку." }, { status: 500 })
     }
   } else {
-      console.error("Supabase client not initialized")
-      return NextResponse.json({ error: "Ошибка подключения к базе данных" }, { status: 500 })
+      const missingVars = []
+      if (!process.env.NEXT_PUBLIC_SUPABASE_URL) missingVars.push("NEXT_PUBLIC_SUPABASE_URL")
+      if (!process.env.SUPABASE_SERVICE_ROLE_KEY) missingVars.push("SUPABASE_SERVICE_ROLE_KEY")
+      
+      console.error("Supabase client not initialized. Missing: " + missingVars.join(", "))
+      return NextResponse.json({ error: `Ошибка подключения к БД. Отсутствуют переменные: ${missingVars.join(", ")}` }, { status: 500 })
   }
 
   const out = outSum.toFixed(2)
