@@ -54,20 +54,37 @@ export async function POST(req: Request) {
     const currentTime = new Date().toISOString().split('T')[1].split('.')[0];
     
     // Сохраняем заказ в таблицу pending_orders
-    const { error } = await client.from("pending_orders").insert({
-      id: invId,
-      total_amount: outSum,
-      items: body.invoiceItems || [],
-      customer_info: body.customerInfo || { email: body.email },
-      promo_code: body.promoCode,
-      ref_code: body.refCode,
-      status: 'pending',
-      updated_at: currentTime
-    })
+    // Если pending_orders нет, используем fallback на orders
+    try {
+      const { error } = await client.from("pending_orders").insert({
+        id: invId,
+        total_amount: outSum,
+        items: body.invoiceItems || [],
+        customer_info: body.customerInfo || { email: body.email },
+        promo_code: body.promoCode,
+        ref_code: body.refCode,
+        status: 'pending',
+        updated_at: currentTime
+      })
 
-    if (error) {
-      console.error("Error creating order in pending_orders:", error)
-      return NextResponse.json({ error: "Ошибка сохранения заказа. Попробуйте позже." }, { status: 500 })
+      if (error) throw error
+    } catch (e) {
+      console.error("Error saving to pending_orders, falling back to orders:", e)
+      const { error: fallbackError } = await client.from("orders").insert({
+        id: invId,
+        total_amount: outSum,
+        items: body.invoiceItems || [],
+        customer_info: body.customerInfo || { email: body.email },
+        promo_code: body.promoCode,
+        ref_code: body.refCode,
+        status: 'pending',
+        updated_at: currentTime
+      })
+
+      if (fallbackError) {
+        console.error("Error creating order in fallback (orders):", fallbackError)
+        return NextResponse.json({ error: "Ошибка сохранения заказа. Попробуйте позже." }, { status: 500 })
+      }
     }
   } else {
       console.error("Supabase client not initialized")

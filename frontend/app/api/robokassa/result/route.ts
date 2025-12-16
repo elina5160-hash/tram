@@ -19,47 +19,54 @@ async function processOrder(invId: string, outSum: string) {
     if (!client) return
 
     try {
-        // 1. Проверяем, есть ли уже заказ в таблице orders (чтобы не дублировать)
-        const { data: existingOrder } = await client.from("orders").select('id, status').eq("id", Number(invId)).single()
+        let order;
+
+        // 1. Проверяем, есть ли уже заказ в таблице orders
+        // Select full object to reuse it for notifications if needed
+        const { data: existingOrder } = await client.from("orders").select('*').eq("id", Number(invId)).single()
         
         if (existingOrder) {
-            console.log(`Order ${invId} already exists in orders table with status ${existingOrder.status}`)
-            // Если он там есть, значит уже оплачен (или мы его туда перенесли).
-            // Но на всякий случай обновим статус, если он вдруг не оплачен (хотя по логике он там только оплаченный)
             if (existingOrder.status !== 'paid' && existingOrder.status !== 'Оплачен') {
+                console.log(`Order ${invId} found in orders with status ${existingOrder.status}, updating to paid`)
                 await client.from("orders").update({ status: "Оплачен", ok: "true" }).eq("id", Number(invId))
+                // Use the existing order data (updated status)
+                order = { ...existingOrder, status: "Оплачен" }
+            } else {
+                console.log(`Order ${invId} already paid, skipping`)
+                return
             }
-            return
+        } else {
+            // 2. Если нет в orders, ищем в pending_orders
+            const { data: pendingOrder } = await client.from("pending_orders").select('*').eq("id", Number(invId)).single()
+            
+            if (!pendingOrder) {
+                console.error(`Order ${invId} not found in pending_orders`)
+                return
+            }
+    
+            // 3. Переносим в orders
+            const { error: insertError } = await client.from("orders").insert({
+                id: pendingOrder.id,
+                total_amount: pendingOrder.total_amount,
+                items: pendingOrder.items,
+                customer_info: pendingOrder.customer_info,
+                promo_code: pendingOrder.promo_code,
+                ref_code: pendingOrder.ref_code,
+                status: "Оплачен",
+                ok: "true",
+                updated_at: pendingOrder.updated_at || new Date().toISOString().split('T')[1].split('.')[0]
+            })
+    
+            if (insertError) {
+                 console.error(`Failed to move order ${invId} to orders table:`, insertError)
+                 return
+            }
+            
+            // Используем данные из pendingOrder для дальнейшей логики
+            order = { ...pendingOrder, status: "Оплачен" }
         }
 
-        // 2. Если нет в orders, ищем в pending_orders
-        const { data: pendingOrder } = await client.from("pending_orders").select('*').eq("id", Number(invId)).single()
-        
-        if (!pendingOrder) {
-            console.error(`Order ${invId} not found in pending_orders`)
-            return
-        }
-
-        // 3. Переносим в orders
-        const { error: insertError } = await client.from("orders").insert({
-            id: pendingOrder.id,
-            total_amount: pendingOrder.total_amount,
-            items: pendingOrder.items,
-            customer_info: pendingOrder.customer_info,
-            promo_code: pendingOrder.promo_code,
-            ref_code: pendingOrder.ref_code,
-            status: "Оплачен",
-            ok: "true",
-            updated_at: pendingOrder.updated_at || new Date().toISOString().split('T')[1].split('.')[0]
-        })
-
-        if (insertError) {
-             console.error(`Failed to move order ${invId} to orders table:`, insertError)
-             return
-        }
-        
-        // Используем данные из pendingOrder для дальнейшей логики
-        const order = { ...pendingOrder, status: "Оплачен" }
+        if (!order) return;
 
         // --- TELEGRAM NOTIFICATION ---
              const customer = order.customer_info || {}

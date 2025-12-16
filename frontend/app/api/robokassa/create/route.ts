@@ -52,20 +52,38 @@ export async function POST(req: Request) {
 
     // Сохраняем заказ в таблицу pending_orders (черновики)
     // Только оплаченные заказы попадут в основную таблицу orders
-    const { error } = await client.from("pending_orders").insert({
-      id: invId,
-      total_amount: outSum,
-      items: body.items || [],
-      customer_info: body.customerInfo || { email },
-      promo_code: body.promoCode,
-      ref_code: body.refCode,
-      status: 'pending',
-      updated_at: currentTime
-    })
-    
-    if (error) {
-      console.error("Error creating order in pending_orders:", error)
-      return NextResponse.json({ error: "Ошибка сохранения заказа. Пожалуйста, обратитесь в поддержку." }, { status: 500 })
+    // P.S. Если таблицы pending_orders нет, пробуем сохранить в orders как fallback, чтобы оплата не сломалась
+    try {
+      const { error } = await client.from("pending_orders").insert({
+        id: invId,
+        total_amount: outSum,
+        items: body.items || [],
+        customer_info: body.customerInfo || { email },
+        promo_code: body.promoCode,
+        ref_code: body.refCode,
+        status: 'pending',
+        updated_at: currentTime
+      })
+      
+      if (error) throw error
+    } catch (e) {
+      console.error("Error saving to pending_orders, falling back to orders:", e)
+      // Fallback: сохраняем в orders, если pending_orders недоступна
+      const { error: fallbackError } = await client.from("orders").insert({
+        id: invId,
+        total_amount: outSum,
+        items: body.items || [],
+        customer_info: body.customerInfo || { email },
+        promo_code: body.promoCode,
+        ref_code: body.refCode,
+        status: 'pending',
+        updated_at: currentTime
+      })
+      
+      if (fallbackError) {
+         console.error("Error creating order in fallback (orders):", fallbackError)
+         return NextResponse.json({ error: "Ошибка сохранения заказа. Пожалуйста, обратитесь в поддержку." }, { status: 500 })
+      }
     }
   } else {
       const missingVars = []
