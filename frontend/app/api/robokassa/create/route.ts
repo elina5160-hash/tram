@@ -105,7 +105,7 @@ export async function POST(req: Request) {
       let receiptItems = body.items.map((it: any) => ({
         name: it.name || "Товар",
         quantity: it.quantity || 1,
-        sum: (it.cost || 0) * (it.quantity || 1),
+        sum: (it.cost || 0) * (it.quantity || 1), // Сумма строки = цена * количество
         tax: it.tax || "none",
         payment_method: it.paymentMethod || "full_prepayment",
         payment_object: it.paymentObject || "commodity"
