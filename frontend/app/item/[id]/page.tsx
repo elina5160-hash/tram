@@ -139,9 +139,9 @@ export default function ItemPage() {
                 <Image src="/Набор семейный.png" alt={item.title} fill className="object-cover" />
               ) : item.id === 21 ? (
                 <Image src="/баня.PNG" alt={item.title} fill className="object-cover" />
-              ) : item.id === 6 || item.image.endsWith(".mp4") ? (
+              ) : item.image.endsWith(".mp4") ? (
                 <LazyVideo 
-                  src={item.id === 6 ? "/видео%201.mp4" : item.image} 
+                  src={item.image} 
                   className="w-full h-full object-cover" 
                 />
               ) : (

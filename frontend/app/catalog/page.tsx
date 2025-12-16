@@ -12,10 +12,10 @@ export default function Catalog() {
   const router = useRouter()
   const items = [
     { id: 1, title: "Закваска ПРАЭнзим", price: "3 000 руб / 1л", image: "/1500x2000 3-4 Zakvaska.mp4" },
-    { id: 2, title: "🎉 АКЦИЯ ДВА КУРСА смены микробиома 🎉", price: "24 000 руб", image: "/афиша.png" },
+    { id: 2, title: "🎉 АКЦИЯ ДВА КУРСА смены микробиома 🎉", price: "24 000 руб", image: "/1.jpg" },
     { id: 3, title: "💫 Чистое утро", price: "2400 руб / 2 л + 100гр", image: "/4.png" },
     { id: 4, title: "БифидумФаната﻿🍊﻿", price: "1 200 руб / 1л", image: "/ETRA Bottle Fanta2.mp4" },
-    { id: 6, title: "Набор СЕЗОННЫЙ", price: "4 200 руб / 6л", image: "/главная4.png" },
+    { id: 6, title: "Набор СЕЗОННЫЙ", price: "4 200 руб / 6л", image: "/2.jpg" },
     { id: 7, title: "Бак для приготовления энзимных напитков", price: "53 000 руб / 19л", image: "/2.png" },
     { id: 8, title: "Супер пробка", price: "950 руб.", image: "/пробка.jpg" },
     { id: 9, title: "☀️ Курс Чистка Микробиома 🌛", price: "16 000 руб", image: "/афиша.png" },
@@ -77,9 +77,9 @@ export default function Catalog() {
               <div className="relative rounded-[16px] overflow-hidden">
                 <Link href={`/item/${it.id}`} className="block" aria-label="Открыть товар">
                   <div className="aspect-square bg-[#F1F1F1]">
-                    {it.id === 6 || it.image.endsWith(".mp4") ? (
+                    {it.image.endsWith(".mp4") ? (
                       <LazyVideo 
-                        src={it.id === 6 ? "/видео%201.mp4" : it.image} 
+                        src={it.image} 
                         className="w-full h-full object-cover" 
                       />
                     ) : (
