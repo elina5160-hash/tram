@@ -42,8 +42,12 @@ export async function POST(req: Request) {
   const description = body.description || "Оплата заказа"
 
   // Сохраняем заказ в Supabase
-  // Используем Service Role Client для обхода RLS (гарантированная запись)
-  const client = getServiceSupabaseClient()
+  // Используем обычный клиент (getSupabaseClient), так как RLS позволяет запись, 
+  // а Service Key может отсутствовать на Vercel.
+  let client = getServiceSupabaseClient()
+  if (!client) {
+    client = getSupabaseClient()
+  }
   
   if (client) {
     // Получаем текущее время в формате HH:mm:ss для поля updated_at (тип time)
@@ -63,8 +67,6 @@ export async function POST(req: Request) {
     if (error) {
       console.error("Error creating order in Supabase:", error)
     }
-  } else {
-    console.error("Failed to create Supabase Service Client - check SUPABASE_SERVICE_ROLE_KEY")
   }
 
   const headerJson = { typ: "JWT", alg: "MD5" }

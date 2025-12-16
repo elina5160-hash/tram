@@ -40,8 +40,12 @@ export async function POST(req: Request) {
   const invId = body.invId && typeof body.invId === "number" ? body.invId : Math.floor(Date.now() / 1000)
   
   // Сохраняем заказ в Supabase (если настроены переменные окружения)
-  // Используем Service Role Client для обхода RLS
-  const client = getServiceSupabaseClient()
+  // Пытаемся использовать Service Client, если нет - обычный
+  let client = getServiceSupabaseClient()
+  if (!client) {
+    client = getSupabaseClient()
+  }
+
   if (client) {
     // Получаем текущее время в формате HH:mm:ss для поля updated_at (тип time)
     const currentTime = new Date().toISOString().split('T')[1].split('.')[0];
