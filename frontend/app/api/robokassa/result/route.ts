@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import crypto from "node:crypto"
 import { getServiceSupabaseClient } from "@/lib/supabase"
 import { addTickets } from "@/lib/contest"
+import { sendTelegramMessage } from "@/lib/telegram"
 
 function verifySignature(outSum: string, invId: string, signature: string, password2: string) {
   const base = `${outSum}:${invId}:${password2}`
@@ -27,6 +28,25 @@ async function processOrder(invId: string, outSum: string) {
                  ok: "true" 
              }).eq("id", Number(invId))
              
+             // --- TELEGRAM NOTIFICATION ---
+             const customer = order.customer_info || {}
+             const itemsList = (order.items || []).map((i: any) => `- ${i.name} x${i.quantity || i.qty || 1}`).join('\n')
+             
+             const message = `
+<b>💰 Новый заказ оплачен!</b>
+
+<b>ID заказа:</b> ${invId}
+<b>Сумма:</b> ${outSum} руб.
+<b>Покупатель:</b> ${customer.name || 'Не указано'}
+<b>Телефон:</b> ${customer.phone || 'Не указано'}
+<b>Email:</b> ${customer.email || 'Не указано'}
+<b>Адрес:</b> ${customer.address || 'Не указано'}
+
+<b>Товары:</b>
+${itemsList}
+`
+             await sendTelegramMessage(message, "-5037927554")
+
              // --- CONTEST LOGIC ---
              const amount = Number(outSum)
              const tickets = Math.floor(amount / 1000)
