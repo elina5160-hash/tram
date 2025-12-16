@@ -3,7 +3,12 @@ import useSWR, { mutate } from 'swr';
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export function useProducts() {
-  const { data, error, isLoading } = useSWR('/api/products', fetcher);
+  const { data, error, isLoading } = useSWR('/api/products', fetcher, {
+    revalidateOnFocus: false, // Don't revalidate on window focus
+    revalidateOnReconnect: true,
+    dedupingInterval: 60000, // Dedupe requests within 1 minute
+    keepPreviousData: true, // Keep showing old data while fetching new
+  });
 
   const addProduct = async (product: any) => {
     const res = await fetch('/api/products', {

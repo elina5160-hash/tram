@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation"
 import BottomBanner from "@/components/ui/bottom-banner"
 import { addToCart, incrementQty } from "@/lib/cart"
 
+import LazyVideo from "@/components/ui/lazy-video"
+
 export default function Catalog() {
   const router = useRouter()
   const items = [
@@ -76,11 +78,12 @@ export default function Catalog() {
                 <Link href={`/item/${it.id}`} className="block" aria-label="Открыть товар">
                   <div className="aspect-square bg-[#F1F1F1]">
                     {it.id === 6 || it.image.endsWith(".mp4") ? (
-                      <video muted playsInline autoPlay loop className="w-full h-full object-cover">
-                        <source src={it.id === 6 ? "/видео%201.mp4" : it.image} type="video/mp4" />
-                      </video>
+                      <LazyVideo 
+                        src={it.id === 6 ? "/видео%201.mp4" : it.image} 
+                        className="w-full h-full object-cover" 
+                      />
                     ) : (
-                      <Image src={it.image} alt={it.title} fill className="object-cover" priority={it.id <= 2} />
+                      <Image src={it.image} alt={it.title} fill className="object-cover" sizes="(max-width: 768px) 50vw, 33vw" />
                     )}
                   </div>
                 </Link>

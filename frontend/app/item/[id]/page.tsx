@@ -10,6 +10,8 @@ import { addRatingOnce, addReview, getRatingCount, getRatings, getUserStar, remo
 import { useProducts } from "@/hooks/useProducts"
 import { staticItems } from "@/data/staticItems"
 
+import LazyVideo from "@/components/ui/lazy-video"
+
 function plural(count: number, one: string, few: string, many: string) {
   const mod10 = count % 10
   const mod100 = count % 100
@@ -81,9 +83,7 @@ export default function ItemPage() {
               {item.id === 12 ? (
                 <div className="w-full h-full overflow-x-auto flex snap-x snap-mandatory scrollbar-hide">
                   <div className="flex-none w-full h-full snap-center relative">
-                    <video muted playsInline autoPlay loop className="w-full h-full object-cover">
-                      <source src="/Etra PROMO strz Detskii.mp4" type="video/mp4" />
-                    </video>
+                    <LazyVideo src="/Etra PROMO strz Detskii.mp4" className="w-full h-full object-cover" />
                   </div>
                   <div className="flex-none w-full h-full snap-center relative">
                     <Image src="/детский.png" alt={item.title} fill className="object-cover" />
@@ -110,9 +110,7 @@ export default function ItemPage() {
               ) : item.id === 16 ? (
                 <div className="w-full h-full overflow-x-auto flex snap-x snap-mandatory scrollbar-hide">
                   <div className="flex-none w-full h-full snap-center relative">
-                    <video muted playsInline autoPlay loop className="w-full h-full object-cover">
-                      <source src="/Etra PROMO RISLING -3.mp4" type="video/mp4" />
-                    </video>
+                    <LazyVideo src="/Etra PROMO RISLING -3.mp4" className="w-full h-full object-cover" />
                   </div>
                   <div className="flex-none w-full h-full snap-center relative">
                     <Image src="/рислинг1.png" alt={item.title} fill className="object-cover" />
@@ -124,9 +122,7 @@ export default function ItemPage() {
               ) : item.id === 17 ? (
                 <div className="w-full h-full overflow-x-auto flex snap-x snap-mandatory scrollbar-hide">
                   <div className="flex-none w-full h-full snap-center relative">
-                    <video muted playsInline autoPlay loop className="w-full h-full object-cover">
-                      <source src="/Etra PROMO ORANGE-2.mp4" type="video/mp4" />
-                    </video>
+                    <LazyVideo src="/Etra PROMO ORANGE-2.mp4" className="w-full h-full object-cover" />
                   </div>
                   <div className="flex-none w-full h-full snap-center relative">
                     <Image src="/апельсин1.png" alt={item.title} fill className="object-cover" />
@@ -136,21 +132,18 @@ export default function ItemPage() {
                   </div>
                 </div>
               ) : item.id === 18 ? (
-                <video muted playsInline autoPlay loop className="w-full h-full object-cover">
-                  <source src="/PARAZITOFF 1500x2667 9-16 PROMO-4_1.mp4" type="video/mp4" />
-                </video>
+                <LazyVideo src="/PARAZITOFF 1500x2667 9-16 PROMO-4_1.mp4" className="w-full h-full object-cover" />
               ) : item.id === 19 ? (
-                <video muted playsInline autoPlay loop className="w-full h-full object-cover">
-                  <source src="/KASHA PROMO Demo.mp4" type="video/mp4" />
-                </video>
+                <LazyVideo src="/KASHA PROMO Demo.mp4" className="w-full h-full object-cover" />
               ) : item.id === 20 ? (
                 <Image src="/Набор семейный.png" alt={item.title} fill className="object-cover" />
               ) : item.id === 21 ? (
                 <Image src="/баня.PNG" alt={item.title} fill className="object-cover" />
               ) : item.id === 6 || item.image.endsWith(".mp4") ? (
-                <video muted playsInline autoPlay loop className="w-full h-full object-cover">
-                  <source src={item.id === 6 ? "/видео%201.mp4" : item.image} type="video/mp4" />
-                </video>
+                <LazyVideo 
+                  src={item.id === 6 ? "/видео%201.mp4" : item.image} 
+                  className="w-full h-full object-cover" 
+                />
               ) : (
                 <Image src={item.image} alt={item.title} fill className="object-cover" />
               )}

@@ -8,20 +8,58 @@ import { addToCart, clearCart, getCart, incrementQty, removeFromCart } from "@/l
 import BackButton from "@/components/ui/back-button"
 import BottomBanner from "@/components/ui/bottom-banner"
 
+import LazyVideo from "@/components/ui/lazy-video"
+
 function CartContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [items, setItems] = useState<{ id: number; title: string; qty: number }[]>(() => getCart())
+  
+  // Form State
   const [email, setEmail] = useState<string>("")
   const [name, setName] = useState<string>("")
   const [phone, setPhone] = useState<string>("")
   const [cdek, setCdek] = useState<string>("")
   const [address, setAddress] = useState<string>("")
   const [promoCode, setPromoCode] = useState<string>("")
+  
+  // Logic State
   const [discountAmount, setDiscountAmount] = useState<number>(0)
   const [isCheckingPromo, setIsCheckingPromo] = useState<boolean>(false)
   const [clientId, setClientId] = useState<number | string>("")
   const [username, setUsername] = useState<string>("")
+  
+  // Validation State
+  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [isFormLoaded, setIsFormLoaded] = useState(false)
+
+  // Load saved data from LocalStorage
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedData = localStorage.getItem("cart_form_data")
+      if (savedData) {
+        try {
+          const parsed = JSON.parse(savedData)
+          if (parsed.email) setEmail(parsed.email)
+          if (parsed.name) setName(parsed.name)
+          if (parsed.phone) setPhone(parsed.phone)
+          if (parsed.cdek) setCdek(parsed.cdek)
+          if (parsed.address) setAddress(parsed.address)
+        } catch (e) {
+          console.error("Failed to parse saved form data", e)
+        }
+      }
+      setIsFormLoaded(true)
+    }
+  }, [])
+
+  // Save data to LocalStorage on change
+  useEffect(() => {
+    if (isFormLoaded && typeof window !== "undefined") {
+      const data = { email, name, phone, cdek, address }
+      localStorage.setItem("cart_form_data", JSON.stringify(data))
+    }
+  }, [email, name, phone, cdek, address, isFormLoaded])
 
   useEffect(() => {
     // Try to get Telegram user ID from URL (priority) or WebApp initData
@@ -150,6 +188,53 @@ function CartContent() {
     return `${n.toLocaleString("ru-RU")} руб.`
   }
 
+  function validateForm() {
+    const newErrors: Record<string, string> = {}
+    let isValid = true
+
+    if (!name.trim()) {
+      newErrors.name = "Пожалуйста, введите ваше имя"
+      isValid = false
+    }
+
+    if (!phone.trim()) {
+      newErrors.phone = "Пожалуйста, введите телефон"
+      isValid = false
+    } else if (!/^\+?[0-9\s\-\(\)]{10,}$/.test(phone)) {
+      newErrors.phone = "Некорректный формат телефона"
+      isValid = false
+    }
+
+    if (!email.trim()) {
+      newErrors.email = "Пожалуйста, введите email"
+      isValid = false
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      newErrors.email = "Некорректный email"
+      isValid = false
+    }
+
+    if (!cdek.trim() && !address.trim()) {
+      newErrors.delivery = "Укажите адрес доставки или пункт СДЭК"
+      isValid = false
+    }
+
+    setErrors(newErrors)
+    return isValid
+  }
+
+  const handleClearData = () => {
+    if (confirm("Вы уверены, что хотите очистить сохраненные данные формы?")) {
+      setEmail("")
+      setName("")
+      setPhone("")
+      setCdek("")
+      setAddress("")
+      setPromoCode("")
+      localStorage.removeItem("cart_form_data")
+      setErrors({})
+    }
+  }
+
   const inCartIds = new Set(items.map((it) => it.id))
   const suggestions = catalog.filter((c) => !inCartIds.has(c.id))
 
@@ -162,9 +247,11 @@ function CartContent() {
           <button
             aria-label="Очистить корзину"
             onClick={() => {
-              clearCart()
-              setItems([])
-              router.push("/home")
+              if (confirm("Очистить корзину?")) {
+                clearCart()
+                setItems([])
+                router.push("/home")
+              }
             }}
             className="w-10 h-10 rounded-[12px] bg-white border border-gray-300 flex items-center justify-center"
           >
@@ -192,11 +279,9 @@ function CartContent() {
                   <div className="w-24 h-24 shrink-0 rounded-[12px] overflow-hidden bg-[#F1F1F1] flex items-center justify-center relative">
                     {info ? (
                       info.image.endsWith(".mp4") ? (
-                        <video muted playsInline autoPlay loop className="w-full h-full object-cover">
-                          <source src={info.image} type="video/mp4" />
-                        </video>
+                        <LazyVideo src={info.image} className="w-full h-full object-cover" />
                       ) : (
-                        <Image src={info.image} alt={it.title} fill className="object-cover" />
+                        <Image src={info.image} alt={it.title} fill className="object-cover" sizes="96px" />
                       )
                     ) : (
                       <span className="text-[12px]">{it.title[0] || "?"}</span>
@@ -242,41 +327,78 @@ function CartContent() {
                 </div>
               </div>
               <div className="mt-3 flex flex-col gap-2">
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full rounded-[12px] bg-white border border-gray-300 px-3 py-2 text-[13px]"
-                  placeholder="ФИО"
-                />
-                <input
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="w-full rounded-[12px] bg-white border border-gray-300 px-3 py-2 text-[13px]"
-                  placeholder="Телефон"
-                />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full rounded-[12px] bg-white border border-gray-300 px-3 py-2 text-[13px]"
-                  placeholder="Email"
-                />
-                <input
-                  type="text"
-                  value={cdek}
-                  onChange={(e) => setCdek(e.target.value)}
-                  className="w-full rounded-[12px] bg-white border border-gray-300 px-3 py-2 text-[13px]"
-                  placeholder="Пункт выдачи СДЭК"
-                />
-                <input
-                  type="text"
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  className="w-full rounded-[12px] bg-white border border-gray-300 px-3 py-2 text-[13px]"
-                  placeholder="Адрес доставки (если не СДЭК)"
-                />
+                {/* Name */}
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => { setName(e.target.value); if (errors.name) setErrors({...errors, name: ""}) }}
+                    className={`w-full rounded-[12px] bg-white border ${errors.name ? 'border-red-500' : 'border-gray-300'} px-3 py-2 text-[13px] transition-colors`}
+                    placeholder="ФИО *"
+                  />
+                  {errors.name && (
+                    <div className="text-red-500 text-[11px] mt-1 ml-1 animate-in slide-in-from-top-1 fade-in duration-200">
+                      {errors.name}
+                    </div>
+                  )}
+                </div>
+
+                {/* Phone */}
+                <div className="relative">
+                  <input
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => { setPhone(e.target.value); if (errors.phone) setErrors({...errors, phone: ""}) }}
+                    className={`w-full rounded-[12px] bg-white border ${errors.phone ? 'border-red-500' : 'border-gray-300'} px-3 py-2 text-[13px] transition-colors`}
+                    placeholder="Телефон *"
+                  />
+                  {errors.phone && (
+                    <div className="text-red-500 text-[11px] mt-1 ml-1 animate-in slide-in-from-top-1 fade-in duration-200">
+                      {errors.phone}
+                    </div>
+                  )}
+                </div>
+
+                {/* Email */}
+                <div className="relative">
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => { setEmail(e.target.value); if (errors.email) setErrors({...errors, email: ""}) }}
+                    className={`w-full rounded-[12px] bg-white border ${errors.email ? 'border-red-500' : 'border-gray-300'} px-3 py-2 text-[13px] transition-colors`}
+                    placeholder="Email *"
+                  />
+                  {errors.email && (
+                    <div className="text-red-500 text-[11px] mt-1 ml-1 animate-in slide-in-from-top-1 fade-in duration-200">
+                      {errors.email}
+                    </div>
+                  )}
+                </div>
+
+                {/* Delivery */}
+                <div className="space-y-2">
+                  <input
+                    type="text"
+                    value={cdek}
+                    onChange={(e) => { setCdek(e.target.value); if (errors.delivery) setErrors({...errors, delivery: ""}) }}
+                    className={`w-full rounded-[12px] bg-white border ${errors.delivery && !address ? 'border-red-500' : 'border-gray-300'} px-3 py-2 text-[13px] transition-colors`}
+                    placeholder="Пункт выдачи СДЭК"
+                  />
+                  <div className="text-center text-[12px] text-gray-500">- или -</div>
+                  <input
+                    type="text"
+                    value={address}
+                    onChange={(e) => { setAddress(e.target.value); if (errors.delivery) setErrors({...errors, delivery: ""}) }}
+                    className={`w-full rounded-[12px] bg-white border ${errors.delivery && !cdek ? 'border-red-500' : 'border-gray-300'} px-3 py-2 text-[13px] transition-colors`}
+                    placeholder="Адрес доставки"
+                  />
+                  {errors.delivery && (
+                    <div className="text-red-500 text-[11px] ml-1 animate-in slide-in-from-top-1 fade-in duration-200">
+                      {errors.delivery}
+                    </div>
+                  )}
+                </div>
+
                 <input
                   type="text"
                   value={promoCode}
@@ -292,9 +414,43 @@ function CartContent() {
                   <span style={{ color: "#000000" }}>К оплате</span>
                   <span style={{ color: "#000000" }}>{totalWithDiscount.toLocaleString("ru-RU")} руб.</span>
                 </div>
+
+                {/* Error Banner */}
+                {Object.keys(errors).length > 0 && (
+                   <div className="rounded-[10px] bg-red-50 border border-red-200 p-2 text-red-600 text-[12px] text-center">
+                     Пожалуйста, заполните все обязательные поля корректно
+                   </div>
+                )}
+
                 <HoverButton
                   className="w-full rounded-[12px] border px-3 py-3 text-[13px] active:scale-105 bg-[#6800E9] text-white"
                   onClick={async () => {
+                    if (!validateForm()) {
+                      // Log invalid attempt to server
+                      fetch('/api/log', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          type: 'VALIDATION_ERROR',
+                          message: 'User attempted payment with invalid data',
+                          data: { name, phone, email, cdek, address, errors: validateForm() ? {} : 'Validation Failed' }
+                        })
+                      }).catch(console.error)
+                      
+                      return
+                    }
+
+                    // Check for zero/negative amount (unless specific free items)
+                    if (totalWithDiscount <= 0 && items.some(i => priceMap[i.id] > 0)) {
+                         // Only alert if we are trying to pay 0 for paid items
+                         // If it's a 100% discount, Robokassa might fail if amount is 0.
+                         // Usually we should warn.
+                         if (totalWithDiscount === 0) {
+                             alert("Сумма к оплате 0 руб. Робокасса не поддерживает нулевые платежи. Пожалуйста, измените состав заказа или промокод.")
+                             return
+                         }
+                    }
+
                     const refCode = typeof window !== "undefined" ? (window.localStorage.getItem("referral_code") || "") : ""
                     const invoiceItems = items.map((it) => ({
                       name: it.title,
@@ -430,6 +586,16 @@ function CartContent() {
                 >
                   К оформлению
                 </HoverButton>
+                
+                {/* Clear Data Button */}
+                {(name || phone || email || cdek || address) && (
+                    <button 
+                        onClick={handleClearData}
+                        className="text-[12px] text-gray-400 underline text-center w-full"
+                    >
+                        Очистить форму
+                    </button>
+                )}
               </div>
             </div>
 
@@ -447,11 +613,9 @@ function CartContent() {
                     <div key={s.id} className="min-w-[220px] rounded-[16px] border border-gray-200 p-3 bg-white flex flex-col">
                       <div className="relative w-full h-[120px] rounded-[12px] overflow-hidden bg-[#F1F1F1]">
                         {s.image.endsWith(".mp4") ? (
-                          <video muted playsInline autoPlay loop className="w-full h-full object-cover">
-                            <source src={s.image} type="video/mp4" />
-                          </video>
+                          <LazyVideo src={s.image} className="w-full h-full object-cover" />
                         ) : (
-                          <Image src={s.image} alt={s.title} fill className="object-cover" />
+                          <Image src={s.image} alt={s.title} fill className="object-cover" sizes="220px" />
                         )}
                       </div>
                       <div className="mt-2 text-[13px] font-semibold" style={{ color: "#000000" }}>{s.title}</div>

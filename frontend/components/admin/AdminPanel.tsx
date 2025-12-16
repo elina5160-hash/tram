@@ -4,13 +4,14 @@ import { AdminLogin } from "@/components/admin/AdminLogin"
 import { ProductList } from "@/components/admin/ProductList"
 import { ProductForm } from "@/components/admin/ProductForm"
 import { BottomBannerEditor } from "./BottomBannerEditor"
+import { ContestTable } from "./ContestTable"
 import { useProducts } from "@/hooks/useProducts"
 
 interface AdminPanelProps {
   onClose: () => void
 }
 
-type Tab = 'products' | 'bottom-banner'
+type Tab = 'products' | 'bottom-banner' | 'contest'
 
 export function AdminPanel({ onClose }: AdminPanelProps) {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -67,12 +68,20 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
                 >
                     Нижняя панель
                 </button>
+                <button
+                    onClick={() => handleTabChange('contest')}
+                    className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                        activeTab === 'contest' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                >
+                    Конкурс
+                </button>
             </div>
           </div>
           <div className="flex items-center gap-3">
             <button
               onClick={() => {
-                if (activeTab === 'bottom-banner') {
+                if (activeTab === 'bottom-banner' || activeTab === 'contest') {
                   setActiveTab('products')
                   setMode('initial')
                 } else {
@@ -174,6 +183,8 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
                 )}
             </div>
             )
+        ) : activeTab === 'contest' ? (
+            <ContestTable />
         ) : (
             <BottomBannerEditor onBack={() => { setActiveTab('products'); setMode('initial') }} />
         )}

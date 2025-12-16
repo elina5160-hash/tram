@@ -1,14 +1,26 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs';
+import fs from 'fs/promises';
 import path from 'path';
 
 const dataPath = path.join(process.cwd(), process.cwd().endsWith('frontend') ? 'data/products.json' : 'frontend/data/products.json');
 
+// Simple in-memory cache
+let productsCache: any[] | null = null;
+let lastCacheTime = 0;
+const CACHE_TTL = 60 * 1000; // 1 minute
+
 // Helper to read data
-function getProducts() {
+async function getProducts() {
+  const now = Date.now();
+  if (productsCache && (now - lastCacheTime < CACHE_TTL)) {
+    return productsCache;
+  }
+
   try {
-    const fileContent = fs.readFileSync(dataPath, 'utf8');
-    return JSON.parse(fileContent);
+    const fileContent = await fs.readFile(dataPath, 'utf8');
+    productsCache = JSON.parse(fileContent);
+    lastCacheTime = now;
+    return productsCache;
   } catch (error) {
     // Fallback if file doesn't exist or error (shouldn't happen if setup correctly)
     return [];
@@ -16,19 +28,25 @@ function getProducts() {
 }
 
 // Helper to write data
-function saveProducts(products: any[]) {
-  fs.writeFileSync(dataPath, JSON.stringify(products, null, 2), 'utf8');
+async function saveProducts(products: any[]) {
+  await fs.writeFile(dataPath, JSON.stringify(products, null, 2), 'utf8');
+  productsCache = products;
+  lastCacheTime = Date.now();
 }
 
 export async function GET() {
-  const products = getProducts();
-  return NextResponse.json(products);
+  const products = await getProducts();
+  return NextResponse.json(products, {
+    headers: {
+      'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=30',
+    },
+  });
 }
 
 export async function POST(request: Request) {
   try {
     const newProduct = await request.json();
-    const products = getProducts();
+    const products = (await getProducts()) || [];
     
     // Generate new ID if not provided
     const id = newProduct.id || (products.length > 0 ? Math.max(...products.map((p: any) => p.id)) + 1 : 1);
@@ -36,7 +54,7 @@ export async function POST(request: Request) {
     const productToAdd = { ...newProduct, id: Number(id) };
     products.push(productToAdd);
     
-    saveProducts(products);
+    await saveProducts(products);
     
     return NextResponse.json(productToAdd, { status: 201 });
   } catch (error) {

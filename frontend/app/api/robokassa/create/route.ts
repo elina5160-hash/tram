@@ -63,7 +63,11 @@ export async function POST(req: Request) {
     
     if (error) {
       console.error("Error creating order in Supabase:", error)
+      return NextResponse.json({ error: "Ошибка сохранения заказа в базе данных. Попробуйте позже." }, { status: 500 })
     }
+  } else {
+      console.error("Supabase client not initialized")
+      return NextResponse.json({ error: "Ошибка подключения к базе данных" }, { status: 500 })
   }
 
   const out = outSum.toFixed(2)

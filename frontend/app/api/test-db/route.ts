@@ -30,15 +30,35 @@ export async function GET() {
 
   const testId = Math.floor(Date.now() / 1000)
   const currentTime = new Date().toISOString().split('T')[1].split('.')[0];
+  
+  // Realistic payload similar to cart
+  const realisticItem = {
+    name: "Закваска ПРАЭнзим",
+    quantity: 1,
+    cost: 3000,
+    tax: "vat0",
+    paymentMethod: "full_prepayment",
+    paymentObject: "commodity"
+  }
+
+  const realisticCustomer = {
+    name: "Test User",
+    phone: "+79001234567",
+    email: "test@example.com",
+    address: "Test Address",
+    cdek: "",
+    client_id: 12345,
+    order_time: new Date().toISOString()
+  }
 
   try {
     const { data, error } = await client.from("orders").insert({
       id: testId,
-      total_amount: 1.00,
-      items: [{ name: "Test Diagnostic", quantity: 1, cost: 1 }],
-      customer_info: { email: "diagnostic@test.com", note: "Diagnostic Test" },
-      promo_code: "DIAGNOSTIC",
-      ref_code: "TEST",
+      total_amount: 3000.00,
+      items: [realisticItem],
+      customer_info: realisticCustomer,
+      promo_code: "TEST_PROMO",
+      ref_code: "TEST_REF",
       status: 'pending',
       updated_at: currentTime
     }).select()
@@ -47,6 +67,8 @@ export async function GET() {
       results.insertTest = `Failed: ${JSON.stringify(error)}`
     } else {
       results.insertTest = "Success"
+      // Cleanup
+      // await client.from("orders").delete().eq("id", testId)
     }
   } catch (e) {
     results.insertTest = `Exception: ${e}`
