@@ -5,6 +5,8 @@ import BackButton from "@/components/ui/back-button"
 import BottomBanner from "@/components/ui/bottom-banner"
 import { HoverButton } from "@/components/ui/hover-button"
 import { getCart } from "@/lib/cart"
+import products from "@/data/products.json"
+import { getPriceValue } from "@/lib/price"
 
 function ConfirmContent() {
   const params = useSearchParams()
@@ -13,6 +15,20 @@ function ConfirmContent() {
   const invId = params.get("invId") || ""
 
   const items = useMemo(() => getCart(), [])
+  const parsed = useMemo(() => {
+    try {
+      if (!payUrl) return { items: [], out: 0 }
+      const u = new URL(payUrl)
+      const r = u.searchParams.get("Receipt")
+      const out = Number(u.searchParams.get("OutSum") || 0)
+      if (!r) return { items: [], out }
+      const json = JSON.parse(r)
+      const arr = Array.isArray(json.items) ? json.items : []
+      return { items: arr, out }
+    } catch {
+      return { items: [], out: 0 }
+    }
+  }, [payUrl])
   const catalogPrices: Record<number, number> = {
     1: 3000,
     2: 24000,
@@ -39,9 +55,23 @@ function ConfirmContent() {
     20: 4200,
     21: 4200,
     22: 750,
+    999: 5,
   }
 
-  const total = items.reduce((sum, it) => sum + (catalogPrices[it.id] || 0) * (it.qty || 1), 0)
+  try {
+    const priceFromProducts: Record<number, number> = {}
+    ;(products as any[]).forEach((p: any) => {
+      const v = getPriceValue(p.price || "")
+      if (typeof p.id === "number" && v > 0) priceFromProducts[p.id] = v
+    })
+    Object.keys(priceFromProducts).forEach((k) => {
+      const id = Number(k)
+      if (!catalogPrices[id]) catalogPrices[id] = priceFromProducts[id]
+    })
+  } catch {}
+
+  const total = items.reduce((sum, it) => sum + (catalogPrices[Number(it.id)] || 0) * (it.qty || 1), 0)
+  const totalParsed = parsed.items.reduce((s: number, it: any) => s + Number(it.sum || 0), 0) || parsed.out
 
   return (
     <div className="min-h-screen w-full bg-white flex flex-col justify-start relative pb-56">
@@ -50,19 +80,32 @@ function ConfirmContent() {
         <h1 className="text-xl font-semibold">Подтверждение заказа</h1>
         <div className="mt-2 text-[13px] text-[#232323]">№ {invId || "—"}</div>
 
-        {items.length === 0 ? (
+        {items.length === 0 && parsed.items.length === 0 ? (
           <div className="mt-6 text-[14px]">Ваша корзина пуста.</div>
-        ) : (
+        ) : items.length > 0 ? (
           <div className="mt-4 space-y-3">
             {items.map((it) => (
               <div key={it.id} className="rounded-[12px] border border-gray-200 p-3 flex items-center justify-between">
                 <div className="text-[13px] font-medium truncate" style={{ color: "#000000" }}>{it.title}</div>
-                <div className="text-[12px]" style={{ color: "#000000" }}>{(catalogPrices[it.id] || 0).toLocaleString("ru-RU")} × {it.qty}</div>
+                <div className="text-[12px]" style={{ color: "#000000" }}>{(catalogPrices[Number(it.id)] || 0).toLocaleString("ru-RU")} × {it.qty}</div>
               </div>
             ))}
             <div className="rounded-[12px] border border-gray-200 p-3 flex items-center justify-between">
               <span className="text-[13px] font-semibold" style={{ color: "#000000" }}>Итого</span>
               <span className="text-[13px] font-semibold" style={{ color: "#000000" }}>{total.toLocaleString("ru-RU")} руб.</span>
+            </div>
+          </div>
+        ) : (
+          <div className="mt-4 space-y-3">
+            {parsed.items.map((it: any, idx: number) => (
+              <div key={idx} className="rounded-[12px] border border-gray-200 p-3 flex items-center justify-between">
+                <div className="text-[13px] font-medium truncate" style={{ color: "#000000" }}>{String(it.name || "Товар")}</div>
+                <div className="text-[12px]" style={{ color: "#000000" }}>{Number(it.sum || 0).toLocaleString("ru-RU")} × {it.quantity || 1}</div>
+              </div>
+            ))}
+            <div className="rounded-[12px] border border-gray-200 p-3 flex items-center justify-between">
+              <span className="text-[13px] font-semibold" style={{ color: "#000000" }}>Итого</span>
+              <span className="text-[13px] font-semibold" style={{ color: "#000000" }}>{Number(totalParsed || 0).toLocaleString("ru-RU")} руб.</span>
             </div>
           </div>
         )}

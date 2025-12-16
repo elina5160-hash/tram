@@ -45,6 +45,7 @@ async function processOrder(invId: string, outSum: string) {
             }
     
             // 3. Переносим в orders
+            const totalQty = Array.isArray(pendingOrder.items) ? pendingOrder.items.reduce((n: number, it: any) => n + (it.quantity || it.qty || 1), 0) : null
             const { error: insertError } = await client.from("orders").insert({
                 id: pendingOrder.id,
                 total_amount: pendingOrder.total_amount,
@@ -54,6 +55,9 @@ async function processOrder(invId: string, outSum: string) {
                 ref_code: pendingOrder.ref_code,
                 status: "Оплачен",
                 ok: "true",
+                currency: pendingOrder.currency || 'RUB',
+                total_qty: totalQty ?? undefined,
+                paid_at: new Date().toISOString(),
                 updated_at: pendingOrder.updated_at || new Date().toISOString().split('T')[1].split('.')[0]
             })
     

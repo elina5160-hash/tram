@@ -461,154 +461,105 @@ function CartContent() {
                       const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' })
                       navigator.sendBeacon('/api/log', blob)
                     } catch {}
-                    let res: Response
-                    try {
-                      res = await fetch("/api/robokassa/invoice/create", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ 
-                          outSum: totalWithDiscount, 
-                          description: "Оплата заказа", 
-                          email,
-                          customerInfo: { 
-                            name, 
-                            phone, 
-                            cdek, 
-                            address, 
-                            email,
-                            client_id: clientId,
-                            username: username,
-                            order_time: new Date().toISOString()
-                          },
-                          promoCode, 
-                          refCode,
-                          invoiceItems,
-                          invId: Math.floor(Date.now() / 1000)
-                        }),
-                      })
-                    } catch (e) {
-                      alert("Ошибка соединения. Проверьте интернет и попробуйте ещё раз.")
-                      return
-                    }
-                    let data: unknown = null
-                    try {
-                      data = await res.json()
-                    } catch {}
-                    if (res.ok && typeof data === 'object' && data && 'url' in data) {
-                      const d = data as { url: string; invId?: number | string }
-                      const pay = (d.url || "").trim()
-                      if (pay) {
-                        try {
-                          const payload = { type: 'CHECKOUT_REDIRECT', message: 'redirect to pay', data: { url: pay } }
-                          const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' })
-                          navigator.sendBeacon('/api/log', blob)
-                        } catch {}
-                        const url = `/pay/confirm?url=${encodeURIComponent(pay)}&invId=${encodeURIComponent(String(d.invId || ''))}`
-                        router.push(url)
-                        return
-                      }
-                    }
-                    if (res.ok && typeof data === 'object' && data && 'raw' in data) {
-                      const d = data as { raw?: string; invId?: number | string }
-                      const m = (d.raw || '').match(/https?:\/\/\S+/)
-                      if (m) {
-                        try {
-                          const payload = { type: 'CHECKOUT_REDIRECT', message: 'redirect to pay raw', data: { url: m[0] } }
-                          const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' })
-                          navigator.sendBeacon('/api/log', blob)
-                        } catch {}
-                        const url = `/pay/confirm?url=${encodeURIComponent(m[0])}&invId=${encodeURIComponent(String(d.invId || ''))}`
-                        router.push(url)
-                        return
-                      }
-                    }
-                    if (!res.ok) {
-                      type ErrorData = { error?: string; message?: string }
-                      const msg = typeof data === 'object' && data && ('error' in data || 'message' in data)
-                        ? ((data as ErrorData).error || (data as ErrorData).message || "Ошибка создания счёта Robokassa")
-                        : "Ошибка создания счёта Robokassa"
-                      alert(msg)
-                      // Попробуем классический API
-                      try {
-                        // Используем invoiceItems, так как там есть цены (cost) и правильные имена
-                        const itemsForCreate = invoiceItems.map(it => ({
-                          name: it.name,
-                          quantity: it.quantity,
-                          cost: it.cost,
-                          tax: it.tax,
-                          paymentMethod: it.paymentMethod,
-                          paymentObject: it.paymentObject
-                        }))
 
-                        const res2 = await fetch("/api/robokassa/create", {
-                          method: "POST",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({
-                            outSum: totalWithDiscount,
-                            description: "Оплата заказа",
-                            email,
-                            customerInfo: { 
-                              name, 
-                              phone, 
-                              cdek, 
-                              address, 
-                              email,
-                              client_id: clientId,
-                              order_time: new Date().toISOString()
-                            },
-                            promoCode,
-                            refCode,
-                            items: itemsForCreate, // Передаем правильные товары с ценами
-                          }),
-                        })
-                        let data2: any = null
-                        try { data2 = await res2.json() } catch {}
-                        if (res2.ok && data2?.url) {
-                          const url = `/pay/confirm?url=${encodeURIComponent(data2.url)}&invId=${encodeURIComponent(String(data2.invId || ''))}`
-                          router.push(url)
-                          return
-                        }
-                      } catch {}
-                      return
-                    }
-                    // Если InvoiceService не вернул ссылку, попробуем классический API
-                    try {
-                      const itemsForCreate = invoiceItems.map(it => ({
-                          name: it.name,
-                          quantity: it.quantity,
-                          cost: it.cost,
-                          tax: it.tax,
-                          paymentMethod: it.paymentMethod,
-                          paymentObject: it.paymentObject
-                        }))
+                    const invId = Math.floor(Date.now() / 1000)
+                    const itemsForCreate = invoiceItems.map(it => ({
+                      name: it.name,
+                      quantity: it.quantity,
+                      cost: it.cost,
+                      tax: it.tax,
+                      paymentMethod: it.paymentMethod,
+                      paymentObject: it.paymentObject
+                    }))
 
-                      const res2 = await fetch("/api/robokassa/create", {
+                    // Быстрый путь: классический интерфейс (локальная генерация URL) → мгновенный редирект
+                    try {
+                      const resClassic = await fetch("/api/robokassa/create", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({
                           outSum: totalWithDiscount,
                           description: "Оплата заказа",
                           email,
-                          customerInfo: { 
-                            name, 
-                            phone, 
-                            cdek, 
-                            address, 
+                          customerInfo: {
+                            name,
+                            phone,
+                            cdek,
+                            address,
                             email,
                             client_id: clientId,
+                            username,
                             order_time: new Date().toISOString()
                           },
                           promoCode,
                           refCode,
                           items: itemsForCreate,
+                          invId
                         }),
                       })
-                      let data2: any = null
-                      try { data2 = await res2.json() } catch {}
-                      if (res2.ok && data2?.url) {
-                        const url = `/pay/confirm?url=${encodeURIComponent(data2.url)}&invId=${encodeURIComponent(String(data2.invId || ''))}`
+                      let dataClassic: unknown = null
+                      try { dataClassic = await resClassic.json() } catch {}
+                      if (resClassic.ok && typeof dataClassic === 'object' && dataClassic && 'url' in dataClassic) {
+                        const dc = dataClassic as { url: string; invId?: number | string }
+                        try {
+                          const payload = { type: 'CHECKOUT_REDIRECT', message: 'redirect to pay (classic)', data: { url: dc.url } }
+                          const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' })
+                          navigator.sendBeacon('/api/log', blob)
+                        } catch {}
+                        const url = `/pay/confirm?url=${encodeURIComponent(dc.url)}&invId=${encodeURIComponent(String(dc.invId || invId))}`
                         router.push(url)
                         return
+                      }
+                    } catch {
+                      // игнорируем, упадёт — попробуем InvoiceService ниже
+                    }
+
+                    // Резервный путь: InvoiceService (внешний вызов) → редирект
+                    try {
+                      const resInvoice = await fetch("/api/robokassa/invoice/create", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          outSum: totalWithDiscount,
+                          description: "Оплата заказа",
+                          email,
+                          customerInfo: {
+                            name,
+                            phone,
+                            cdek,
+                            address,
+                            email,
+                            client_id: clientId,
+                            username,
+                            order_time: new Date().toISOString()
+                          },
+                          promoCode,
+                          refCode,
+                          invoiceItems,
+                          invId
+                        }),
+                      })
+                      let dataInvoice: unknown = null
+                      try { dataInvoice = await resInvoice.json() } catch {}
+                      if (resInvoice.ok && typeof dataInvoice === 'object' && dataInvoice && 'url' in dataInvoice) {
+                        const di = dataInvoice as { url: string; invId?: number | string }
+                        try {
+                          const payload = { type: 'CHECKOUT_REDIRECT', message: 'redirect to pay (invoice)', data: { url: di.url } }
+                          const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' })
+                          navigator.sendBeacon('/api/log', blob)
+                        } catch {}
+                        const url = `/pay/confirm?url=${encodeURIComponent(di.url)}&invId=${encodeURIComponent(String(di.invId || invId))}`
+                        router.push(url)
+                        return
+                      }
+                      if (resInvoice.ok && typeof dataInvoice === 'object' && dataInvoice && 'raw' in dataInvoice && typeof (dataInvoice as { raw?: string }).raw === 'string') {
+                        const di2 = dataInvoice as { raw?: string; invId?: number | string }
+                        const m = (di2.raw as string).match(/https?:\/\/\S+/)
+                        if (m) {
+                          const url = `/pay/confirm?url=${encodeURIComponent(m[0])}&invId=${encodeURIComponent(String(di2.invId || invId))}`
+                          router.push(url)
+                          return
+                        }
                       }
                     } catch {}
                     alert("Не удалось получить ссылку на оплату. Попробуйте позже.")

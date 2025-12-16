@@ -10,7 +10,8 @@ function normalize(items: unknown[]): CartItem[] {
   return items.map((it) => {
     if (typeof it === "object" && it !== null) {
       const o = it as Record<string, unknown>
-      const id = typeof o.id === "number" ? o.id : Date.now()
+      const rawId = o.id as unknown
+      const id = typeof rawId === "number" ? rawId : (typeof rawId === "string" && /^\d+$/.test(rawId) ? Number(rawId) : Date.now())
       const title = typeof o.title === "string" ? o.title : ""
       const qty = typeof o.qty === "number" ? o.qty : 1
       return { id, title, qty }

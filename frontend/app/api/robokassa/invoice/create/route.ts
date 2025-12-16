@@ -68,32 +68,18 @@ export async function POST(req: Request) {
         promo_code: body.promoCode,
         ref_code: body.refCode,
         status: 'pending',
+        currency: 'RUB',
         updated_at: currentTime
       })
 
       if (error) throw error
     } catch (e) {
-      console.error("Error saving to pending_orders, falling back to orders:", e)
-      const { error: fallbackError } = await client.from("orders").insert({
-        id: invId,
-        total_amount: outSum,
-        items: body.invoiceItems || [],
-        customer_info: body.customerInfo || { email: body.email },
-        promo_code: body.promoCode,
-        ref_code: body.refCode,
-        status: 'pending',
-        updated_at: currentTime
-      })
-
-      if (fallbackError) {
-        console.error("Error creating order in fallback (orders):", fallbackError)
-        
-        // Do not block payment if DB write failed; continue to invoice creation
-      }
+      console.error("Error saving to pending_orders:", e)
+      // Не пишем в orders на этапе создания — только после подтверждения оплаты
     }
   } else {
       console.error("Supabase client not initialized")
-      // Continue without DB; do not block payment
+      // Продолжаем без записи в БД, чтобы не блокировать оплату
   }
 
   const headerJson = { typ: "JWT", alg: "MD5" }
