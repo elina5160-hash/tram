@@ -71,7 +71,21 @@ export default function Shop() {
                           className="w-full h-full object-cover" 
                         />
                       ) : (
-                        <Image src={it.image} alt={it.title} fill className="object-cover" priority={it.id <= 2} sizes="(max-width: 768px) 50vw, 33vw" />
+                        <Image
+                          src={it.image}
+                          alt={it.title}
+                          fill
+                          className="object-cover"
+                          loading="lazy"
+                          sizes="(max-width: 420px) 50vw, 33vw"
+                          onLoad={() => {
+                            try {
+                              const payload = { type: "IMAGE_LOAD", message: "shop promo image loaded", data: { id: it.id, ts: Date.now() } }
+                              const blob = new Blob([JSON.stringify(payload)], { type: "application/json" })
+                              navigator.sendBeacon("/api/log", blob)
+                            } catch {}
+                          }}
+                        />
                       )}
                     </div>
                   </Link>
@@ -144,7 +158,21 @@ export default function Shop() {
                           className="w-full h-full object-cover" 
                         />
                       ) : (
-                        <Image src={it.image} alt={it.title} fill className="object-cover" priority={it.id <= 2} />
+                        <Image
+                          src={it.image}
+                          alt={it.title}
+                          fill
+                          className="object-cover"
+                          loading="lazy"
+                          sizes="(max-width: 420px) 50vw, 33vw"
+                          onLoad={() => {
+                            try {
+                              const payload = { type: "IMAGE_LOAD", message: "shop best image loaded", data: { id: it.id, ts: Date.now() } }
+                              const blob = new Blob([JSON.stringify(payload)], { type: "application/json" })
+                              navigator.sendBeacon("/api/log", blob)
+                            } catch {}
+                          }}
+                        />
                       )}
                     </div>
                   </Link>
@@ -215,7 +243,21 @@ export default function Shop() {
                           className="w-full h-full object-cover" 
                         />
                       ) : (
-                        <Image src={it.image} alt={it.title} fill className="object-cover" priority={it.id <= 2} />
+                        <Image
+                          src={it.image}
+                          alt={it.title}
+                          fill
+                          className="object-cover"
+                          loading="lazy"
+                          sizes="(max-width: 420px) 50vw, 33vw"
+                          onLoad={() => {
+                            try {
+                              const payload = { type: "IMAGE_LOAD", message: "shop novelty image loaded", data: { id: it.id, ts: Date.now() } }
+                              const blob = new Blob([JSON.stringify(payload)], { type: "application/json" })
+                              navigator.sendBeacon("/api/log", blob)
+                            } catch {}
+                          }}
+                        />
                       )}
                     </div>
                   </Link>

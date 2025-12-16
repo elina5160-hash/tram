@@ -7,7 +7,7 @@ const dataPath = path.join(process.cwd(), process.cwd().endsWith('frontend') ? '
 // Simple in-memory cache
 let productsCache: any[] | null = null;
 let lastCacheTime = 0;
-const CACHE_TTL = 60 * 1000; // 1 minute
+const CACHE_TTL = 5 * 60 * 1000;
 
 // Helper to read data
 async function getProducts() {
@@ -38,7 +38,7 @@ export async function GET() {
   const products = await getProducts();
   return NextResponse.json(products, {
     headers: {
-      'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=30',
+      'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=120',
     },
   });
 }

@@ -82,9 +82,23 @@ export default function Catalog() {
                         src={it.image} 
                         className="w-full h-full object-cover" 
                       />
-                    ) : (
-                      <Image src={it.image} alt={it.title} fill className="object-cover" sizes="(max-width: 768px) 50vw, 33vw" />
-                    )}
+                      ) : (
+                        <Image
+                          src={it.image}
+                          alt={it.title}
+                          fill
+                          className="object-cover"
+                          loading="lazy"
+                          sizes="(max-width: 420px) 50vw, 33vw"
+                          onLoad={() => {
+                            try {
+                              const payload = { type: "IMAGE_LOAD", message: "catalog image loaded", data: { id: it.id, ts: Date.now() } }
+                              const blob = new Blob([JSON.stringify(payload)], { type: "application/json" })
+                              navigator.sendBeacon("/api/log", blob)
+                            } catch {}
+                          }}
+                        />
+                      )}
                   </div>
                 </Link>
               </div>

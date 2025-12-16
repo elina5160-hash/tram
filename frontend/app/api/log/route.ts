@@ -1,15 +1,16 @@
-import { NextResponse } from 'next/server';
+import { NextResponse } from "next/server"
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    const { type, message, data } = body;
-    
-    // Log to server console (visible in Vercel logs)
-    console.log(`[CLIENT_LOG] [${type || 'INFO'}] ${message}`, data ? JSON.stringify(data) : '');
-    
-    return NextResponse.json({ success: true });
-  } catch (e) {
-    return NextResponse.json({ error: 'Failed to log' }, { status: 500 });
+    type Payload = { type?: string; message?: string; data?: unknown }
+    let payload: Payload | null = null
+    try { payload = await req.json() } catch {}
+    const type = (payload && payload.type) || "UNKNOWN"
+    const message = (payload && payload.message) || ""
+    const data = (payload && payload.data) || null
+    console.log("metric", { type, message, data, ts: Date.now() })
+    return NextResponse.json({ ok: true })
+  } catch {
+    return NextResponse.json({ ok: false }, { status: 500 })
   }
 }

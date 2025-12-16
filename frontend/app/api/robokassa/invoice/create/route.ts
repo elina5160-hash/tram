@@ -8,12 +8,16 @@ function toBase64Url(input: string) {
 }
 
 export async function POST(req: Request) {
-  const merchant = process.env.ROBO_MERCHANT_LOGIN || process.env.NEXT_PUBLIC_ROBO_MERCHANT_LOGIN || ""
-  const password1 = process.env.ROBO_PASSWORD1 || ""
+  const merchant = (process.env.ROBO_MERCHANT_LOGIN || process.env.NEXT_PUBLIC_ROBO_MERCHANT_LOGIN || "").trim()
+  const password1Raw = (process.env.ROBO_PASSWORD1 || "").trim()
+  const isTest = process.env.ROBO_IS_TEST === "1"
+  const password1Test = (process.env.ROBO_PASSWORD1_TEST || "").trim()
+  const password1 = isTest ? password1Test : password1Raw
   if (!merchant || !password1) {
     console.error("Missing Robokassa credentials:", { 
       ROBO_MERCHANT_LOGIN: merchant ? "Set" : "Missing", 
-      ROBO_PASSWORD1: password1 ? "Set" : "Missing" 
+      ROBO_PASSWORD1: password1 ? "Set" : "Missing",
+      ROBO_IS_TEST: isTest
     })
     return NextResponse.json({ error: "Missing Robokassa credentials" }, { status: 500 })
   }
@@ -83,12 +87,13 @@ export async function POST(req: Request) {
 
       if (fallbackError) {
         console.error("Error creating order in fallback (orders):", fallbackError)
-        return NextResponse.json({ error: "Ошибка сохранения заказа. Попробуйте позже." }, { status: 500 })
+        
+        // Do not block payment if DB write failed; continue to invoice creation
       }
     }
   } else {
       console.error("Supabase client not initialized")
-      return NextResponse.json({ error: "Ошибка подключения к базе данных" }, { status: 500 })
+      // Continue without DB; do not block payment
   }
 
   const headerJson = { typ: "JWT", alg: "MD5" }
@@ -160,7 +165,7 @@ export async function POST(req: Request) {
 
   const payload = toBase64Url(JSON.stringify(payloadJson))
   const compact = `${header}.${payload}`
-  const key = crypto.createHash("md5").update(`${merchant}:${password1}`).digest("hex")
+  const key = `${merchant}:${password1}`
   const signature = crypto.createHmac("md5", key).update(compact, "utf8").digest("base64")
     .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "")
   const token = `${compact}.${signature}`

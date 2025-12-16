@@ -129,7 +129,21 @@ export default function HomePage() {
                           className="w-full h-full object-cover" 
                         />
                       ) : (
-                        <Image src={it.image} alt={it.title} fill className="object-cover" priority={it.id <= 2} sizes="(max-width: 768px) 50vw, 33vw" />
+                        <Image
+                          src={it.image}
+                          alt={it.title}
+                          fill
+                          className="object-cover"
+                          priority={idx < 2}
+                          sizes="(max-width: 420px) 50vw, 33vw"
+                          onLoad={() => {
+                            try {
+                              const payload = { type: "IMAGE_LOAD", message: "home promo image loaded", data: { id: it.id, ts: Date.now() } }
+                              const blob = new Blob([JSON.stringify(payload)], { type: "application/json" })
+                              navigator.sendBeacon("/api/log", blob)
+                            } catch {}
+                          }}
+                        />
                       )}
                     </div>
                   </Link>
@@ -206,7 +220,21 @@ export default function HomePage() {
                           className="w-full h-full object-cover" 
                         />
                       ) : (
-                        <Image src={it.image} alt={it.title} fill className="object-cover" priority={it.id <= 2} />
+                        <Image
+                          src={it.image}
+                          alt={it.title}
+                          fill
+                          className="object-cover"
+                          loading="lazy"
+                          sizes="180px"
+                          onLoad={() => {
+                            try {
+                              const payload = { type: "IMAGE_LOAD", message: "home best image loaded", data: { id: it.id, ts: Date.now() } }
+                              const blob = new Blob([JSON.stringify(payload)], { type: "application/json" })
+                              navigator.sendBeacon("/api/log", blob)
+                            } catch {}
+                          }}
+                        />
                       )}
                     </div>
                   </Link>

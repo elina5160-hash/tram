@@ -427,15 +427,11 @@ function CartContent() {
                   onClick={async () => {
                     if (!validateForm()) {
                       // Log invalid attempt to server
-                      fetch('/api/log', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                          type: 'VALIDATION_ERROR',
-                          message: 'User attempted payment with invalid data',
-                          data: { name, phone, email, cdek, address, errors: validateForm() ? {} : 'Validation Failed' }
-                        })
-                      }).catch(console.error)
+                      try {
+                        const payload = { type: 'VALIDATION_ERROR', message: 'User attempted payment with invalid data', data: { name, phone, email, cdek, address } }
+                        const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' })
+                        navigator.sendBeacon('/api/log', blob)
+                      } catch {}
                       
                       return
                     }
@@ -460,6 +456,11 @@ function CartContent() {
                       paymentMethod: "full_prepayment",
                       paymentObject: "commodity",
                     }))
+                    try {
+                      const payload = { type: 'CHECKOUT_START', message: 'checkout started', data: { total: totalWithDiscount, items: invoiceItems.length } }
+                      const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' })
+                      navigator.sendBeacon('/api/log', blob)
+                    } catch {}
                     let res: Response
                     try {
                       res = await fetch("/api/robokassa/invoice/create", {
@@ -497,6 +498,11 @@ function CartContent() {
                       const d = data as { url: string; invId?: number | string }
                       const pay = (d.url || "").trim()
                       if (pay) {
+                        try {
+                          const payload = { type: 'CHECKOUT_REDIRECT', message: 'redirect to pay', data: { url: pay } }
+                          const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' })
+                          navigator.sendBeacon('/api/log', blob)
+                        } catch {}
                         const url = `/pay/confirm?url=${encodeURIComponent(pay)}&invId=${encodeURIComponent(String(d.invId || ''))}`
                         router.push(url)
                         return
@@ -506,6 +512,11 @@ function CartContent() {
                       const d = data as { raw?: string; invId?: number | string }
                       const m = (d.raw || '').match(/https?:\/\/\S+/)
                       if (m) {
+                        try {
+                          const payload = { type: 'CHECKOUT_REDIRECT', message: 'redirect to pay raw', data: { url: m[0] } }
+                          const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' })
+                          navigator.sendBeacon('/api/log', blob)
+                        } catch {}
                         const url = `/pay/confirm?url=${encodeURIComponent(m[0])}&invId=${encodeURIComponent(String(d.invId || ''))}`
                         router.push(url)
                         return
