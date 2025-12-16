@@ -50,7 +50,9 @@ export async function POST(req: Request) {
     // Получаем текущее время в формате HH:mm:ss для поля updated_at (тип time)
     const currentTime = new Date().toISOString().split('T')[1].split('.')[0];
 
-    const { error } = await client.from("orders").insert({
+    // Сохраняем заказ в таблицу pending_orders (черновики)
+    // Только оплаченные заказы попадут в основную таблицу orders
+    const { error } = await client.from("pending_orders").insert({
       id: invId,
       total_amount: outSum,
       items: body.items || [],
@@ -62,8 +64,8 @@ export async function POST(req: Request) {
     })
     
     if (error) {
-      console.error("Error creating order in Supabase:", error)
-      return NextResponse.json({ error: "Ошибка сохранения заказа в базе данных. Попробуйте позже." }, { status: 500 })
+      console.error("Error creating order in pending_orders:", error)
+      return NextResponse.json({ error: "Ошибка сохранения заказа. Пожалуйста, обратитесь в поддержку." }, { status: 500 })
     }
   } else {
       console.error("Supabase client not initialized")

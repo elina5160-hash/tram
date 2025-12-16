@@ -19,16 +19,49 @@ async function processOrder(invId: string, outSum: string) {
     if (!client) return
 
     try {
-        const { data: order } = await client.from("orders").select('*').eq("id", Number(invId)).single()
+        // 1. Проверяем, есть ли уже заказ в таблице orders (чтобы не дублировать)
+        const { data: existingOrder } = await client.from("orders").select('id, status').eq("id", Number(invId)).single()
         
-        if (order && order.status !== 'paid' && order.status !== 'Оплачен') {
-             // Mark as paid
-             await client.from("orders").update({ 
-                 status: "Оплачен",
-                 ok: "true" 
-             }).eq("id", Number(invId))
-             
-             // --- TELEGRAM NOTIFICATION ---
+        if (existingOrder) {
+            console.log(`Order ${invId} already exists in orders table with status ${existingOrder.status}`)
+            // Если он там есть, значит уже оплачен (или мы его туда перенесли).
+            // Но на всякий случай обновим статус, если он вдруг не оплачен (хотя по логике он там только оплаченный)
+            if (existingOrder.status !== 'paid' && existingOrder.status !== 'Оплачен') {
+                await client.from("orders").update({ status: "Оплачен", ok: "true" }).eq("id", Number(invId))
+            }
+            return
+        }
+
+        // 2. Если нет в orders, ищем в pending_orders
+        const { data: pendingOrder } = await client.from("pending_orders").select('*').eq("id", Number(invId)).single()
+        
+        if (!pendingOrder) {
+            console.error(`Order ${invId} not found in pending_orders`)
+            return
+        }
+
+        // 3. Переносим в orders
+        const { error: insertError } = await client.from("orders").insert({
+            id: pendingOrder.id,
+            total_amount: pendingOrder.total_amount,
+            items: pendingOrder.items,
+            customer_info: pendingOrder.customer_info,
+            promo_code: pendingOrder.promo_code,
+            ref_code: pendingOrder.ref_code,
+            status: "Оплачен",
+            ok: "true",
+            updated_at: pendingOrder.updated_at || new Date().toISOString().split('T')[1].split('.')[0]
+        })
+
+        if (insertError) {
+             console.error(`Failed to move order ${invId} to orders table:`, insertError)
+             return
+        }
+        
+        // Используем данные из pendingOrder для дальнейшей логики
+        const order = { ...pendingOrder, status: "Оплачен" }
+
+        // --- TELEGRAM NOTIFICATION ---
              const customer = order.customer_info || {}
              const itemsList = (order.items || []).map((i: any) => `- ${i.name} x${i.quantity || i.qty || 1}`).join('\n')
              
@@ -75,7 +108,6 @@ ${itemsList}
                       await addTickets(referral.referrer_id, 1, 'referral_purchase_bonus', invId)
                  }
              }
-        }
     } catch (e) {
         console.error("Error processing order", e)
     }
