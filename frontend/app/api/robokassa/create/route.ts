@@ -99,6 +99,50 @@ export async function POST(req: Request) {
   params.set("Description", description)
   params.set("SignatureValue", signature)
   
+  // Добавляем фискализацию (Receipt), если есть товары
+  if (body.items && body.items.length > 0) {
+    try {
+      let receiptItems = body.items.map((it: any) => ({
+        name: it.name || "Товар",
+        quantity: it.quantity || 1,
+        sum: (it.cost || 0) * (it.quantity || 1),
+        tax: it.tax || "none",
+        payment_method: it.paymentMethod || "full_prepayment",
+        payment_object: it.paymentObject || "commodity"
+      }))
+
+      // Проверяем сходимость сумм (важно для Robokassa)
+      const totalItemsSum = receiptItems.reduce((acc: number, it: any) => acc + it.sum, 0)
+      
+      // Если сумма товаров отличается от суммы к оплате (например, скидка), корректируем цены
+      if (Math.abs(totalItemsSum - outSum) > 0.01) {
+        const coefficient = outSum / totalItemsSum
+        let currentSum = 0
+        
+        receiptItems = receiptItems.map((it: any, index: number) => {
+           if (index === receiptItems.length - 1) {
+             // Последнему элементу отдаем остаток, чтобы сумма сошлась копейка в копейку
+             const newItemSum = Number((outSum - currentSum).toFixed(2))
+             return { ...it, sum: newItemSum }
+           } else {
+             const newItemSum = Number((it.sum * coefficient).toFixed(2))
+             currentSum += newItemSum
+             return { ...it, sum: newItemSum }
+           }
+        })
+      }
+
+      const receipt = {
+        items: receiptItems
+      }
+      
+      // Receipt нужно передавать как URL-encoded JSON
+      params.set("Receipt", JSON.stringify(receipt))
+    } catch (e) {
+      console.error("Error creating receipt:", e)
+    }
+  }
+  
   if (email) params.set("Email", email)
   sortedKeys.forEach((k) => params.set(k, shp[k]))
   if (isTest) params.set("IsTest", "1")

@@ -108,7 +108,7 @@ export async function POST(req: Request) {
   }
 
   if (body.invoiceItems && Array.isArray(body.invoiceItems) && body.invoiceItems.length > 0) {
-    payloadJson.InvoiceItems = body.invoiceItems.map((it) => ({
+    let items = body.invoiceItems.map((it) => ({
       Name: it.name,
       Quantity: it.quantity,
       Cost: it.cost,
@@ -116,6 +116,29 @@ export async function POST(req: Request) {
       PaymentMethod: it.paymentMethod || "full_prepayment",
       PaymentObject: it.paymentObject || "commodity",
     }))
+
+    // Normalization logic for InvoiceItems
+    const totalItemsSum = items.reduce((acc, it) => acc + (it.Cost * it.Quantity), 0)
+    
+    if (Math.abs(totalItemsSum - outSum) > 0.01) {
+         const coefficient = outSum / totalItemsSum
+         let currentSum = 0
+         
+         items = items.map((it, index) => {
+            if (index === items.length - 1) {
+              const newItemSum = Number((outSum - currentSum).toFixed(2))
+              // Force Quantity 1 to ensure exact match if division is not clean
+              return { ...it, Quantity: 1, Cost: newItemSum }
+            } else {
+              const newItemSum = Number((it.Cost * it.Quantity * coefficient).toFixed(2))
+              currentSum += newItemSum
+              // Force Quantity 1 to ensure exact match
+              return { ...it, Quantity: 1, Cost: newItemSum }
+            }
+         })
+    }
+    
+    payloadJson.InvoiceItems = items
   }
 
   const payload = toBase64Url(JSON.stringify(payloadJson))
