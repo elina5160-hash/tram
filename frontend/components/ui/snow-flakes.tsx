@@ -100,22 +100,21 @@ export function SnowfallBackground({
     const styleSheet = document.createElement("style")
     styleSheet.type = "text/css"
 
+    // Create 5 variations of snowfall animation to reuse
     let cssRules = ""
-
-    snowflakes.forEach((flake) => {
-      const windOffset = wind ? Math.random() * 100 - 50 : 0
-
-      cssRules += `
-        @keyframes snowfall-${flake.id} {
+    for (let i = 0; i < 5; i++) {
+        const windOffset = wind ? Math.random() * 50 - 25 : 0
+        cssRules += `
+        @keyframes snowfall-anim-${i} {
           0% {
-            transform: translateY(-100vh) translateX(0px) rotate(0deg);
+            transform: translateY(-20vh) translateX(0px) rotate(0deg);
           }
           100% {
-            transform: translateY(100vh) translateX(${windOffset}px) rotate(360deg);
+            transform: translateY(120vh) translateX(${windOffset}px) rotate(360deg);
           }
         }
       `
-    })
+    }
 
     styleSheet.innerHTML = cssRules
     document.head.appendChild(styleSheet)
@@ -123,7 +122,40 @@ export function SnowfallBackground({
     return () => {
       document.head.removeChild(styleSheet)
     }
-  }, [snowflakes, wind])
+  }, [wind])
+
+  const Snowflake = ({
+    id,
+    size,
+    left,
+    animationDuration,
+    opacity,
+    color,
+  }: SnowflakeProps) => {
+    // Assign one of the 5 animations based on ID
+    const animIndex = id % 5
+    // Add random delay to prevent them falling in sync
+    const delay = -(Math.random() * animationDuration)
+    
+    return (
+      <div
+        className="pointer-events-none absolute select-none"
+        style={{
+          left: `${left}%`,
+          fontSize: `${size}px`,
+          opacity,
+          color,
+          top: -30, // Start above screen
+          animation: `snowfall-anim-${animIndex} ${animationDuration}s linear infinite`,
+          animationDelay: `${delay}s`,
+          textShadow: "0 0 1px rgba(255,255,255,0.8)",
+          willChange: "transform" // Hint to browser
+        }}
+      >
+        ❄
+      </div>
+    )
+  }
 
   return (
     <div className="pointer-events-none overflow-hidden fixed inset-0" style={{ zIndex }}>

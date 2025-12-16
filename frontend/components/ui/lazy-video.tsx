@@ -7,25 +7,26 @@ interface LazyVideoProps extends React.VideoHTMLAttributes<HTMLVideoElement> {
 
 export default function LazyVideo({ src, className, ...props }: LazyVideoProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
-  const [isVisible, setIsVisible] = useState(false)
+  const [hasLoaded, setHasLoaded] = useState(false)
 
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            setIsVisible(true)
-            videoRef.current?.play().catch(() => {
-                // Auto-play might be blocked by browser policies
-                // Muted attribute handles most cases, but good to be safe
-            })
+            setHasLoaded(true)
+            // Small timeout to ensure src is set before playing
+            setTimeout(() => {
+                videoRef.current?.play().catch(() => {
+                    // Auto-play might be blocked
+                })
+            }, 50)
           } else {
-            setIsVisible(false)
             videoRef.current?.pause()
           }
         })
       },
-      { threshold: 0.4 } // Play when 40% visible
+      { threshold: 0.1, rootMargin: "100px" } // Load slightly before it comes into view
     )
 
     if (videoRef.current) {
@@ -40,12 +41,12 @@ export default function LazyVideo({ src, className, ...props }: LazyVideoProps) 
   return (
     <video
       ref={videoRef}
-      src={src}
+      src={hasLoaded ? src : undefined}
       className={className}
       muted
       playsInline
       loop
-      preload="metadata" // Only load metadata initially
+      preload="metadata"
       {...props}
     />
   )

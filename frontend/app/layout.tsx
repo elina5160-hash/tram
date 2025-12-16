@@ -39,7 +39,7 @@ export default function RootLayout({
         <Garland />
         {children}
         <div className="fixed inset-0 pointer-events-none z-50">
-          <SnowfallBackground count={120} speed={0.6} minSize={2} maxSize={14} minOpacity={0.2} maxOpacity={0.9} color="#9dd4ff" zIndex={1} wind={true} />
+          <SnowfallBackground count={40} speed={0.6} minSize={2} maxSize={14} minOpacity={0.2} maxOpacity={0.9} color="#9dd4ff" zIndex={1} wind={true} />
         </div>
       </body>
     </html>

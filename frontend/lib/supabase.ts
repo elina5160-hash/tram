@@ -1,6 +1,10 @@
 import { createClient } from '@supabase/supabase-js'
 
+let supabaseInstance: any = null
+
 export function getSupabaseClient() {
+  if (supabaseInstance) return supabaseInstance
+
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   if (!supabaseUrl || !supabaseKey) {
@@ -10,7 +14,9 @@ export function getSupabaseClient() {
     })
     return null
   }
-  return createClient(supabaseUrl, supabaseKey)
+  
+  supabaseInstance = createClient(supabaseUrl, supabaseKey)
+  return supabaseInstance
 }
 
 export function getServiceSupabaseClient() {
