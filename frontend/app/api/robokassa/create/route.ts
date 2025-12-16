@@ -133,7 +133,7 @@ export async function POST(req: Request) {
       const totalItemsSum = receiptItems.reduce((acc: number, it: any) => acc + it.sum, 0)
       
       // Если сумма товаров отличается от суммы к оплате (например, скидка), корректируем цены
-      if (Math.abs(totalItemsSum - outSum) > 0.01) {
+      if (totalItemsSum > 0 && Math.abs(totalItemsSum - outSum) > 0.01) {
         const coefficient = outSum / totalItemsSum
         let currentSum = 0
         
@@ -141,6 +141,9 @@ export async function POST(req: Request) {
            if (index === receiptItems.length - 1) {
              // Последнему элементу отдаем остаток, чтобы сумма сошлась копейка в копейку
              const newItemSum = Number((outSum - currentSum).toFixed(2))
+             // Force quantity 1 to ensure exact match if needed, but for now just update sum
+             // Robokassa requires sum to be item_price * quantity.
+             // If we change sum, we imply price change.
              return { ...it, sum: newItemSum }
            } else {
              const newItemSum = Number((it.sum * coefficient).toFixed(2))
@@ -148,6 +151,22 @@ export async function POST(req: Request) {
              return { ...it, sum: newItemSum }
            }
         })
+      } else if (totalItemsSum === 0 && outSum > 0) {
+          // Fallback if items sum is 0 (e.g. missing costs) but outSum is positive
+          // Distribute outSum evenly or just to the first item?
+          // This shouldn't happen with correct frontend, but just in case.
+          console.warn("Total items sum is 0 but OutSum is positive. Fixing receipt.")
+          if (receiptItems.length > 0) {
+              const perItem = Number((outSum / receiptItems.length).toFixed(2))
+              let current = 0
+              receiptItems = receiptItems.map((it: any, index: number) => {
+                  if (index === receiptItems.length - 1) {
+                      return { ...it, sum: Number((outSum - current).toFixed(2)) }
+                  }
+                  current += perItem
+                  return { ...it, sum: perItem }
+              })
+          }
       }
 
       const receipt = {

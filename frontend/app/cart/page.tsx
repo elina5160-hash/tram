@@ -519,6 +519,16 @@ function CartContent() {
                       alert(msg)
                       // Попробуем классический API
                       try {
+                        // Используем invoiceItems, так как там есть цены (cost) и правильные имена
+                        const itemsForCreate = invoiceItems.map(it => ({
+                          name: it.name,
+                          quantity: it.quantity,
+                          cost: it.cost,
+                          tax: it.tax,
+                          paymentMethod: it.paymentMethod,
+                          paymentObject: it.paymentObject
+                        }))
+
                         const res2 = await fetch("/api/robokassa/create", {
                           method: "POST",
                           headers: { "Content-Type": "application/json" },
@@ -537,7 +547,7 @@ function CartContent() {
                             },
                             promoCode,
                             refCode,
-                            items,
+                            items: itemsForCreate, // Передаем правильные товары с ценами
                           }),
                         })
                         let data2: any = null
@@ -552,6 +562,15 @@ function CartContent() {
                     }
                     // Если InvoiceService не вернул ссылку, попробуем классический API
                     try {
+                      const itemsForCreate = invoiceItems.map(it => ({
+                          name: it.name,
+                          quantity: it.quantity,
+                          cost: it.cost,
+                          tax: it.tax,
+                          paymentMethod: it.paymentMethod,
+                          paymentObject: it.paymentObject
+                        }))
+
                       const res2 = await fetch("/api/robokassa/create", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
@@ -570,7 +589,7 @@ function CartContent() {
                           },
                           promoCode,
                           refCode,
-                          items,
+                          items: itemsForCreate,
                         }),
                       })
                       let data2: any = null
