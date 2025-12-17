@@ -29,10 +29,65 @@ function formatCustomerInfo(ci: unknown, emailFallback: string = "") {
   return emailFallback
 }
 
-async function processOrder(invId: string, outSum: string) {
+const recent = new Map<string, number>()
+const TTL = 10 * 60 * 1000
+function isDup(k: string) {
+  const t = recent.get(k) || 0
+  const now = Date.now()
+  if (t && now - t < TTL) return true
+  recent.set(k, now)
+  for (const [kk, vv] of recent.entries()) if (now - vv > TTL) recent.delete(kk)
+  return false
+}
+
+async function processOrder(invId: string, outSum: string, payload?: Record<string, string>) {
     let client = getServiceSupabaseClient()
     if (!client) {
       client = getSupabaseClient()
+    }
+    if (payload && Object.keys(payload).length > 0) {
+      try {
+        const name = payload.name || ""
+        const phone = payload.phone || ""
+        const email = payload.email || ""
+        const address = payload.address || payload.cdek || ""
+        const itemsStr = payload.items || ""
+        let items: any[] = []
+        try {
+          const dec = decodeURIComponent(itemsStr)
+          items = JSON.parse(dec)
+        } catch {}
+        const lines = Array.isArray(items) ? items.map((it) => {
+          const n = String((it?.n ?? it?.name ?? 'Товар'))
+          const q = Number((it?.q ?? it?.quantity ?? 1))
+          const s = Number((it?.s ?? it?.sum ?? 0))
+          return `• ${n} × ${q} — ${s.toLocaleString('ru-RU')} руб.`
+        }) : []
+        const contact = [
+          name ? `👤 ${name}` : '',
+          phone ? `📞 <a href="tel:${phone}">${phone}</a>` : '',
+          address ? `📍 ${address}` : '',
+          email ? `✉️ <a href="mailto:${email}">${email}</a>` : '',
+        ].filter(Boolean).join('\n')
+        const promo = payload.promo ? `Промокод: ${payload.promo}` : ''
+        const ref = payload.ref ? `Реф-код: ${payload.ref}` : ''
+        const dt = new Date()
+        const when = dt.toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })
+        const text = [
+          `<b>Оплачен заказ № ${invId}</b>`,
+          `Сумма: ${Number(outSum).toLocaleString('ru-RU')} руб.`,
+          `Дата: ${when}`,
+          lines.length ? `\n<b>Товары:</b>\n${lines.join('\n')}` : '',
+          contact ? `\n<b>Пользователь</b>\n${contact}` : '',
+          [promo, ref].filter(Boolean).length ? `\n${[promo, ref].filter(Boolean).join('\n')}` : '',
+        ].filter(Boolean).join('\n')
+        const chatId = String(process.env.TELEGRAM_ADMIN_CHAT_ID || '-1003590157576')
+        const replyMarkup = payload.client ? { inline_keyboard: [[{ text: 'Написать в личные сообщения', url: `tg://user?id=${payload.client}` }]] } : undefined
+        await sendTelegramMessage(text, chatId, replyMarkup)
+      } catch (e) {
+        console.error('Error sending telegram without DB', e)
+      }
+      return
     }
     if (!client) {
       try {
@@ -152,7 +207,19 @@ export async function GET(req: Request) {
   const ok1 = password1 ? verifySignature(outSum, invId, signature, password1) : false
   const ok1Test = isTest && password1Test ? verifySignature(outSum, invId, signature, password1Test) : false
   if (!ok2 && !ok1 && !ok1Test) return NextResponse.json({ error: "Bad signature" }, { status: 400 })
-  await processOrder(invId, outSum)
+  if (isDup(invId)) return ack(invId)
+  const payload: Record<string, string> = {
+    name: url.searchParams.get('Shp_name') || '',
+    phone: url.searchParams.get('Shp_phone') || '',
+    email: url.searchParams.get('Shp_email') || '',
+    address: url.searchParams.get('Shp_address') || '',
+    cdek: url.searchParams.get('Shp_cdek') || '',
+    items: url.searchParams.get('Shp_items') || '',
+    promo: url.searchParams.get('Shp_promo') || '',
+    ref: url.searchParams.get('Shp_ref') || '',
+    client: url.searchParams.get('Shp_client') || '',
+  }
+  await processOrder(invId, outSum, payload)
   return ack(invId)
 }
 
@@ -172,6 +239,18 @@ export async function POST(req: Request) {
   const ok1 = password1 ? verifySignature(outSum, invId, signature, password1) : false
   const ok1Test = isTest && password1Test ? verifySignature(outSum, invId, signature, password1Test) : false
   if (!ok2 && !ok1 && !ok1Test) return NextResponse.json({ error: "Bad signature" }, { status: 400 })
-  await processOrder(invId, outSum)
+  if (isDup(invId)) return ack(invId)
+  const payload: Record<string, string> = {
+    name: params.get('Shp_name') || '',
+    phone: params.get('Shp_phone') || '',
+    email: params.get('Shp_email') || '',
+    address: params.get('Shp_address') || '',
+    cdek: params.get('Shp_cdek') || '',
+    items: params.get('Shp_items') || '',
+    promo: params.get('Shp_promo') || '',
+    ref: params.get('Shp_ref') || '',
+    client: params.get('Shp_client') || '',
+  }
+  await processOrder(invId, outSum, payload)
   return ack(invId)
 }

@@ -80,6 +80,20 @@ export async function POST(req: Request) {
   const shp: Record<string, string> = {}
   if (body.promoCode) shp.Shp_promo = body.promoCode.trim()
   if (body.refCode) shp.Shp_ref = body.refCode.trim()
+  try {
+    const ci = body.customerInfo as any
+    const name = typeof ci?.name === "string" ? ci.name.trim() : ""
+    const phone = typeof ci?.phone === "string" ? ci.phone.trim() : ""
+    const address = typeof ci?.address === "string" ? ci.address.trim() : ""
+    const cdek = typeof ci?.cdek === "string" ? ci.cdek.trim() : ""
+    const clientId = ci?.client_id ? String(ci.client_id) : ""
+    if (name) shp.Shp_name = sanitizeText(name)
+    if (phone) shp.Shp_phone = phone
+    if (address) shp.Shp_address = sanitizeText(address)
+    if (!address && cdek) shp.Shp_cdek = sanitizeText(cdek)
+    if (email) shp.Shp_email = email
+    if (clientId) shp.Shp_client = clientId
+  } catch {}
 
   const sortedKeys = Object.keys(shp).sort()
   const shpString = sortedKeys.map((k) => `${k}=${shp[k]}`).join(":")
@@ -99,6 +113,10 @@ export async function POST(req: Request) {
       const receiptJson = JSON.stringify({ items: receiptItems })
       receiptEncodedOnce = encodeURIComponent(receiptJson)
       receiptEncodedTwice = encodeURIComponent(receiptEncodedOnce)
+      try {
+        const itemsSimple = JSON.stringify(receiptItems.map((x) => ({ n: x.name, q: x.quantity, s: x.sum })))
+        shp.Shp_items = encodeURIComponent(itemsSimple)
+      } catch {}
     } catch {}
   }
 
