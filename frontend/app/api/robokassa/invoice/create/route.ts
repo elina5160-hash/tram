@@ -8,16 +8,12 @@ function toBase64Url(input: string) {
 }
 
 export async function POST(req: Request) {
-  const merchant = (process.env.ROBO_MERCHANT_LOGIN || process.env.NEXT_PUBLIC_ROBO_MERCHANT_LOGIN || "").trim()
-  const password1Raw = (process.env.ROBO_PASSWORD1 || "").trim()
-  const isTest = process.env.ROBO_IS_TEST === "1"
-  const password1Test = (process.env.ROBO_PASSWORD1_TEST || "").trim()
-  const password1 = isTest ? password1Test : password1Raw
+  const merchant = process.env.ROBO_MERCHANT_LOGIN || process.env.NEXT_PUBLIC_ROBO_MERCHANT_LOGIN || ""
+  const password1 = process.env.ROBO_PASSWORD1 || ""
   if (!merchant || !password1) {
     console.error("Missing Robokassa credentials:", { 
       ROBO_MERCHANT_LOGIN: merchant ? "Set" : "Missing", 
-      ROBO_PASSWORD1: password1 ? "Set" : "Missing",
-      ROBO_IS_TEST: isTest
+      ROBO_PASSWORD1: password1 ? "Set" : "Missing" 
     })
     return NextResponse.json({ error: "Missing Robokassa credentials" }, { status: 500 })
   }
@@ -57,29 +53,20 @@ export async function POST(req: Request) {
     // Получаем текущее время в формате HH:mm:ss для поля updated_at (тип time)
     const currentTime = new Date().toISOString().split('T')[1].split('.')[0];
     
-    // Сохраняем заказ в таблицу pending_orders
-    // Если pending_orders нет, используем fallback на orders
-    try {
-      const { error } = await client.from("pending_orders").insert({
-        id: invId,
-        total_amount: outSum,
-        items: body.invoiceItems || [],
-        customer_info: body.customerInfo || { email: body.email },
-        promo_code: body.promoCode,
-        ref_code: body.refCode,
-        status: 'pending',
-        currency: 'RUB',
-        updated_at: currentTime
-      })
+    const { error } = await client.from("orders").insert({
+      id: invId,
+      total_amount: outSum,
+      items: body.invoiceItems || [],
+      customer_info: body.customerInfo || { email: body.email },
+      promo_code: body.promoCode,
+      ref_code: body.refCode,
+      status: 'pending',
+      updated_at: currentTime
+    })
 
-      if (error) throw error
-    } catch (e) {
-      console.error("Error saving to pending_orders:", e)
-      // Не пишем в orders на этапе создания — только после подтверждения оплаты
+    if (error) {
+      console.error("Error creating order in Supabase:", error)
     }
-  } else {
-      console.error("Supabase client not initialized")
-      // Продолжаем без записи в БД, чтобы не блокировать оплату
   }
 
   const headerJson = { typ: "JWT", alg: "MD5" }
@@ -116,7 +103,7 @@ export async function POST(req: Request) {
   }
 
   if (body.invoiceItems && Array.isArray(body.invoiceItems) && body.invoiceItems.length > 0) {
-    let items = body.invoiceItems.map((it) => ({
+    payloadJson.InvoiceItems = body.invoiceItems.map((it) => ({
       Name: it.name,
       Quantity: it.quantity,
       Cost: it.cost,
@@ -124,34 +111,11 @@ export async function POST(req: Request) {
       PaymentMethod: it.paymentMethod || "full_prepayment",
       PaymentObject: it.paymentObject || "commodity",
     }))
-
-    // Normalization logic for InvoiceItems
-    const totalItemsSum = items.reduce((acc, it) => acc + (it.Cost * it.Quantity), 0)
-    
-    if (Math.abs(totalItemsSum - outSum) > 0.01) {
-         const coefficient = outSum / totalItemsSum
-         let currentSum = 0
-         
-         items = items.map((it, index) => {
-            if (index === items.length - 1) {
-              const newItemSum = Number((outSum - currentSum).toFixed(2))
-              // Force Quantity 1 to ensure exact match if division is not clean
-              return { ...it, Quantity: 1, Cost: newItemSum }
-            } else {
-              const newItemSum = Number((it.Cost * it.Quantity * coefficient).toFixed(2))
-              currentSum += newItemSum
-              // Force Quantity 1 to ensure exact match
-              return { ...it, Quantity: 1, Cost: newItemSum }
-            }
-         })
-    }
-    
-    payloadJson.InvoiceItems = items
   }
 
   const payload = toBase64Url(JSON.stringify(payloadJson))
   const compact = `${header}.${payload}`
-  const key = `${merchant}:${password1}`
+  const key = crypto.createHash("md5").update(`${merchant}:${password1}`).digest("hex")
   const signature = crypto.createHmac("md5", key).update(compact, "utf8").digest("base64")
     .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "")
   const token = `${compact}.${signature}`

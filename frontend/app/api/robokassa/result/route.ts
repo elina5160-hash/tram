@@ -2,7 +2,6 @@ import { NextResponse } from "next/server"
 import crypto from "node:crypto"
 import { getServiceSupabaseClient } from "@/lib/supabase"
 import { addTickets } from "@/lib/contest"
-import { sendTelegramMessage } from "@/lib/telegram"
 
 function verifySignature(outSum: string, invId: string, signature: string, password2: string) {
   const base = `${outSum}:${invId}:${password2}`
@@ -19,78 +18,15 @@ async function processOrder(invId: string, outSum: string) {
     if (!client) return
 
     try {
-        let order;
-
-        // 1. Проверяем, есть ли уже заказ в таблице orders
-        // Select full object to reuse it for notifications if needed
-        const { data: existingOrder } = await client.from("orders").select('*').eq("id", Number(invId)).single()
+        const { data: order } = await client.from("orders").select('*').eq("id", Number(invId)).single()
         
-        if (existingOrder) {
-            if (existingOrder.status !== 'paid' && existingOrder.status !== 'Оплачен') {
-                console.log(`Order ${invId} found in orders with status ${existingOrder.status}, updating to paid`)
-                await client.from("orders").update({ status: "Оплачен", ok: "true" }).eq("id", Number(invId))
-                // Use the existing order data (updated status)
-                order = { ...existingOrder, status: "Оплачен" }
-            } else {
-                console.log(`Order ${invId} already paid, skipping`)
-                return
-            }
-        } else {
-            // 2. Если нет в orders, ищем в pending_orders
-            const { data: pendingOrder } = await client.from("pending_orders").select('*').eq("id", Number(invId)).single()
-            
-            if (!pendingOrder) {
-                console.error(`Order ${invId} not found in pending_orders`)
-                return
-            }
-    
-            // 3. Переносим в orders
-            const totalQty = Array.isArray(pendingOrder.items) ? pendingOrder.items.reduce((n: number, it: any) => n + (it.quantity || it.qty || 1), 0) : null
-            const { error: insertError } = await client.from("orders").insert({
-                id: pendingOrder.id,
-                total_amount: pendingOrder.total_amount,
-                items: pendingOrder.items,
-                customer_info: pendingOrder.customer_info,
-                promo_code: pendingOrder.promo_code,
-                ref_code: pendingOrder.ref_code,
-                status: "Оплачен",
-                ok: "true",
-                currency: pendingOrder.currency || 'RUB',
-                total_qty: totalQty ?? undefined,
-                paid_at: new Date().toISOString(),
-                updated_at: pendingOrder.updated_at || new Date().toISOString().split('T')[1].split('.')[0]
-            })
-    
-            if (insertError) {
-                 console.error(`Failed to move order ${invId} to orders table:`, insertError)
-                 return
-            }
-            
-            // Используем данные из pendingOrder для дальнейшей логики
-            order = { ...pendingOrder, status: "Оплачен" }
-        }
-
-        if (!order) return;
-
-        // --- TELEGRAM NOTIFICATION ---
-             const customer = order.customer_info || {}
-             const itemsList = (order.items || []).map((i: any) => `- ${i.name} x${i.quantity || i.qty || 1}`).join('\n')
+        if (order && order.status !== 'paid' && order.status !== 'Оплачен') {
+             // Mark as paid
+             await client.from("orders").update({ 
+                 status: "Оплачен",
+                 ok: "true" 
+             }).eq("id", Number(invId))
              
-             const message = `
-<b>💰 Новый заказ оплачен!</b>
-
-<b>ID заказа:</b> ${invId}
-<b>Сумма:</b> ${outSum} руб.
-<b>Покупатель:</b> ${customer.name || 'Не указано'}
-<b>Телефон:</b> ${customer.phone || 'Не указано'}
-<b>Email:</b> ${customer.email || 'Не указано'}
-<b>Адрес:</b> ${customer.address || 'Не указано'}
-
-<b>Товары:</b>
-${itemsList}
-`
-             await sendTelegramMessage(message, "-5037927554")
-
              // --- CONTEST LOGIC ---
              const amount = Number(outSum)
              const tickets = Math.floor(amount / 1000)
@@ -119,6 +55,7 @@ ${itemsList}
                       await addTickets(referral.referrer_id, 1, 'referral_purchase_bonus', invId)
                  }
              }
+        }
     } catch (e) {
         console.error("Error processing order", e)
     }
