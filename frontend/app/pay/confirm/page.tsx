@@ -120,17 +120,29 @@ function ConfirmContent() {
                 router.push("/cart")
                 return
               }
-              window.location.href = payUrl
+              try {
+                const tg = (typeof window !== "undefined" ? (window as any).Telegram?.WebApp : undefined)
+                if (tg && typeof tg.openLink === "function") {
+                  tg.openLink(payUrl)
+                } else {
+                  window.open(payUrl, "_blank", "noopener,noreferrer")
+                }
+              } catch {
+                window.open(payUrl, "_blank", "noopener,noreferrer")
+              }
             }}
           >
             Оплатить
           </HoverButton>
           <HoverButton
-            className="w-full rounded-[12px] bg-white text-[#232323] border px-4 py-3 text-[13px]"
+            className="w-full rounded-[12px] bg:white text-[#232323] border px-4 py-3 text-[13px]"
             onClick={() => router.push("/cart")}
           >
             Вернуться в корзину
           </HoverButton>
+          {typeof window !== "undefined" && (window as any).Telegram?.WebApp && (
+            <div className="text-[12px] text-gray-600 text-center">Если платёж недоступен внутри Telegram, откроем ссылку в браузере.</div>
+          )}
         </div>
       </div>
       <BottomBanner />
