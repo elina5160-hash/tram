@@ -116,7 +116,7 @@ export async function POST(req: Request) {
   }
 
   const baseUrl = getBaseUrl(req)
-  const successUrl2 = baseUrl ? `${baseUrl}/pay/confirm?OutSum=${out}&InvId=${String(invId)}&SignatureValue=` : ""
+  const successUrl2 = baseUrl ? `${baseUrl}/pay/confirm` : ""
   const failUrl2 = baseUrl ? `${baseUrl}/pay/fail` : ""
   const resultUrl2 = baseUrl ? `${baseUrl}/api/robokassa/result` : ""
   const successMethod = "GET"
@@ -151,10 +151,12 @@ export async function POST(req: Request) {
   
   params.set("Culture", "ru")
   if (resultUrl2) params.set("ResultUrl2", resultUrl2)
-  if (successUrl2) params.set("SuccessUrl2", successUrl2 + signature)
+  if (successUrl2) params.set("SuccessUrl2", successUrl2)
   if (successUrl2) params.set("SuccessUrl2Method", successMethod)
   if (failUrl2) params.set("FailUrl2", failUrl2)
   if (failUrl2) params.set("FailUrl2Method", failMethod)
+  if (successUrl2) params.set("SuccessURL", successUrl2)
+  if (failUrl2) params.set("FailURL", failUrl2)
   
   const url = `https://auth.robokassa.ru/Merchant/Index.aspx?${params.toString()}`
   return NextResponse.json({ url, invId })
