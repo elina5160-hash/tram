@@ -1,7 +1,7 @@
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN
 const TELEGRAM_ADMIN_CHAT_ID = process.env.TELEGRAM_ADMIN_CHAT_ID
 
-export async function sendTelegramMessage(text: string, chatId?: string) {
+export async function sendTelegramMessage(text: string, chatId?: string, replyMarkup?: any) {
   if (!TELEGRAM_BOT_TOKEN) {
     console.error("TELEGRAM_BOT_TOKEN is missing")
     return
@@ -19,8 +19,9 @@ export async function sendTelegramMessage(text: string, chatId?: string) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         chat_id: targetChatId,
-        text: text,
+        text,
         parse_mode: "HTML",
+        reply_markup: replyMarkup,
       }),
     })
     

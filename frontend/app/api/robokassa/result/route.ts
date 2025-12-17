@@ -97,19 +97,30 @@ async function processOrder(invId: string, outSum: string) {
                 const sum = Number(it?.sum ?? it?.cost ?? 0)
                 return `• ${name} × ${qty} — ${sum.toLocaleString('ru-RU')} руб.`
               })
-              const infoText = formatCustomerInfo(finalOrder.customer_info, '')
-              const promo = finalOrder.promo_code ? `\nПромокод: ${finalOrder.promo_code}` : ''
-              const ref = finalOrder.ref_code ? `\nРеф-код: ${finalOrder.ref_code}` : ''
+              const ci = finalOrder.customer_info || {}
+              const name = String(ci?.name || '')
+              const phone = String(ci?.phone || '')
+              const email = String(ci?.email || '')
+              const address = String(ci?.address || ci?.cdek || '')
+              const clientId = ci?.client_id ? String(ci.client_id) : ''
+              const promo = finalOrder.promo_code ? `Промокод: ${finalOrder.promo_code}` : ''
+              const ref = finalOrder.ref_code ? `Реф-код: ${finalOrder.ref_code}` : ''
+              const contactLines = [
+                name ? `👤 ${name}` : '',
+                phone ? `📞 <a href="tel:${phone}">${phone}</a>` : '',
+                address ? `📍 ${address}` : '',
+                email ? `✉️ <a href="mailto:${email}">${email}</a>` : '',
+              ].filter(Boolean).join('\n')
               const text = [
                 `<b>Оплачен заказ № ${invId}</b>`,
                 `Сумма: ${Number(outSum).toLocaleString('ru-RU')} руб.`,
-                lines.length ? lines.join('\n') : '',
-                infoText ? `\n${infoText}` : '',
-                promo,
-                ref,
+                lines.length ? `\n<b>Товары:</b>\n${lines.join('\n')}` : '',
+                contactLines ? `\n<b>Пользователь</b>\n${contactLines}` : '',
+                [promo, ref].filter(Boolean).length ? `\n${[promo, ref].filter(Boolean).join('\n')}` : '',
               ].filter(Boolean).join('\n')
-              const chatId = String(process.env.TELEGRAM_ADMIN_CHAT_ID || '-5037927554')
-              await sendTelegramMessage(text, chatId)
+              const chatId = String(process.env.TELEGRAM_ADMIN_CHAT_ID || '-1003590157576')
+              const replyMarkup = clientId ? { inline_keyboard: [[{ text: 'Написать в личные сообщения', url: `tg://user?id=${clientId}` }]] } : undefined
+              await sendTelegramMessage(text, chatId, replyMarkup)
             } catch {}
         }
     } catch (e) {

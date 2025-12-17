@@ -46,23 +46,27 @@ export async function GET() {
   }
 
   // Send Telegram Notification
-  const msg = `
-📦 <b>ТЕСТОВЫЙ ЗАКАЗ #${testOrder.id}</b>
-💰 Сумма: <b>${testOrder.total_amount} руб.</b>
-👤 Клиент: ${testOrder.customer_info.name}
-🆔 ID клиента: ${testOrder.customer_info.client_id}
-📧 Email: ${testOrder.customer_info.email}
-📍 Адрес: ${testOrder.customer_info.address}
-
-🛒 <b>Товары:</b>
-- Набор СЕЗОННЫЙ x1 (4200 руб.)
-
-🎁 <b>Конкурс:</b>
-Начислено билетов: ${tickets}
-  `.trim()
+  const lines = [`• Набор СЕЗОННЫЙ × 1 — 4200 руб.`]
+  const contact = [
+    `👤 ${testOrder.customer_info.name}`,
+    `📞 <a href="tel:${'+79001234567'}">${'+79001234567'}</a>`,
+    `📍 ${testOrder.customer_info.address}`,
+    `✉️ <a href="mailto:${testOrder.customer_info.email}">${testOrder.customer_info.email}</a>`,
+  ].join('\n')
+  const msg = [
+    `<b>Оплачен заказ № ${testOrder.id}</b>`,
+    `Сумма: ${testOrder.total_amount} руб.`,
+    `\n<b>Товары:</b>`,
+    lines.join('\n'),
+    `\n<b>Пользователь</b>`,
+    contact,
+    `\nНачислено билетов: ${tickets}`,
+  ].join('\n')
 
   const chatId = String(process.env.TELEGRAM_ADMIN_CHAT_ID || '-1003590157576')
-  await sendTelegramMessage(msg, chatId)
+  const clientId = String(testOrder.customer_info.client_id)
+  const replyMarkup = clientId ? { inline_keyboard: [[{ text: 'Написать в личные сообщения', url: `tg://user?id=${clientId}` }]] } : undefined
+  await sendTelegramMessage(msg, chatId, replyMarkup)
 
   return NextResponse.json({ success: true, data, telegram_sent: true, tickets_awarded: tickets, db_skipped: !hasClient })
 }
