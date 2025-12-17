@@ -109,7 +109,7 @@ export async function POST(req: Request) {
   params.set("InvId", String(invId))
   params.set("Description", description)
   params.set("SignatureValue", signature)
-  if (receiptEncodedOnce) params.set("Receipt", receiptEncodedOnce)
+  if (receiptEncodedTwice) params.set("Receipt", receiptEncodedTwice)
   
   if (email) params.set("Email", email)
   sortedKeys.forEach((k) => params.set(k, shp[k]))
