@@ -129,21 +129,37 @@ export default function HomePage() {
                           className="w-full h-full object-cover" 
                         />
                       ) : (
-                        <Image
-                          src={it.image}
-                          alt={it.title}
-                          fill
-                          className="object-cover"
-                          priority={idx < 2}
-                          sizes="(max-width: 420px) 50vw, 33vw"
-                          onLoad={() => {
-                            try {
-                              const payload = { type: "IMAGE_LOAD", message: "home promo image loaded", data: { id: it.id, ts: Date.now() } }
-                              const blob = new Blob([JSON.stringify(payload)], { type: "application/json" })
-                              navigator.sendBeacon("/api/log", blob)
-                            } catch {}
-                          }}
-                        />
+                        (() => {
+                          const map: Record<string, string> = {
+                            "/night.png": "/day.png",
+                            "/Zakvaska.png": "/1.png",
+                            "/Rozling.png": "/розлинг1.jpg",
+                            "/Risling.png": "/рислинг1.png",
+                            "/Xmel.png": "/хмель1.png",
+                          }
+                          return (
+                            <Image
+                              src={it.image}
+                              alt={it.title}
+                              fill
+                              className="object-cover"
+                              priority={idx < 2}
+                              sizes="(max-width: 420px) 50vw, 33vw"
+                              onLoad={() => {
+                                try {
+                                  const payload = { type: "IMAGE_LOAD", message: "home promo image loaded", data: { id: it.id, ts: Date.now() } }
+                                  const blob = new Blob([JSON.stringify(payload)], { type: "application/json" })
+                                  navigator.sendBeacon("/api/log", blob)
+                                } catch {}
+                              }}
+                              onError={(e) => {
+                                const el = e.currentTarget as any
+                                const next = map[it.image] || "/главная4.png"
+                                if (el && next) el.src = next
+                              }}
+                            />
+                          )
+                        })()
                       )}
                     </div>
                   </Link>
@@ -220,21 +236,37 @@ export default function HomePage() {
                           className="w-full h-full object-cover" 
                         />
                       ) : (
-                        <Image
-                          src={it.image}
-                          alt={it.title}
-                          fill
-                          className="object-cover"
-                          loading="lazy"
-                          sizes="180px"
-                          onLoad={() => {
-                            try {
-                              const payload = { type: "IMAGE_LOAD", message: "home best image loaded", data: { id: it.id, ts: Date.now() } }
-                              const blob = new Blob([JSON.stringify(payload)], { type: "application/json" })
-                              navigator.sendBeacon("/api/log", blob)
-                            } catch {}
-                          }}
-                        />
+                        (() => {
+                          const map: Record<string, string> = {
+                            "/night.png": "/day.png",
+                            "/Zakvaska.png": "/1.png",
+                            "/Rozling.png": "/розлинг1.jpg",
+                            "/Risling.png": "/рислинг1.png",
+                            "/Xmel.png": "/хмель1.png",
+                          }
+                          return (
+                            <Image
+                              src={it.image}
+                              alt={it.title}
+                              fill
+                              className="object-cover"
+                              loading="lazy"
+                              sizes="180px"
+                              onLoad={() => {
+                                try {
+                                  const payload = { type: "IMAGE_LOAD", message: "home best image loaded", data: { id: it.id, ts: Date.now() } }
+                                  const blob = new Blob([JSON.stringify(payload)], { type: "application/json" })
+                                  navigator.sendBeacon("/api/log", blob)
+                                } catch {}
+                              }}
+                              onError={(e) => {
+                                const el = e.currentTarget as any
+                                const next = map[it.image] || "/главная4.png"
+                                if (el && next) el.src = next
+                              }}
+                            />
+                          )
+                        })()
                       )}
                     </div>
                   </Link>

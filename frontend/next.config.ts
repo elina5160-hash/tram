@@ -4,7 +4,7 @@ const nextConfig: NextConfig = {
   compress: true,
   images: {
     formats: ['image/avif', 'image/webp'],
-    minimumCacheTTL: 60,
+    minimumCacheTTL: 3600,
   },
   async redirects() {
     return [
@@ -18,6 +18,8 @@ const nextConfig: NextConfig = {
       { source: "/Xmel.png", destination: "/хмель1.png" },
       { source: "/Zakvaska.png", destination: "/1.png" },
       { source: "/night.png", destination: "/day.png" },
+      { source: "/pay/success", destination: "/pay/confirm?status=success" },
+      { source: "/pay/fail", destination: "/pay/confirm?status=fail" },
     ]
   },
   // Remove turbopack config if not using it explicitly or if it causes issues, 

@@ -145,7 +145,28 @@ export default function ItemPage() {
                   className="w-full h-full object-cover" 
                 />
               ) : (
-                <Image src={item.image} alt={item.title} fill className="object-cover" />
+                (() => {
+                  const map: Record<string, string> = {
+                    "/night.png": "/day.png",
+                    "/Zakvaska.png": "/1.png",
+                    "/Rozling.png": "/розлинг1.jpg",
+                    "/Risling.png": "/рислинг1.png",
+                    "/Xmel.png": "/хмель1.png",
+                  }
+                  return (
+                    <Image
+                      src={item.image}
+                      alt={item.title}
+                      fill
+                      className="object-cover"
+                      onError={(e) => {
+                        const el = e.currentTarget as any
+                        const next = map[item.image] || "/главная4.png"
+                        if (el && next) el.src = next
+                      }}
+                    />
+                  )
+                })()
               )}
             </div>
             <button

@@ -55,7 +55,7 @@ export default function Shop() {
         </div>
         <section className="mt-4">
           <div className="mt-3 inline-grid grid-cols-2 gap-2 mx-auto">
-            {promos.map((it) => (
+            {promos.map((it, idx) => (
               <div
                 key={it.id}
                 className="bg-white rounded-[20px] border border-gray-300 p-2"
@@ -71,21 +71,32 @@ export default function Shop() {
                           className="w-full h-full object-cover" 
                         />
                       ) : (
-                        <Image
-                          src={it.image}
-                          alt={it.title}
-                          fill
-                          className="object-cover"
-                          loading="lazy"
-                          sizes="(max-width: 420px) 50vw, 33vw"
-                          onLoad={() => {
-                            try {
-                              const payload = { type: "IMAGE_LOAD", message: "shop promo image loaded", data: { id: it.id, ts: Date.now() } }
-                              const blob = new Blob([JSON.stringify(payload)], { type: "application/json" })
-                              navigator.sendBeacon("/api/log", blob)
-                            } catch {}
-                          }}
-                        />
+                        (() => {
+                          const map: Record<string, string> = {
+                            "/night.png": "/day.png",
+                            "/Zakvaska.png": "/1.png",
+                            "/Rozling.png": "/розлинг1.jpg",
+                            "/Risling.png": "/рислинг1.png",
+                            "/Xmel.png": "/хмель1.png",
+                          }
+                          return (
+                            <Image
+                              src={it.image}
+                              alt={it.title}
+                              fill
+                              className="object-cover"
+                              loading="lazy"
+                              sizes="(max-width: 420px) 50vw, 33vw"
+                              quality={60}
+                              priority={idx < 2}
+                              onError={(e) => {
+                                const el = e.currentTarget as any
+                                const next = map[it.image] || "/главная4.png"
+                                if (el && next) el.src = next
+                              }}
+                            />
+                          )
+                        })()
                       )}
                     </div>
                   </Link>
@@ -142,7 +153,7 @@ export default function Shop() {
         </section>
         <section className="mt-6">
           <div className="mt-3 inline-grid grid-cols-2 gap-2 mx-auto">
-            {bests.map((it) => (
+            {bests.map((it, idx) => (
               <div
                 key={it.id}
                 className="bg-white rounded-[20px] border border-gray-300 p-2"
@@ -158,21 +169,32 @@ export default function Shop() {
                           className="w-full h-full object-cover" 
                         />
                       ) : (
-                        <Image
-                          src={it.image}
-                          alt={it.title}
-                          fill
-                          className="object-cover"
-                          loading="lazy"
-                          sizes="(max-width: 420px) 50vw, 33vw"
-                          onLoad={() => {
-                            try {
-                              const payload = { type: "IMAGE_LOAD", message: "shop best image loaded", data: { id: it.id, ts: Date.now() } }
-                              const blob = new Blob([JSON.stringify(payload)], { type: "application/json" })
-                              navigator.sendBeacon("/api/log", blob)
-                            } catch {}
-                          }}
-                        />
+                        (() => {
+                          const map: Record<string, string> = {
+                            "/night.png": "/day.png",
+                            "/Zakvaska.png": "/1.png",
+                            "/Rozling.png": "/розлинг1.jpg",
+                            "/Risling.png": "/рислинг1.png",
+                            "/Xmel.png": "/хмель1.png",
+                          }
+                          return (
+                            <Image
+                              src={it.image}
+                              alt={it.title}
+                              fill
+                              className="object-cover"
+                              loading="lazy"
+                              sizes="(max-width: 420px) 50vw, 33vw"
+                              quality={60}
+                              priority={idx < 2}
+                              onError={(e) => {
+                                const el = e.currentTarget as any
+                                const next = map[it.image] || "/главная4.png"
+                                if (el && next) el.src = next
+                              }}
+                            />
+                          )
+                        })()
                       )}
                     </div>
                   </Link>
@@ -243,21 +265,30 @@ export default function Shop() {
                           className="w-full h-full object-cover" 
                         />
                       ) : (
-                        <Image
-                          src={it.image}
-                          alt={it.title}
-                          fill
-                          className="object-cover"
-                          loading="lazy"
-                          sizes="(max-width: 420px) 50vw, 33vw"
-                          onLoad={() => {
-                            try {
-                              const payload = { type: "IMAGE_LOAD", message: "shop novelty image loaded", data: { id: it.id, ts: Date.now() } }
-                              const blob = new Blob([JSON.stringify(payload)], { type: "application/json" })
-                              navigator.sendBeacon("/api/log", blob)
-                            } catch {}
-                          }}
-                        />
+                        (() => {
+                          const map: Record<string, string> = {
+                            "/night.png": "/day.png",
+                            "/Zakvaska.png": "/1.png",
+                            "/Rozling.png": "/розлинг1.jpg",
+                            "/Risling.png": "/рислинг1.png",
+                            "/Xmel.png": "/хмель1.png",
+                          }
+                          return (
+                            <Image
+                              src={it.image}
+                              alt={it.title}
+                              fill
+                              className="object-cover"
+                              loading="lazy"
+                              sizes="(max-width: 420px) 50vw, 33vw"
+                              onError={(e) => {
+                                const el = e.currentTarget as any
+                                const next = map[it.image] || "/главная4.png"
+                                if (el && next) el.src = next
+                              }}
+                            />
+                          )
+                        })()
                       )}
                     </div>
                   </Link>

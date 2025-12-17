@@ -29,7 +29,7 @@ export async function GET() {
   let data: unknown = null
   let error: any = null
   if (hasClient) {
-    const currentTime = new Date().toISOString().split('T')[1].split('.')[0]
+    const currentTime = new Date().toISOString()
     const res = await client!.from("orders").insert({ ...testOrder, updated_at: currentTime }).select()
     data = res.data
     error = res.error

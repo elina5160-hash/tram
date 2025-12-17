@@ -29,7 +29,7 @@ export async function GET() {
   }
 
   const testId = Math.floor(Date.now() / 1000)
-  const currentTime = new Date().toISOString().split('T')[1].split('.')[0];
+  const currentTime = new Date().toISOString();
 
   try {
     const { data, error } = await client.from("orders").insert({

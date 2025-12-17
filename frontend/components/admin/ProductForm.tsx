@@ -20,13 +20,36 @@ export function ProductForm({ initialData, onSubmit, onCancel }: ProductFormProp
   const [uploading, setUploading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
 
+  async function compressImageToWebP(file: File, quality = 0.75): Promise<Blob | null> {
+    try {
+      const bitmap = await createImageBitmap(file)
+      const canvas = document.createElement('canvas')
+      canvas.width = bitmap.width
+      canvas.height = bitmap.height
+      const ctx = canvas.getContext('2d')
+      if (!ctx) return null
+      ctx.drawImage(bitmap, 0, 0)
+      const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob((b) => resolve(b), 'image/webp', quality))
+      return blob
+    } catch {
+      return null
+    }
+  }
+
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
 
     setUploading(true)
     const form = new FormData()
-    form.append('file', file)
+    let uploadFile: File | Blob = file
+    if (file.type.startsWith('image/')) {
+      const webp = await compressImageToWebP(file, 0.7)
+      if (webp) {
+        uploadFile = new File([webp], (file.name.replace(/\.[^/.]+$/, '') || 'image') + '.webp', { type: 'image/webp' })
+      }
+    }
+    form.append('file', uploadFile)
 
     try {
       const res = await fetch('/api/upload', {
@@ -122,7 +145,7 @@ export function ProductForm({ initialData, onSubmit, onCancel }: ProductFormProp
               {formData.image.endsWith('.mp4') ? (
                 <video src={formData.image} className="w-full h-full object-cover" />
               ) : (
-                <Image src={formData.image} alt="Preview" fill className="object-cover" />
+                <Image src={formData.image} alt="Preview" fill className="object-cover" quality={60} />
               )}
             </div>
           )}

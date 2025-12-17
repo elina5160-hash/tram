@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import crypto from "node:crypto"
-import { getServiceSupabaseClient } from "@/lib/supabase"
+import { getServiceSupabaseClient, getSupabaseClient } from "@/lib/supabase"
 import { addTickets } from "@/lib/contest"
 import { sendTelegramMessage } from "@/lib/telegram"
 
@@ -30,8 +30,18 @@ function formatCustomerInfo(ci: unknown, emailFallback: string = "") {
 }
 
 async function processOrder(invId: string, outSum: string) {
-    const client = getServiceSupabaseClient()
-    if (!client) return
+    let client = getServiceSupabaseClient()
+    if (!client) {
+      client = getSupabaseClient()
+    }
+    if (!client) {
+      try {
+        const chatId = String(process.env.TELEGRAM_ADMIN_CHAT_ID || '-1003590157576')
+        const text = [`<b>Оплачен заказ № ${invId}</b>`, `Сумма: ${Number(outSum).toLocaleString('ru-RU')} руб.`].join('\n')
+        await sendTelegramMessage(text, chatId)
+      } catch {}
+      return
+    }
     try {
         const { data: order } = await client.from("orders").select('*').eq("id", Number(invId)).single()
         let finalOrder = order
@@ -49,7 +59,7 @@ async function processOrder(invId: string, outSum: string) {
                     }
                     return s
                 }, 0) : 0
-                const currentTime = new Date().toISOString().split('T')[1].split('.')[0]
+                const currentTime = new Date().toISOString()
                 await client.from("orders").insert({
                     id: Number(invId),
                     total_amount: Number(outSum),
@@ -68,7 +78,7 @@ async function processOrder(invId: string, outSum: string) {
             }
         }
         if (finalOrder && finalOrder.status !== 'paid' && finalOrder.status !== 'Оплачен') {
-            const currentTime2 = new Date().toISOString().split('T')[1].split('.')[0]
+            const currentTime2 = new Date().toISOString()
             await client.from("orders").update({ status: "Оплачен", ok: "true", updated_at: currentTime2 }).eq("id", Number(invId))
             const amount = Number(outSum)
             const tickets = Math.floor(amount / 1000)
@@ -135,10 +145,13 @@ export async function GET(req: Request) {
   const signature = url.searchParams.get("SignatureValue") || ""
   const password2 = process.env.ROBO_PASSWORD2 || ""
   const password1 = process.env.ROBO_PASSWORD1 || process.env.NEXT_PUBLIC_ROBO_MERCHANT_LOGIN ? process.env.ROBO_PASSWORD1 || "" : ""
+  const isTest = process.env.ROBO_IS_TEST === "1"
+  const password1Test = process.env.ROBO_PASSWORD1_TEST || ""
   if (!outSum || !invId || !signature) return NextResponse.json({ error: "Bad params" }, { status: 400 })
   const ok2 = password2 ? verifySignature(outSum, invId, signature, password2) : false
   const ok1 = password1 ? verifySignature(outSum, invId, signature, password1) : false
-  if (!ok2 && !ok1) return NextResponse.json({ error: "Bad signature" }, { status: 400 })
+  const ok1Test = isTest && password1Test ? verifySignature(outSum, invId, signature, password1Test) : false
+  if (!ok2 && !ok1 && !ok1Test) return NextResponse.json({ error: "Bad signature" }, { status: 400 })
   await processOrder(invId, outSum)
   return ack(invId)
 }
@@ -146,6 +159,8 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   const password2 = process.env.ROBO_PASSWORD2 || ""
   const password1 = process.env.ROBO_PASSWORD1 || ""
+  const isTest = process.env.ROBO_IS_TEST === "1"
+  const password1Test = process.env.ROBO_PASSWORD1_TEST || ""
   let bodyText = ""
   try { bodyText = await req.text() } catch {}
   const params = new URLSearchParams(bodyText)
@@ -155,7 +170,8 @@ export async function POST(req: Request) {
   if (!outSum || !invId || !signature) return NextResponse.json({ error: "Bad params" }, { status: 400 })
   const ok2 = password2 ? verifySignature(outSum, invId, signature, password2) : false
   const ok1 = password1 ? verifySignature(outSum, invId, signature, password1) : false
-  if (!ok2 && !ok1) return NextResponse.json({ error: "Bad signature" }, { status: 400 })
+  const ok1Test = isTest && password1Test ? verifySignature(outSum, invId, signature, password1Test) : false
+  if (!ok2 && !ok1 && !ok1Test) return NextResponse.json({ error: "Bad signature" }, { status: 400 })
   await processOrder(invId, outSum)
   return ack(invId)
 }
