@@ -75,8 +75,29 @@ export async function POST(req: Request) {
   const sortedKeys = Object.keys(shp).sort()
   const shpString = sortedKeys.map((k) => `${k}=${shp[k]}`).join(":")
 
-  const base = [merchant, out, String(invId), password1ToUse].join(":")
-  const signatureBase = shpString ? `${base}:${shpString}` : base
+  let receiptEncodedOnce = ""
+  let receiptEncodedTwice = ""
+  if (body.items && body.items.length > 0) {
+    try {
+      const receiptItems = body.items.map((it: any) => ({
+        name: it.name || "Товар",
+        quantity: it.quantity || 1,
+        sum: (it.cost || 0) * (it.quantity || 1),
+        tax: it.tax || "none",
+        payment_method: it.paymentMethod || "full_prepayment",
+        payment_object: it.paymentObject || "commodity"
+      }))
+      const receiptJson = JSON.stringify({ items: receiptItems })
+      receiptEncodedOnce = encodeURIComponent(receiptJson)
+      receiptEncodedTwice = encodeURIComponent(receiptEncodedOnce)
+    } catch {}
+  }
+
+  const baseParts = [merchant, out, String(invId)]
+  if (receiptEncodedTwice) baseParts.push(receiptEncodedTwice)
+  baseParts.push(password1ToUse as string)
+  let signatureBase = baseParts.join(":")
+  if (shpString) signatureBase = `${signatureBase}:${shpString}`
   const signature = crypto.createHash("md5").update(signatureBase, "utf8").digest("hex")
   
   console.log(`[Robokassa] Base: ${signatureBase}`)
@@ -88,6 +109,7 @@ export async function POST(req: Request) {
   params.set("InvId", String(invId))
   params.set("Description", description)
   params.set("SignatureValue", signature)
+  if (receiptEncodedOnce) params.set("Receipt", receiptEncodedOnce)
   
   if (email) params.set("Email", email)
   sortedKeys.forEach((k) => params.set(k, shp[k]))
