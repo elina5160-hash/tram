@@ -2,6 +2,10 @@ import { NextResponse } from "next/server"
 import crypto from "node:crypto"
 import { getSupabaseClient, getServiceSupabaseClient } from "@/lib/supabase"
 
+function sanitizeText(input: string) {
+  return Array.from(input).filter((ch) => !/\p{Extended_Pictographic}/u.test(ch) && ch !== "\u200D" && ch !== "\uFE0F").join("")
+}
+
 export async function POST(req: Request) {
   const merchant = process.env.ROBO_MERCHANT_LOGIN?.trim()
   const password1Raw = process.env.ROBO_PASSWORD1?.trim()
@@ -14,15 +18,23 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Missing Robokassa credentials" }, { status: 500 })
   }
   
-  let body: { 
-    outSum?: number; 
-    description?: string; 
-    email?: string; 
-    customerInfo?: any;
-    promoCode?: string; 
-    refCode?: string;
-    items?: any[];
-    invId?: number;
+  type ReceiptItemInput = {
+    name?: string
+    quantity?: number
+    cost?: number
+    tax?: string
+    paymentMethod?: string
+    paymentObject?: string
+  }
+  let body: {
+    outSum?: number
+    description?: string
+    email?: string
+    customerInfo?: unknown
+    promoCode?: string
+    refCode?: string
+    items?: ReceiptItemInput[]
+    invId?: number
   } = {}
   
   try {
@@ -34,7 +46,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid amount" }, { status: 400 })
   }
   
-  const description = body.description || "Оплата заказа"
+  const description = sanitizeText(body.description || "Оплата заказа")
   const email = body.email || ""
   // Use provided invId if valid number, else generate new one
   const invId = body.invId && typeof body.invId === "number" ? body.invId : Math.floor(Date.now() / 1000)
@@ -79,8 +91,8 @@ export async function POST(req: Request) {
   let receiptEncodedTwice = ""
   if (body.items && body.items.length > 0) {
     try {
-      const receiptItems = body.items.map((it: any) => ({
-        name: it.name || "Товар",
+      const receiptItems = body.items.map((it: ReceiptItemInput) => ({
+        name: sanitizeText(it.name || "Товар"),
         quantity: it.quantity || 1,
         sum: (it.cost || 0) * (it.quantity || 1),
         tax: it.tax || "none",
@@ -94,7 +106,7 @@ export async function POST(req: Request) {
   }
 
   const baseParts = [merchant, out, String(invId)]
-  if (receiptEncodedTwice) baseParts.push(receiptEncodedTwice)
+  if (receiptEncodedOnce) baseParts.push(receiptEncodedOnce)
   baseParts.push(password1ToUse as string)
   let signatureBase = baseParts.join(":")
   if (shpString) signatureBase = `${signatureBase}:${shpString}`
