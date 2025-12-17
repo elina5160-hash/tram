@@ -88,7 +88,7 @@ export default function HomePage() {
           className="mt-3 h-[220px] relative rounded-[20px] overflow-hidden cursor-pointer"
           onClick={() => setAdminOpen(true)}
         >
-          <Image src="/2 51.png" alt="Афиша" fill className="object-contain rounded-[20px]" priority />
+          <Image src="/нг.png" alt="Афиша" fill className="object-contain rounded-[20px]" priority />
         </div>
 
         <div className="mt-2 -mx-4 h-[34px] relative overflow-hidden bg-[#0E1C1D]/60">

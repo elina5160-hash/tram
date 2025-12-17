@@ -12,7 +12,7 @@
   { "id": 12, "title": "Энзимный напиток Детский", "price": "750 руб.", "image": "/Etra PROMO strz Detskii.mp4", "category": "drinks" },
   { "id": 13, "title": "Энзимный напиток Хмель", "price": "900 руб / 1л", "image": "/хмель1.png", "category": "drinks" },
   { "id": 14, "title": "Энзимный напиток Розлинг", "price": "800 руб / 1л", "image": "/розлинг1.jpg", "category": "drinks" },
-  { "id": 15, "title": "Полезный энергетик", "price": "750 руб / 1л", "image": "/2 51.png", "category": "drinks" },
+  { "id": 15, "title": "Полезный энергетик", "price": "750 руб / 1л", "image": "/нг.png", "category": "drinks" },
   { "id": 16, "title": "Энзимный напиток Рислинг", "price": "800 руб.", "image": "/рислинг1.png", "category": "drinks" },
   { "id": 17, "title": "Энзимный напиток Апельсин", "price": "800 руб.", "image": "/Etra PROMO ORANGE-2.mp4", "category": "drinks" },
   { "id": 18, "title": "Антипаразитарные пребиотики ПАРАЗИТОФФ", "price": "750 руб.", "image": "/PARAZITOFF 1500x2667 9-16 PROMO-4_1.mp4", "category": "prebiotics" },
