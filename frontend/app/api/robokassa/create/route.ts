@@ -59,10 +59,8 @@ export async function POST(req: Request) {
   }
 
   if (client) {
-    // Получаем текущее время в формате HH:mm:ss для поля updated_at (тип time)
     const currentTime = new Date().toISOString().split('T')[1].split('.')[0];
-
-    const { error } = await client.from("orders").insert({
+    const { error } = await client.from("pending_orders").insert({
       id: invId,
       total_amount: outSum,
       items: body.items || [],
@@ -72,9 +70,8 @@ export async function POST(req: Request) {
       status: 'pending',
       updated_at: currentTime
     })
-    
     if (error) {
-      console.error("Error creating order in Supabase:", error)
+      console.error("Error creating pending order in Supabase:", error)
     }
   }
 

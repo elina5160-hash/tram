@@ -16,45 +16,60 @@ function ack(invId: string) {
 async function processOrder(invId: string, outSum: string) {
     const client = getServiceSupabaseClient()
     if (!client) return
-
     try {
         const { data: order } = await client.from("orders").select('*').eq("id", Number(invId)).single()
-        
-        if (order && order.status !== 'paid' && order.status !== 'Оплачен') {
-             // Mark as paid
-             await client.from("orders").update({ 
-                 status: "Оплачен",
-                 ok: "true" 
-             }).eq("id", Number(invId))
-             
-             // --- CONTEST LOGIC ---
-             const amount = Number(outSum)
-             const tickets = Math.floor(amount / 1000)
-             // Check client_id in customer_info (jsonb)
-             const clientId = order.customer_info?.client_id
-             
-             // 1. Buyer Tickets
-             if (tickets > 0 && clientId) {
-                 await addTickets(clientId, tickets, 'purchase_reward', invId)
-             }
-             
-             // 2. Promo Code Referrer (Method 3: +2 tickets)
-             const promoCode = order.promo_code
-             if (promoCode) {
-                 const { data: owner } = await client.from('contest_participants').select('user_id').eq('personal_promo_code', promoCode).single()
-                 // Prevent self-referral bonus if they used their own code (if allowed)
-                 if (owner && String(owner.user_id) !== String(clientId)) {
-                     await addTickets(owner.user_id, 2, 'friend_purchase_promo', invId)
-                 }
-             }
-             
-             // 3. Referral Link Bonus (Method 2 Bonus: +1 ticket)
-             if (clientId) {
-                 const { data: referral } = await client.from('contest_referrals').select('referrer_id').eq('referee_id', clientId).single()
-                 if (referral) {
-                      await addTickets(referral.referrer_id, 1, 'referral_purchase_bonus', invId)
-                 }
-             }
+        let finalOrder = order
+        if (!finalOrder) {
+            const { data: pending } = await client.from("pending_orders").select('*').eq("id", Number(invId)).single()
+            if (pending) {
+                const paidAt = new Date().toISOString()
+                const items = pending.items || []
+                const totalQty = Array.isArray(items) ? items.reduce((s: number, it: unknown) => {
+                    if (typeof it === 'object' && it !== null) {
+                        const obj = it as Record<string, unknown>
+                        const q = obj.quantity ?? obj.qty
+                        const qn = typeof q === 'number' ? q : Number(q || 0)
+                        return s + (isNaN(qn as number) ? 0 : (qn as number))
+                    }
+                    return s
+                }, 0) : 0
+                await client.from("orders").insert({
+                    id: Number(invId),
+                    total_amount: Number(outSum),
+                    items,
+                    customer_info: pending.customer_info || {},
+                    promo_code: pending.promo_code,
+                    ref_code: pending.ref_code,
+                    status: "Оплачен",
+                    ok: "true",
+                    paid_at: paidAt,
+                    total_qty: totalQty
+                })
+                finalOrder = pending
+                await client.from("pending_orders").delete().eq("id", Number(invId))
+            }
+        }
+        if (finalOrder && finalOrder.status !== 'paid' && finalOrder.status !== 'Оплачен') {
+            await client.from("orders").update({ status: "Оплачен", ok: "true" }).eq("id", Number(invId))
+            const amount = Number(outSum)
+            const tickets = Math.floor(amount / 1000)
+            const clientId = finalOrder.customer_info?.client_id
+            if (tickets > 0 && clientId) {
+                await addTickets(clientId, tickets, 'purchase_reward', invId)
+            }
+            const promoCode = finalOrder.promo_code
+            if (promoCode) {
+                const { data: owner } = await client.from('contest_participants').select('user_id').eq('personal_promo_code', promoCode).single()
+                if (owner && String(owner.user_id) !== String(clientId)) {
+                    await addTickets(owner.user_id, 2, 'friend_purchase_promo', invId)
+                }
+            }
+            if (clientId) {
+                const { data: referral } = await client.from('contest_referrals').select('referrer_id').eq('referee_id', clientId).single()
+                if (referral) {
+                    await addTickets(referral.referrer_id, 1, 'referral_purchase_bonus', invId)
+                }
+            }
         }
     } catch (e) {
         console.error("Error processing order", e)

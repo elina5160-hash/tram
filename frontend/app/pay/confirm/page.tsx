@@ -1,18 +1,27 @@
 "use client"
-import { useMemo, Suspense } from "react"
+import { useMemo, Suspense, useEffect, useState } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import BackButton from "@/components/ui/back-button"
 import BottomBanner from "@/components/ui/bottom-banner"
 import { HoverButton } from "@/components/ui/hover-button"
-import { getCart } from "@/lib/cart"
+import { getCart, clearCart } from "@/lib/cart"
 import products from "@/data/products.json"
 import { getPriceValue } from "@/lib/price"
+
+type ProductShort = { id: number; price?: string }
+type ParsedItem = { name?: string; sum?: number; quantity?: number }
+type TelegramWindow = { Telegram?: { WebApp?: { openLink?: (url: string) => void } } }
 
 function ConfirmContent() {
   const params = useSearchParams()
   const router = useRouter()
   const payUrl = params.get("url") || ""
   const invId = params.get("invId") || ""
+  const outSumSuccess = params.get("OutSum") || ""
+  const invIdSuccess = params.get("InvId") || ""
+  const signatureSuccess = params.get("SignatureValue") || ""
+  const [isPaid, setIsPaid] = useState(false)
+  const [statusText, setStatusText] = useState("")
 
   const items = useMemo(() => getCart(), [])
   const parsed = useMemo(() => {
@@ -22,8 +31,8 @@ function ConfirmContent() {
       const r = u.searchParams.get("Receipt")
       const out = Number(u.searchParams.get("OutSum") || 0)
       if (!r) return { items: [], out }
-      const json = JSON.parse(r)
-      const arr = Array.isArray(json.items) ? json.items : []
+      const json = JSON.parse(r) as { items?: ParsedItem[] }
+      const arr: ParsedItem[] = Array.isArray(json.items) ? json.items as ParsedItem[] : []
       return { items: arr, out }
     } catch {
       return { items: [], out: 0 }
@@ -60,7 +69,7 @@ function ConfirmContent() {
 
   try {
     const priceFromProducts: Record<number, number> = {}
-    ;(products as any[]).forEach((p: any) => {
+    ;(products as unknown as ProductShort[]).forEach((p) => {
       const v = getPriceValue(p.price || "")
       if (typeof p.id === "number" && v > 0) priceFromProducts[p.id] = v
     })
@@ -71,7 +80,29 @@ function ConfirmContent() {
   } catch {}
 
   const total = items.reduce((sum, it) => sum + (catalogPrices[Number(it.id)] || 0) * (it.qty || 1), 0)
-  const totalParsed = parsed.items.reduce((s: number, it: any) => s + Number(it.sum || 0), 0) || parsed.out
+  const totalParsed = parsed.items.reduce((s: number, it: ParsedItem) => s + Number(it.sum || 0), 0) || parsed.out
+
+  useEffect(() => {
+    const hasSuccessParams = !!(outSumSuccess && invIdSuccess && signatureSuccess)
+    if (!hasSuccessParams) return
+    const run = async () => {
+      try {
+        const qs = new URLSearchParams({ OutSum: outSumSuccess, InvId: invIdSuccess, SignatureValue: signatureSuccess })
+        const res = await fetch(`/api/robokassa/result?${qs.toString()}`, { method: "GET" })
+        if (res.ok) {
+          clearCart()
+          setIsPaid(true)
+          setStatusText(`Оплата подтверждена. Заказ № ${invIdSuccess}`)
+        } else {
+          setStatusText("Оплата подтверждена, но подтверждение на сервере не прошло. Свяжитесь с поддержкой.")
+        }
+      } catch {
+        setStatusText("Ошибка при подтверждении оплаты. Свяжитесь с поддержкой.")
+      }
+    }
+    run()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [outSumSuccess, invIdSuccess, signatureSuccess])
 
   return (
     <div className="min-h-screen w-full bg-white flex flex-col justify-start relative pb-56">
@@ -97,7 +128,7 @@ function ConfirmContent() {
           </div>
         ) : (
           <div className="mt-4 space-y-3">
-            {parsed.items.map((it: any, idx: number) => (
+            {parsed.items.map((it: ParsedItem, idx: number) => (
               <div key={idx} className="rounded-[12px] border border-gray-200 p-3 flex items-center justify-between">
                 <div className="text-[13px] font-medium truncate" style={{ color: "#000000" }}>{String(it.name || "Товар")}</div>
                 <div className="text-[12px]" style={{ color: "#000000" }}>{Number(it.sum || 0).toLocaleString("ru-RU")} × {it.quantity || 1}</div>
@@ -110,10 +141,15 @@ function ConfirmContent() {
           </div>
         )}
 
+        {isPaid && (
+          <div className="mt-4 rounded-[12px] border border-green-300 bg-green-50 p-3 text-[13px]" style={{ color: "#0F5132" }}>
+            {statusText || "Оплата подтверждена"}
+          </div>
+        )}
         <div className="mt-6 flex flex-col gap-2">
           <HoverButton
             className="w-full rounded-[12px] bg-[#6800E9] text-white px-4 py-3 text-[13px]"
-            aria-disabled={!payUrl}
+            aria-disabled={!payUrl || isPaid}
             onClick={() => {
               if (!payUrl) {
                 alert("Ссылка на оплату не получена. Вернитесь в корзину и попробуйте ещё раз.")
@@ -121,9 +157,10 @@ function ConfirmContent() {
                 return
               }
               try {
-                const tg = (typeof window !== "undefined" ? (window as any).Telegram?.WebApp : undefined)
-                if (tg && typeof tg.openLink === "function") {
-                  tg.openLink(payUrl)
+                const tw = (typeof window !== "undefined" ? (window as unknown as TelegramWindow) : undefined)
+                const openLink = tw?.Telegram?.WebApp?.openLink
+                if (typeof openLink === "function") {
+                  openLink(payUrl)
                 } else {
                   window.open(payUrl, "_blank", "noopener,noreferrer")
                 }
@@ -140,7 +177,7 @@ function ConfirmContent() {
           >
             Вернуться в корзину
           </HoverButton>
-          {typeof window !== "undefined" && (window as any).Telegram?.WebApp && (
+          {typeof window !== "undefined" && !!((window as unknown as TelegramWindow).Telegram?.WebApp) && (
             <div className="text-[12px] text-gray-600 text-center">Если платёж недоступен внутри Telegram, откроем ссылку в браузере.</div>
           )}
         </div>

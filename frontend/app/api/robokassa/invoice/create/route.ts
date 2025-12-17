@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server"
 import crypto from "node:crypto"
 import { getSupabaseClient, getServiceSupabaseClient } from "@/lib/supabase"
-import { sendTelegramMessage } from "@/lib/telegram"
 
 function toBase64Url(input: string) {
   return Buffer.from(input, "utf8").toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "")
@@ -22,7 +21,7 @@ export async function POST(req: Request) {
     outSum?: number
     description?: string
     email?: string
-    customerInfo?: any
+    customerInfo?: unknown
     promoCode?: string
     refCode?: string
     invoiceItems?: { name: string; quantity: number; cost: number; tax?: string; paymentMethod?: string; paymentObject?: string }[]
@@ -50,10 +49,8 @@ export async function POST(req: Request) {
   }
   
   if (client) {
-    // Получаем текущее время в формате HH:mm:ss для поля updated_at (тип time)
     const currentTime = new Date().toISOString().split('T')[1].split('.')[0];
-    
-    const { error } = await client.from("orders").insert({
+    const { error } = await client.from("pending_orders").insert({
       id: invId,
       total_amount: outSum,
       items: body.invoiceItems || [],
@@ -63,9 +60,8 @@ export async function POST(req: Request) {
       status: 'pending',
       updated_at: currentTime
     })
-
     if (error) {
-      console.error("Error creating order in Supabase:", error)
+      console.error("Error creating pending order in Supabase:", error)
     }
   }
 
