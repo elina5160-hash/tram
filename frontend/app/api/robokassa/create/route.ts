@@ -6,19 +6,6 @@ function sanitizeText(input: string) {
   return Array.from(input).filter((ch) => !/\p{Extended_Pictographic}/u.test(ch) && ch !== "\u200D" && ch !== "\uFE0F").join("")
 }
 
-function getBaseUrl(req: Request) {
-  const envUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.WEB_APP_URL || ""
-  if (envUrl) return envUrl.replace(/\/$/, "")
-  try {
-    const u = new URL(req.url)
-    const proto = (u.protocol || "https:").replace(":", "")
-    const host = req.headers.get("x-forwarded-host") || req.headers.get("host") || ""
-    const fp = req.headers.get("x-forwarded-proto") || proto
-    if (host) return `${fp}://${host}`
-  } catch {}
-  return ""
-}
-
 export async function POST(req: Request) {
   const merchant = process.env.ROBO_MERCHANT_LOGIN?.trim()
   const password1Raw = process.env.ROBO_PASSWORD1?.trim()
@@ -115,20 +102,8 @@ export async function POST(req: Request) {
     } catch {}
   }
 
-  const baseUrl = getBaseUrl(req)
-  const successUrl2 = baseUrl ? `${baseUrl}/pay/confirm` : ""
-  const failUrl2 = baseUrl ? `${baseUrl}/pay/fail` : ""
-  const resultUrl2 = baseUrl ? `${baseUrl}/api/robokassa/result` : ""
-  const successMethod = "GET"
-  const failMethod = "GET"
-
   const baseParts = [merchant, out, String(invId)]
   if (receiptEncodedOnce) baseParts.push(receiptEncodedOnce)
-  if (resultUrl2) baseParts.push(resultUrl2)
-  if (successUrl2) baseParts.push(successUrl2)
-  if (successUrl2) baseParts.push(successMethod)
-  if (failUrl2) baseParts.push(failUrl2)
-  if (failUrl2) baseParts.push(failMethod)
   baseParts.push(password1ToUse as string)
   let signatureBase = baseParts.join(":")
   if (shpString) signatureBase = `${signatureBase}:${shpString}`
@@ -150,13 +125,6 @@ export async function POST(req: Request) {
   if (isTest) params.set("IsTest", "1")
   
   params.set("Culture", "ru")
-  if (resultUrl2) params.set("ResultUrl2", resultUrl2)
-  if (successUrl2) params.set("SuccessUrl2", successUrl2)
-  if (successUrl2) params.set("SuccessUrl2Method", successMethod)
-  if (failUrl2) params.set("FailUrl2", failUrl2)
-  if (failUrl2) params.set("FailUrl2Method", failMethod)
-  if (successUrl2) params.set("SuccessURL", successUrl2)
-  if (failUrl2) params.set("FailURL", failUrl2)
   
   const url = `https://auth.robokassa.ru/Merchant/Index.aspx?${params.toString()}`
   return NextResponse.json({ url, invId })
