@@ -5,9 +5,7 @@ import { addTickets } from "@/lib/contest"
 
 export async function GET() {
   const client = getSupabaseClient()
-  if (!client) {
-    return NextResponse.json({ error: "Supabase client not initialized" }, { status: 500 })
-  }
+  const hasClient = !!client
 
   const testOrder = {
     id: Date.now(),
@@ -28,18 +26,23 @@ export async function GET() {
     ref_code: ""
   }
 
-  // Insert into Supabase
-  const { data, error } = await client.from("orders").insert(testOrder).select()
-
-  if (error) {
-    return NextResponse.json({ error: error.message, details: error }, { status: 500 })
+  let data: unknown = null
+  let error: any = null
+  if (hasClient) {
+    const currentTime = new Date().toISOString().split('T')[1].split('.')[0]
+    const res = await client!.from("orders").insert({ ...testOrder, updated_at: currentTime }).select()
+    data = res.data
+    error = res.error
+    if (error) {
+      return NextResponse.json({ error: error.message, details: error }, { status: 500 })
+    }
   }
 
   // --- TRIGGER CONTEST TICKETS ---
   // Simulate logic from robokassa/result
   const tickets = Math.floor(testOrder.total_amount / 1000) // 4 tickets
-  if (testOrder.customer_info.client_id) {
-       await addTickets(testOrder.customer_info.client_id, tickets, 'purchase_reward', String(testOrder.id))
+  if (hasClient && testOrder.customer_info.client_id) {
+    await addTickets(testOrder.customer_info.client_id, tickets, 'purchase_reward', String(testOrder.id))
   }
 
   // Send Telegram Notification
@@ -58,7 +61,8 @@ export async function GET() {
 Начислено билетов: ${tickets}
   `.trim()
 
-  await sendTelegramMessage(msg)
+  const chatId = String(process.env.TELEGRAM_ADMIN_CHAT_ID || '-1003590157576')
+  await sendTelegramMessage(msg, chatId)
 
-  return NextResponse.json({ success: true, data, telegram_sent: true, tickets_awarded: tickets })
+  return NextResponse.json({ success: true, data, telegram_sent: true, tickets_awarded: tickets, db_skipped: !hasClient })
 }

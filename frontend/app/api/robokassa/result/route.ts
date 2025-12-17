@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import crypto from "node:crypto"
 import { getServiceSupabaseClient } from "@/lib/supabase"
 import { addTickets } from "@/lib/contest"
+import { sendTelegramMessage } from "@/lib/telegram"
 
 function verifySignature(outSum: string, invId: string, signature: string, password2: string) {
   const base = `${outSum}:${invId}:${password2}`
@@ -48,6 +49,7 @@ async function processOrder(invId: string, outSum: string) {
                     }
                     return s
                 }, 0) : 0
+                const currentTime = new Date().toISOString().split('T')[1].split('.')[0]
                 await client.from("orders").insert({
                     id: Number(invId),
                     total_amount: Number(outSum),
@@ -58,14 +60,16 @@ async function processOrder(invId: string, outSum: string) {
                     status: "Оплачен",
                     ok: "true",
                     paid_at: paidAt,
-                    total_qty: totalQty
+                    total_qty: totalQty,
+                    updated_at: currentTime
                 })
                 finalOrder = pending
                 await client.from("pending_orders").delete().eq("id", Number(invId))
             }
         }
         if (finalOrder && finalOrder.status !== 'paid' && finalOrder.status !== 'Оплачен') {
-            await client.from("orders").update({ status: "Оплачен", ok: "true" }).eq("id", Number(invId))
+            const currentTime2 = new Date().toISOString().split('T')[1].split('.')[0]
+            await client.from("orders").update({ status: "Оплачен", ok: "true", updated_at: currentTime2 }).eq("id", Number(invId))
             const amount = Number(outSum)
             const tickets = Math.floor(amount / 1000)
             const clientId = finalOrder.customer_info?.client_id
@@ -85,6 +89,28 @@ async function processOrder(invId: string, outSum: string) {
                     await addTickets(referral.referrer_id, 1, 'referral_purchase_bonus', invId)
                 }
             }
+            try {
+              const itemsArr = Array.isArray(finalOrder.items) ? finalOrder.items : []
+              const lines = itemsArr.map((it: any) => {
+                const name = String((it?.name ?? it?.title ?? 'Товар'))
+                const qty = Number((it?.quantity ?? it?.qty ?? 1))
+                const sum = Number(it?.sum ?? it?.cost ?? 0)
+                return `• ${name} × ${qty} — ${sum.toLocaleString('ru-RU')} руб.`
+              })
+              const infoText = formatCustomerInfo(finalOrder.customer_info, '')
+              const promo = finalOrder.promo_code ? `\nПромокод: ${finalOrder.promo_code}` : ''
+              const ref = finalOrder.ref_code ? `\nРеф-код: ${finalOrder.ref_code}` : ''
+              const text = [
+                `<b>Оплачен заказ № ${invId}</b>`,
+                `Сумма: ${Number(outSum).toLocaleString('ru-RU')} руб.`,
+                lines.length ? lines.join('\n') : '',
+                infoText ? `\n${infoText}` : '',
+                promo,
+                ref,
+              ].filter(Boolean).join('\n')
+              const chatId = String(process.env.TELEGRAM_ADMIN_CHAT_ID || '-5037927554')
+              await sendTelegramMessage(text, chatId)
+            } catch {}
         }
     } catch (e) {
         console.error("Error processing order", e)
