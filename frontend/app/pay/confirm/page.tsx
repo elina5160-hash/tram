@@ -7,6 +7,7 @@ import { HoverButton } from "@/components/ui/hover-button"
 import { getCart, clearCart } from "@/lib/cart"
 import products from "@/data/products.json"
 import { getPriceValue } from "@/lib/price"
+import { getSupabaseClient } from "@/lib/supabase"
 
 type ProductShort = { id: number; price?: string }
 type ParsedItem = { name?: string; sum?: number; quantity?: number }
@@ -103,6 +104,31 @@ function ConfirmContent() {
     run()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [outSumSuccess, invIdSuccess, signatureSuccess])
+
+  useEffect(() => {
+    if (!invId || isPaid) return
+    const client = getSupabaseClient()
+    if (!client) return
+    let stopped = false
+    let attempts = 0
+    const tick = async () => {
+      if (stopped) return
+      attempts += 1
+      try {
+        const { data } = await client.from('orders').select('status').eq('id', Number(invId)).single()
+        if (data && (data.status === 'Оплачен' || data.status === 'paid')) {
+          clearCart()
+          setIsPaid(true)
+          setStatusText(`Оплата подтверждена. Заказ № ${invId}`)
+          stopped = true
+          return
+        }
+      } catch {}
+      if (attempts < 30) setTimeout(tick, 2000)
+    }
+    tick()
+    return () => { stopped = true }
+  }, [invId, isPaid])
 
   return (
     <div className="min-h-screen w-full bg-white flex flex-col justify-start relative pb-56">
