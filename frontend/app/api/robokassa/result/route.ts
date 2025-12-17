@@ -97,32 +97,28 @@ export async function GET(req: Request) {
   const invId = url.searchParams.get("InvId") || ""
   const signature = url.searchParams.get("SignatureValue") || ""
   const password2 = process.env.ROBO_PASSWORD2 || ""
-  
-  if (!password2) return NextResponse.json({ error: "Missing password2" }, { status: 500 })
+  const password1 = process.env.ROBO_PASSWORD1 || process.env.NEXT_PUBLIC_ROBO_MERCHANT_LOGIN ? process.env.ROBO_PASSWORD1 || "" : ""
   if (!outSum || !invId || !signature) return NextResponse.json({ error: "Bad params" }, { status: 400 })
-  if (!verifySignature(outSum, invId, signature, password2)) return NextResponse.json({ error: "Bad signature" }, { status: 400 })
-  
+  const ok2 = password2 ? verifySignature(outSum, invId, signature, password2) : false
+  const ok1 = password1 ? verifySignature(outSum, invId, signature, password1) : false
+  if (!ok2 && !ok1) return NextResponse.json({ error: "Bad signature" }, { status: 400 })
   await processOrder(invId, outSum)
-  
   return ack(invId)
 }
 
 export async function POST(req: Request) {
   const password2 = process.env.ROBO_PASSWORD2 || ""
-  if (!password2) return NextResponse.json({ error: "Missing password2" }, { status: 500 })
-  
+  const password1 = process.env.ROBO_PASSWORD1 || ""
   let bodyText = ""
   try { bodyText = await req.text() } catch {}
   const params = new URLSearchParams(bodyText)
-  
   const outSum = params.get("OutSum") || ""
   const invId = params.get("InvId") || ""
   const signature = params.get("SignatureValue") || ""
-  
   if (!outSum || !invId || !signature) return NextResponse.json({ error: "Bad params" }, { status: 400 })
-  if (!verifySignature(outSum, invId, signature, password2)) return NextResponse.json({ error: "Bad signature" }, { status: 400 })
-  
+  const ok2 = password2 ? verifySignature(outSum, invId, signature, password2) : false
+  const ok1 = password1 ? verifySignature(outSum, invId, signature, password1) : false
+  if (!ok2 && !ok1) return NextResponse.json({ error: "Bad signature" }, { status: 400 })
   await processOrder(invId, outSum)
-  
   return ack(invId)
 }
