@@ -13,6 +13,21 @@ function ack(invId: string) {
   return new Response(`OK${invId}`)
 }
 
+function formatCustomerInfo(ci: unknown, emailFallback: string = "") {
+  if (typeof ci === "string") return ci.trim()
+  if (typeof ci === "object" && ci !== null) {
+    const o = ci as Record<string, unknown>
+    const name = typeof o.name === "string" ? o.name.trim() : ""
+    const phone = typeof o.phone === "string" ? o.phone.trim() : ""
+    const address = typeof o.address === "string" ? o.address.trim() : ""
+    const cdek = typeof o.cdek === "string" ? o.cdek.trim() : ""
+    const email = typeof o.email === "string" ? o.email.trim() : emailFallback
+    const addr = address ? `${address} (курьер)` : (cdek ? `ПВЗ СДЭК: ${cdek}` : "")
+    return [name, phone, addr, email].filter(Boolean).join("\n")
+  }
+  return emailFallback
+}
+
 async function processOrder(invId: string, outSum: string) {
     const client = getServiceSupabaseClient()
     if (!client) return
@@ -37,7 +52,7 @@ async function processOrder(invId: string, outSum: string) {
                     id: Number(invId),
                     total_amount: Number(outSum),
                     items,
-                    customer_info: pending.customer_info || {},
+                    customer_info: formatCustomerInfo(pending.customer_info, ""),
                     promo_code: pending.promo_code,
                     ref_code: pending.ref_code,
                     status: "Оплачен",
