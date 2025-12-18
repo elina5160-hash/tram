@@ -64,7 +64,28 @@ export async function POST(req: Request) {
       return created
     }
 
-    // /start отключен, чтобы не конфликтовать с другим ботом
+    // Тихая обработка /start: записываем реферала, но не отправляем сообщения
+    if (/^\/start\b/i.test(text)) {
+      const payload = text.split(/\s+/)[1] || ""
+      if (payload.startsWith('ref_')) {
+        const raw = Number(payload.replace('ref_', ''))
+        const referrerId = Number.isFinite(raw) ? raw : 0
+        if (referrerId && referrerId > 0 && referrerId !== userId) {
+          if (sup) {
+            const { data: existing } = await sup.from('contest_referrals').select('*').eq('referee_id', userId).single()
+            if (!existing) {
+              await sup.from('contest_referrals').insert({ referrer_id: referrerId, referee_id: userId, status: 'joined' })
+              await logEvent('referral_joined', 'Referral recorded silently via /start', { referee: userId, referrer: referrerId })
+            }
+          } else {
+            await logEvent('referral_no_db', 'Supabase not configured', { referee: userId, referrer: referrerId })
+          }
+        } else {
+          await logEvent('referral_invalid', 'Invalid referral payload', { userId, payload })
+        }
+      }
+      return NextResponse.json({ ok: true })
+    }
 
     // /tickets отключен
 
@@ -84,6 +105,20 @@ export async function POST(req: Request) {
       const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(refLink)}&text=${encodeURIComponent('Присоединяйся к конкурсу "Дари Здоровье" и выигрывай призы!')}`
       const replyMarkup = { inline_keyboard: [ [{ text: 'Переслать', url: shareUrl }] ] }
       await sendMessage(greeting, chatId, replyMarkup)
+      return NextResponse.json({ ok: true })
+    }
+
+    // Приветственный бонус по команде /welcom(e)
+    if (/^\/welcom(e)?\b/i.test(text)) {
+      const user = await makeUser()
+      if (sup) {
+        const { data: ref } = await sup.from('contest_referrals').select('status, referrer_id').eq('referee_id', userId).single()
+        if (ref && ref.status === 'joined') {
+          try { await addTickets(userId, 1, 'welcome_bonus', 'ref_welcome') } catch {}
+          try { await sup.from('contest_referrals').update({ status: 'welcomed' }).eq('referee_id', userId) } catch {}
+        }
+      }
+      await sendMessage('Тебя пригласили по реферальной ссылке. Теперь ты получаешь приветственный бонус от компании Этра.', chatId)
       return NextResponse.json({ ok: true })
     }
 
