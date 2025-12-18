@@ -134,6 +134,28 @@ export async function POST(req: Request) {
 
     if (isStart || isKonkurs) {
       const user = await makeUser()
+
+      // Referral handling
+      const startPayload = text.split(' ')[1]
+      if (isStart && startPayload && startPayload.startsWith('ref_') && sup) {
+          const referrerId = Number(startPayload.replace('ref_', ''))
+          if (!isNaN(referrerId) && referrerId !== userId) {
+             // Check if I was already referred or joined before?
+             // Actually we should check if 'referee_id' == userId exists in contest_referrals
+             const { count } = await sup.from('contest_referrals').select('*', { count: 'exact', head: true }).eq('referee_id', userId)
+             if (count === 0) {
+                 try {
+                    await sup.from('contest_referrals').insert({ referrer_id: referrerId, referee_id: userId, status: 'joined' })
+                    await addTickets(referrerId, 1, 'referral_bonus', `ref_${userId}`)
+                    // Notification to referrer is partly handled by addTickets (ticket info), but let's add context
+                    await sendMessage(`🤝 Ваш друг ${firstName} присоединился к конкурсу!`, String(referrerId))
+                 } catch (e) {
+                    console.error('Referral error', e)
+                 }
+             }
+          }
+      }
+
       let referralCount = 0
       if (sup) {
         const { count } = await sup.from('contest_referrals').select('*', { count: 'exact', head: true }).eq('referrer_id', userId)

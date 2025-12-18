@@ -41,6 +41,7 @@ export default function HomeClient() {
   const [pressedId, setPressedId] = useState<number | null>(null)
   const [menuOpen, setMenuOpen] = useState(false)
   const [catalogEntered, setCatalogEntered] = useState(false)
+  const [clientId, setClientId] = useState<string | null>(null)
   type MenuView = "grid" | "delivery" | "payment" | "contacts" | "reviews" | "returns" | "about" | "offer" | "help" | "stores"
   const [menuView, setMenuView] = useState<MenuView>("grid")
   const menuItems: { label: string; key: MenuView }[] = [
@@ -68,6 +69,8 @@ export default function HomeClient() {
       if (ref) {
         window.localStorage.setItem("referral_code", ref)
       }
+      const cid = p.get("client_id")
+      if (cid) setClientId(cid)
     } catch {}
   }, [])
 
@@ -78,7 +81,7 @@ export default function HomeClient() {
           <h1 className="text-xl font-semibold">Главная</h1>
           <div className="flex items-center gap-2">
             <Suspense fallback={null}>
-              <ContestBadge />
+              <ContestBadge clientId={clientId} />
             </Suspense>
             <button
               aria-label="Меню"
