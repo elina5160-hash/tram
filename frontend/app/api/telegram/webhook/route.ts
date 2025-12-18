@@ -26,6 +26,20 @@ async function logEvent(type: string, message: string, data?: unknown) {
   }
 }
 
+async function isSubscribedToOfficial(userId: number) {
+  const token = process.env.TELEGRAM_BOT_TOKEN || ""
+  if (!token || !userId) return false
+  const channel = '@etraproject_official'
+  try {
+    const res = await fetch(`https://api.telegram.org/bot${token}/getChatMember?chat_id=${encodeURIComponent(channel)}&user_id=${userId}`)
+    const data = await res.json()
+    const st = String(data?.result?.status || '')
+    return ['member', 'creator', 'administrator'].includes(st)
+  } catch {
+    return false
+  }
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json()
@@ -57,6 +71,13 @@ export async function POST(req: Request) {
     // /contest отключен
 
     if (/^\/konkurs(?:@\w+)?\b/i.test(text) || /^\/конкурс\b/i.test(text) || /(^|\s)konkurs(\s|$)/i.test(text) || /(^|\s)конкурс(\s|$)/i.test(text)) {
+      const subscribed = await isSubscribedToOfficial(userId)
+      if (!subscribed) {
+        const replyMarkup = { inline_keyboard: [ [{ text: 'Открыть канал ЭТРА', url: 'https://t.me/etraproject_official' }], [{ text: 'Проверить подписку', callback_data: 'check_sub' }] ] }
+        await sendMessage('Для участия подпишитесь на официальный канал @etraproject_official и снова отправьте команду «конкурс».', chatId, replyMarkup)
+        await logEvent('contest_not_subscribed', 'User not subscribed', { userId })
+        return NextResponse.json({ ok: true })
+      }
       const botUsername = process.env.TELEGRAM_BOT_USERNAME || String(update?.bot?.username || "")
       const refLink = `https://t.me/${botUsername}?start=ref_${userId}`
       const greeting = `🎄 Привет, ${firstName} | Разработка приложений и AI помощников!\nВот твоя реферальная ссылка для конкурса\n${refLink}`

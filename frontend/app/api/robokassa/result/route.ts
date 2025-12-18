@@ -107,11 +107,22 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
           let client = getServiceSupabaseClient()
           if (!client) client = getSupabaseClient()
           if (client) {
-            const { data: referral } = await client.from('contest_referrals').select('referrer_id,status').eq('referee_id', Number(payload.client)).single()
+            const refereeId = Number(payload.client)
+            // Create referral record based on ref code if not exists
+            if (payload.ref) {
+              const referrerId = Number(payload.ref)
+              if (Number.isFinite(referrerId) && referrerId > 0 && referrerId !== refereeId) {
+                const { data: existingRef } = await client.from('contest_referrals').select('referrer_id,referee_id').eq('referee_id', refereeId).single()
+                if (!existingRef) {
+                  await client.from('contest_referrals').insert({ referrer_id: referrerId, referee_id: refereeId, status: 'joined' })
+                }
+              }
+            }
+            const { data: referral } = await client.from('contest_referrals').select('referrer_id,status').eq('referee_id', refereeId).single()
             if (referral && referral.status !== 'paid') {
               await addTickets(referral.referrer_id, 1, 'referral_purchase_bonus', invId)
-              await addTickets(Number(payload.client), 1, 'welcome_bonus', invId)
-              await client.from('contest_referrals').update({ status: 'paid' }).eq('referee_id', Number(payload.client))
+              await addTickets(refereeId, 1, 'welcome_bonus', invId)
+              await client.from('contest_referrals').update({ status: 'paid' }).eq('referee_id', refereeId)
             }
           }
         }
