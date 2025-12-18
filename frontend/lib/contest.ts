@@ -27,13 +27,14 @@ export async function addTickets(userId: number | string, count: number, reason:
             const updatedTickets = [...currentTickets, ...newTickets]
             await supabase.from('contest_participants').update({ 
                 ticket_numbers: updatedTickets,
-                // Update status if needed
+                tickets: updatedTickets.length
             }).eq('user_id', String(userId))
         } else {
             // Create new participant
             await supabase.from('contest_participants').insert({
                 user_id: String(userId),
                 ticket_numbers: newTickets,
+                tickets: newTickets.length,
                 status: 'active',
                 contact_info: {} // We might want to fill this later
             })

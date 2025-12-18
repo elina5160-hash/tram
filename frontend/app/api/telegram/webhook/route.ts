@@ -141,6 +141,18 @@ export async function POST(req: Request) {
       }
 
       const subscribed = await isSubscribedToOfficial(userId)
+      let bonusTickets = 0
+      if (subscribed && sup) {
+        try {
+           const { count } = await sup.from('bot_logs').select('*', { count: 'exact', head: true }).eq('type', 'subscription_bonus').contains('data', { userId: userId })
+           if (count === 0) {
+               await addTickets(userId, 1, 'subscription_bonus')
+               await logEvent('subscription_bonus', 'Awarded subscription bonus', { userId })
+               bonusTickets = 1
+           }
+        } catch {}
+      }
+
       const tokenForMe = process.env.TELEGRAM_BOT_TOKEN || ""
       let botUsername = process.env.TELEGRAM_BOT_USERNAME || ""
       if (!botUsername && tokenForMe) {
@@ -152,7 +164,7 @@ export async function POST(req: Request) {
       }
       const refLink = botUsername ? `https://t.me/${botUsername}?start=ref_${userId}` : ''
       
-      const ticketCount = user.tickets || 0
+      const ticketCount = (user.tickets || 0) + bonusTickets
       
       let greeting = ''
       
