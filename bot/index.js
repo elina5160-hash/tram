@@ -209,6 +209,19 @@ bot.command('contest', async (ctx) => {
     )
 })
 
+bot.command('tickets', async (ctx) => {
+  const user = await getOrCreateUser(ctx)
+  if (!user) return
+  const count = Array.isArray(user.ticket_numbers) ? user.ticket_numbers.length : (user.tickets || 0)
+  const nums = Array.isArray(user.ticket_numbers) && user.ticket_numbers.length ? user.ticket_numbers.join(', ') : ''
+  const refLink = `https://t.me/${botUsername || ctx.botInfo.username}?start=ref_${ctx.from.id}`
+  const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(refLink)}&text=${encodeURIComponent('Присоединяйся к конкурсу "Дари Здоровье" и выигрывай призы!')}`
+  await ctx.replyWithHTML(
+    `🎫 Билетов: <b>${count}</b>${nums ? `\nНомера: ${nums}` : ''}`,
+    Markup.inlineKeyboard([[Markup.button.url('🔗 Поделиться ссылкой', shareUrl)]])
+  )
+})
+
 bot.launch()
 
 process.once('SIGINT', () => bot.stop('SIGINT'))

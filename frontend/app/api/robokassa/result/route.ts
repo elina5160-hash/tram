@@ -40,6 +40,23 @@ function isDup(k: string) {
   return false
 }
 
+async function appendToSheet(values: (string | number)[]) {
+  try {
+    const webhook = process.env.GOOGLE_SHEETS_WEBHOOK_URL || ""
+    if (webhook) {
+      await fetch(webhook, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ values }) })
+      return
+    }
+    const spreadsheetId = process.env.GOOGLE_SHEETS_SPREADSHEET_ID || ""
+    const range = process.env.GOOGLE_SHEETS_RANGE || "Sheet1!A1"
+    const token = process.env.GOOGLE_ACCESS_TOKEN || ""
+    if (spreadsheetId && token) {
+      const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(range)}:append?valueInputOption=USER_ENTERED`
+      await fetch(url, { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ values: [values] }) })
+    }
+  } catch {}
+}
+
 async function processOrder(invId: string, outSum: string, payload?: Record<string, string>) {
     let client = getServiceSupabaseClient()
     if (!client) {
@@ -84,6 +101,20 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
         const chatId = String(process.env.TELEGRAM_ADMIN_CHAT_ID || '-1003590157576')
         const replyMarkup = payload.client ? { inline_keyboard: [[{ text: 'Написать в личные сообщения', url: `tg://user?id=${payload.client}` }]] } : undefined
         await sendTelegramMessage(text, chatId, replyMarkup)
+        const row = [new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' }), invId, Number(outSum), contact.replace(/\n/g, ' | '), payload.ref || '']
+        await appendToSheet(row)
+        if (payload.client) {
+          let client = getServiceSupabaseClient()
+          if (!client) client = getSupabaseClient()
+          if (client) {
+            const { data: referral } = await client.from('contest_referrals').select('referrer_id,status').eq('referee_id', Number(payload.client)).single()
+            if (referral && referral.status !== 'paid') {
+              await addTickets(referral.referrer_id, 1, 'referral_purchase_bonus', invId)
+              await addTickets(Number(payload.client), 1, 'welcome_bonus', invId)
+              await client.from('contest_referrals').update({ status: 'paid' }).eq('referee_id', Number(payload.client))
+            }
+          }
+        }
       } catch (e) {
         console.error('Error sending telegram without DB', e)
       }
@@ -149,9 +180,11 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
                 }
             }
             if (clientId) {
-                const { data: referral } = await client.from('contest_referrals').select('referrer_id').eq('referee_id', clientId).single()
-                if (referral) {
+                const { data: referral } = await client.from('contest_referrals').select('referrer_id,status').eq('referee_id', clientId).single()
+                if (referral && referral.status !== 'paid') {
                     await addTickets(referral.referrer_id, 1, 'referral_purchase_bonus', invId)
+                    await addTickets(clientId, 1, 'welcome_bonus', invId)
+                    await client.from('contest_referrals').update({ status: 'paid' }).eq('referee_id', clientId)
                 }
             }
             try {
@@ -186,6 +219,8 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
               const chatId = String(process.env.TELEGRAM_ADMIN_CHAT_ID || '-1003590157576')
               const replyMarkup = clientId ? { inline_keyboard: [[{ text: 'Написать в личные сообщения', url: `tg://user?id=${clientId}` }]] } : undefined
               await sendTelegramMessage(text, chatId, replyMarkup)
+              const row = [new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' }), invId, Number(outSum), contactLines.replace(/\n/g, ' | '), finalOrder.ref_code || finalOrder.promo_code || '']
+              await appendToSheet(row)
             } catch {}
         }
     } catch (e) {
