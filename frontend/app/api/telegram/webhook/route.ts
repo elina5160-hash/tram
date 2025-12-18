@@ -93,12 +93,13 @@ export async function POST(req: Request) {
 
     const makeUser = async () => {
       if (!sup) return { user_id: userId, first_name: firstName, username: String(msg?.from?.username || ""), personal_promo_code: transliterate(firstName) + "15", tickets: 0, ticket_numbers: [] as string[] }
-      const { data: user } = await sup.from('contest_participants').select('*').eq('user_id', userId).single()
+      // Use String(userId) to ensure consistency with addTickets
+      const { data: user } = await sup.from('contest_participants').select('*').eq('user_id', String(userId)).single()
       if (user) return user
       let promo = transliterate(firstName) + "15"
       const { data: exists } = await sup.from('contest_participants').select('personal_promo_code').eq('personal_promo_code', promo).single()
       if (exists) promo = promo + String(userId).slice(-3)
-      const { data: created } = await sup.from('contest_participants').insert({ user_id: userId, first_name: firstName, username: String(msg?.from?.username || ""), personal_promo_code: promo, tickets: 0 }).select().single()
+      const { data: created } = await sup.from('contest_participants').insert({ user_id: String(userId), first_name: firstName, username: String(msg?.from?.username || ""), personal_promo_code: promo, tickets: 0 }).select().single()
       return created
     }
 
@@ -204,11 +205,14 @@ export async function POST(req: Request) {
       
       let greeting = ''
       
+      // Temporary Debug for Admin
+      const debugInfo = (String(userId) === '1287944066') ? `\n\n(Debug: DB Tickets=${user.tickets}, Bonus=${bonusTickets}, FoundUser=${!!user})` : ''
+
       if (isStart) {
         greeting = `🎄 Привет, ${firstName}
 
 Вот твоя реферальная ссылка для конкурса
-${refLink}`
+${refLink}${debugInfo}`
       } else {
         greeting = `🎄 Привет, ${firstName} | Разработка приложений и AI помощников!
 
@@ -216,7 +220,7 @@ ${refLink}`
 👥 Приглашено друзей: ${referralCount}
 
 Вот твоя реферальная ссылка для конкурса
-${refLink}`
+${refLink}${debugInfo}`
       }
 
       const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(refLink)}&text=${encodeURIComponent('Присоединяйся к конкурсу "Дари Здоровье" и выигрывай призы!')}`
