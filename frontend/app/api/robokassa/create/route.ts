@@ -60,7 +60,7 @@ export async function POST(req: Request) {
 
   if (client) {
     const currentTime = new Date().toISOString();
-    const { error } = await client.from("pending_orders").insert({
+    const { error } = await client.from("orders").insert({
       id: invId,
       total_amount: outSum,
       items: body.items || [],

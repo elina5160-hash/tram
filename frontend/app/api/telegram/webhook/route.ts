@@ -64,7 +64,7 @@ export async function POST(req: Request) {
       return created
     }
 
-    // /start полностью отключен здесь, чтобы не конфликтовать с сообщениями пазл-бота
+    
 
     // /tickets отключен
 
@@ -72,18 +72,17 @@ export async function POST(req: Request) {
 
     if (/^\/konkurs(?:@\w+)?\b/i.test(text) || /^\/конкурс\b/i.test(text) || /(^|\s)konkurs(\s|$)/i.test(text) || /(^|\s)конкурс(\s|$)/i.test(text)) {
       const subscribed = await isSubscribedToOfficial(userId)
-      if (!subscribed) {
-        const replyMarkup = { inline_keyboard: [ [{ text: 'Открыть канал ЭТРА', url: 'https://t.me/etraproject_official' }], [{ text: 'Проверить подписку', callback_data: 'check_sub' }] ] }
-        await sendMessage('Для участия подпишитесь на официальный канал @etraproject_official и снова отправьте команду «конкурс».', chatId, replyMarkup)
-        await logEvent('contest_not_subscribed', 'User not subscribed', { userId })
-        return NextResponse.json({ ok: true })
-      }
-      const botUsername = process.env.TELEGRAM_BOT_USERNAME || String(update?.bot?.username || "")
-      const refLink = `https://t.me/${botUsername}?start=ref_${userId}`
+      const botUsername = process.env.TELEGRAM_BOT_USERNAME || ""
+      const refLink = botUsername ? `https://t.me/${botUsername}?start=ref_${userId}` : ''
       const greeting = `🎄 Привет, ${firstName} | Разработка приложений и AI помощников!\nВот твоя реферальная ссылка для конкурса\n${refLink}`
       const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(refLink)}&text=${encodeURIComponent('Присоединяйся к конкурсу "Дари Здоровье" и выигрывай призы!')}`
       const replyMarkup = { inline_keyboard: [ [{ text: 'Переслать', url: shareUrl }] ] }
       await sendMessage(greeting, chatId, replyMarkup)
+      if (!subscribed) {
+        const replyMarkup2 = { inline_keyboard: [ [{ text: 'Открыть канал ЭТРА', url: 'https://t.me/etraproject_official' }] ] }
+        await sendMessage('Для участия подпишитесь на официальный канал @etraproject_official и снова отправьте команду «конкурс».', chatId, replyMarkup2)
+        await logEvent('contest_not_subscribed', 'User not subscribed', { userId })
+      }
       return NextResponse.json({ ok: true })
     }
 
