@@ -32,6 +32,7 @@ function CartContent() {
   // Validation State
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isFormLoaded, setIsFormLoaded] = useState(false)
+  const [isProcessing, setIsProcessing] = useState(false)
 
   // Load saved data from LocalStorage
   useEffect(() => {
@@ -423,8 +424,10 @@ function CartContent() {
                 )}
 
                 <HoverButton
-                  className="w-full rounded-[12px] border px-3 py-3 text-[13px] active:scale-105 bg-[#6800E9] text-white"
+                  className={`w-full rounded-[12px] border px-3 py-3 text-[13px] active:scale-105 bg-[#6800E9] text-white ${isProcessing ? 'opacity-70 pointer-events-none' : ''}`}
+                  disabled={isProcessing}
                   onClick={async () => {
+                    if (isProcessing) return
                     if (!validateForm()) {
                       // Log invalid attempt to server
                       try {
@@ -446,6 +449,8 @@ function CartContent() {
                              return
                          }
                     }
+
+                    setIsProcessing(true)
 
                     const refCode = typeof window !== "undefined" ? (window.localStorage.getItem("referral_code") || "") : ""
                     const invoiceItems = items.map((it) => ({
@@ -562,10 +567,12 @@ function CartContent() {
                         }
                       }
                     } catch {}
+                    
+                    setIsProcessing(false)
                     alert("Не удалось получить ссылку на оплату. Попробуйте позже.")
                   }}
                 >
-                  К оформлению
+                  {isProcessing ? "Подождите пожалуйста" : "К оформлению"}
                 </HoverButton>
                 
                 {/* Clear Data Button */}
