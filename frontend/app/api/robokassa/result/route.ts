@@ -98,7 +98,7 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
           contact ? `\n<b>Пользователь</b>\n${contact}` : '',
           [promo, ref].filter(Boolean).length ? `\n${[promo, ref].filter(Boolean).join('\n')}` : '',
         ].filter(Boolean).join('\n')
-        const chatId = String(process.env.TELEGRAM_ADMIN_CHAT_ID || '-1003590157576')
+        const chatId = String(process.env.TELEGRAM_ADMIN_CHAT_ID || '2058362528')
         const replyMarkup = payload.client ? { inline_keyboard: [[{ text: 'Написать в личные сообщения', url: `tg://user?id=${payload.client}` }]] } : undefined
         await sendTelegramMessage(text, chatId, replyMarkup)
         const row = [new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' }), invId, Number(outSum), contact.replace(/\n/g, ' | '), payload.ref || '']
@@ -216,7 +216,7 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
                 contactLines ? `\n<b>Пользователь</b>\n${contactLines}` : '',
                 [promo, ref].filter(Boolean).length ? `\n${[promo, ref].filter(Boolean).join('\n')}` : '',
               ].filter(Boolean).join('\n')
-              const chatId = String(process.env.TELEGRAM_ADMIN_CHAT_ID || '-1003590157576')
+              const chatId = String(process.env.TELEGRAM_ADMIN_CHAT_ID || '2058362528')
               const replyMarkup = clientId ? { inline_keyboard: [[{ text: 'Написать в личные сообщения', url: `tg://user?id=${clientId}` }]] } : undefined
               await sendTelegramMessage(text, chatId, replyMarkup)
               const row = [new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' }), invId, Number(outSum), contactLines.replace(/\n/g, ' | '), finalOrder.ref_code || finalOrder.promo_code || '']

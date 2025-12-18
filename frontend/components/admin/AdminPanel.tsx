@@ -5,17 +5,18 @@ import { ProductList } from "@/components/admin/ProductList"
 import { ProductForm } from "@/components/admin/ProductForm"
 import { BottomBannerEditor } from "./BottomBannerEditor"
 import { ContestTable } from "./ContestTable"
+import { OrdersTable } from "./OrdersTable"
 import { useProducts } from "@/hooks/useProducts"
 
 interface AdminPanelProps {
   onClose: () => void
 }
 
-type Tab = 'products' | 'bottom-banner' | 'contest'
+type Tab = 'products' | 'bottom-banner' | 'contest' | 'orders'
 
 export function AdminPanel({ onClose }: AdminPanelProps) {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [activeTab, setActiveTab] = useState<Tab>('products')
+  const [activeTab, setActiveTab] = useState<Tab>('orders')
   const [editingProduct, setEditingProduct] = useState<any | null>(null)
   const [isCreating, setIsCreating] = useState(false)
   const [mode, setMode] = useState<'initial' | 'list' | 'form'>('initial')
@@ -76,12 +77,20 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
                 >
                     Конкурс
                 </button>
+                <button
+                    onClick={() => handleTabChange('orders')}
+                    className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                        activeTab === 'orders' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                >
+                    Заказы
+                </button>
             </div>
           </div>
           <div className="flex items-center gap-3">
             <button
               onClick={() => {
-                if (activeTab === 'bottom-banner' || activeTab === 'contest') {
+                if (activeTab === 'bottom-banner' || activeTab === 'contest' || activeTab === 'orders') {
                   setActiveTab('products')
                   setMode('initial')
                 } else {
@@ -185,6 +194,8 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
             )
         ) : activeTab === 'contest' ? (
             <ContestTable />
+        ) : activeTab === 'orders' ? (
+            <OrdersTable />
         ) : (
             <BottomBannerEditor onBack={() => { setActiveTab('products'); setMode('initial') }} />
         )}
