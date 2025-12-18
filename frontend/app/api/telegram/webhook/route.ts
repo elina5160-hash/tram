@@ -56,7 +56,7 @@ export async function POST(req: Request) {
 
     // /contest отключен
 
-    if (/^\/konkurs\b/i.test(text)) {
+    if (/^\/konkurs(?:@\w+)?\b/i.test(text) || /^\/конкурс\b/i.test(text) || /(^|\s)konkurs(\s|$)/i.test(text) || /(^|\s)конкурс(\s|$)/i.test(text)) {
       const botUsername = process.env.TELEGRAM_BOT_USERNAME || String(update?.bot?.username || "")
       const refLink = `https://t.me/${botUsername}?start=ref_${userId}`
       const greeting = `🎄 Привет, ${firstName} | Разработка приложений и AI помощников!\nВот твоя реферальная ссылка для конкурса\n${refLink}`
