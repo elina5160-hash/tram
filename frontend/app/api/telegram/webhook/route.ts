@@ -109,8 +109,13 @@ export async function POST(req: Request) {
     // /contest отключен
 
     if (isStart || isKonkurs) {
-      await sendMessage('Привет! Проверка связи (v2).', chatId)
-      await sendMessage('Привет! Проверка связи (v2).', String(userId))
+      const user = await makeUser()
+      let referralCount = 0
+      if (sup) {
+        const { count } = await sup.from('contest_referrals').select('*', { count: 'exact', head: true }).eq('referrer_id', userId)
+        referralCount = count || 0
+      }
+
       const subscribed = await isSubscribedToOfficial(userId)
       const tokenForMe = process.env.TELEGRAM_BOT_TOKEN || ""
       let botUsername = process.env.TELEGRAM_BOT_USERNAME || ""
@@ -122,11 +127,24 @@ export async function POST(req: Request) {
         } catch {}
       }
       const refLink = botUsername ? `https://t.me/${botUsername}?start=ref_${userId}` : ''
-      const greeting = `🎄 Привет, ${firstName} | Разработка приложений и AI помощников!\nВот твоя реферальная ссылка для конкурса\n${refLink}`
+      
+      const ticketCount = user.tickets || 0
+      
+      const greeting = `🎄 Привет, ${firstName} | Разработка приложений и AI помощников!
+
+🎫 Твои билеты: ${ticketCount}
+👥 Приглашено друзей: ${referralCount}
+
+Вот твоя реферальная ссылка для конкурса
+${refLink}`
+
       const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(refLink)}&text=${encodeURIComponent('Присоединяйся к конкурсу "Дари Здоровье" и выигрывай призы!')}`
       const replyMarkup = { inline_keyboard: [ [{ text: 'Переслать', url: shareUrl }] ] }
       await sendMessage(greeting, chatId, replyMarkup)
-      await sendMessage(greeting, String(userId), replyMarkup)
+      if (String(userId) !== chatId) {
+        await sendMessage(greeting, String(userId), replyMarkup)
+      }
+      
       try { await logEvent('webhook_start', 'Handled start/konkurs', { userId, chatId, username: botUsername, subscribed }) } catch {}
       if (!subscribed) {
         const replyMarkup2 = { inline_keyboard: [ [{ text: 'Открыть канал ЭТРА', url: 'https://t.me/etraproject_official' }] ] }
