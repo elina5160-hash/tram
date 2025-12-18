@@ -1,26 +1,7 @@
 {
   "functions": {
-    "api/**/*": {
-      "excludeFiles": [
-        "public/**",
-        "frontend/public/**",
-        "**/*.mp4",
-        "**/*.png",
-        "**/*.jpg",
-        "**/*.jpeg",
-        "**/*.webp"
-      ]
-    },
     "app/api/**/*": {
-      "excludeFiles": [
-        "public/**",
-        "frontend/public/**",
-        "**/*.mp4",
-        "**/*.png",
-        "**/*.jpg",
-        "**/*.jpeg",
-        "**/*.webp"
-      ]
+      "excludeFiles": "public/**"
     }
   }
 }

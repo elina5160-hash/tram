@@ -22,10 +22,9 @@ const nextConfig: NextConfig = {
       { source: "/pay/fail", destination: "/pay/confirm?status=fail" },
     ]
   },
-  // Remove turbopack config if not using it explicitly or if it causes issues, 
-  // but keeping it if it was there is fine. 
-  // However, the previous config had `root: __dirname` which might be unnecessary or correct depending on setup.
-  // I will keep it but clean up.
+  outputFileTracingExcludes: {
+    'app/api/**/route.*': ['public/**']
+  },
 };
 
 export default nextConfig;
