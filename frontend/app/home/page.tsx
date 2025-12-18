@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -77,7 +77,9 @@ export default function HomePage() {
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-semibold">Главная</h1>
           <div className="flex items-center gap-2">
-            <ContestBadge />
+            <Suspense fallback={null}>
+              <ContestBadge />
+            </Suspense>
             <button
               aria-label="Меню"
               onClick={() => setMenuOpen(true)}
