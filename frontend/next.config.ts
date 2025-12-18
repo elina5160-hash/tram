@@ -6,19 +6,6 @@ const nextConfig: NextConfig = {
     formats: ['image/avif', 'image/webp'],
     minimumCacheTTL: 3600,
   },
-  outputFileTracingIgnores: [
-    'public/**',
-    '**/*.mp4',
-    '**/*.png',
-    '**/*.jpg',
-    '**/*.jpeg',
-    '**/*.webp',
-  ],
-  experimental: {
-    turbopack: {
-      root: __dirname,
-    },
-  },
   async redirects() {
     return [
       { source: "/", destination: "/home", permanent: false },
