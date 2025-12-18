@@ -103,119 +103,102 @@ async function getOrCreateUser(ctx) {
     return user
 }
 
+async function isSubscribedToOfficial(userId) {
+  const channel = '@etraproject_official'
+  try {
+    const res = await bot.telegram.getChatMember(channel, userId)
+    const st = String(res && res.status ? res.status : '')
+    return ['member', 'creator', 'administrator'].includes(st)
+  } catch (e) {
+    return false
+  }
+}
+ 
+if (false) {
 bot.on('text', async (ctx) => {
   const msg = (ctx.message && ctx.message.text) ? String(ctx.message.text) : ''
   const isStart = /^\/start\b/i.test(msg)
-  if (!isStart) return
+  const isKonkurs = /^\/konkurs(?:@\w+)?\b/i.test(msg) || /^\/конкурс\b/i.test(msg) || /(^|\s)konkurs(\s|$)/i.test(msg) || /(^|\s)конкурс(\s|$)/i.test(msg)
+  if (!isStart && !isKonkurs) return
   const userId = ctx.from.id
-  const user = await getOrCreateUser(ctx)
-  
-  if (!user) {
-      return ctx.reply('Произошла ошибка при регистрации в конкурсе.')
+
+  const subscribed = await isSubscribedToOfficial(userId)
+  if (!subscribed) {
+    const keyboardSub = Markup.inlineKeyboard([[Markup.button.url('Открыть канал ЭТРА', 'https://t.me/etraproject_official')]])
+    await ctx.reply('Для участия подпишитесь на официальный канал @etraproject_official и снова отправьте команду «start».', keyboardSub)
+    return
   }
 
-  // Handle Referral
+  const user = await getOrCreateUser(ctx)
+  if (!user) {
+    await ctx.reply('Произошла ошибка при регистрации в конкурсе.')
+    return
+  }
+
   const startPayload = (ctx.startPayload || ctx.payload || '')
-  
-  if (startPayload.startsWith('ref_')) {
-      const referrerId = startPayload.replace('ref_', '')
-      
-      // Prevent self-referral
-      if (referrerId && referrerId != userId) {
-          if (supabase) {
-            // Check if referral record exists
-            const { data: existingRef } = await supabase
-                .from('contest_referrals')
-                .select('*')
-                .eq('referee_id', userId)
-                .single()
-              
-            if (!existingRef) {
-                // Record referral
-                const { error: refError } = await supabase.from('contest_referrals').insert({
-                    referrer_id: referrerId,
-                    referee_id: userId,
-                    status: 'joined'
-                })
-              
-                if (!refError) {
-                    // Count referrals for referrer
-                    const { count } = await supabase
-                        .from('contest_referrals')
-                        .select('*', { count: 'exact', head: true })
-                        .eq('referrer_id', referrerId)
-                    
-                    let reward = 0
-                    if (count === 3) reward = 1
-                    if (count === 5) reward = 2
-                    if (count === 10) reward = 5
-                    
-                    // Notify Referrer
-                    if (reward > 0) {
-                        // Add tickets
-                        const { data: refUser } = await supabase.from('contest_participants').select('tickets').eq('user_id', referrerId).single()
-                        if (refUser) {
-                            await supabase.from('contest_participants').update({ tickets: refUser.tickets + reward }).eq('user_id', referrerId)
-                            
-                            // Log
-                            await supabase.from('contest_tickets_log').insert({
-                                user_id: referrerId,
-                                amount: reward,
-                                reason: `referral_milestone_${count}`
-                            })
-                            
-                            try {
-                                await bot.telegram.sendMessage(referrerId, `🎁 <b>Поздравляем!</b>\nВы пригласили ${count} друзей и получили +${reward} 🎟 билетов!`, { parse_mode: 'HTML' })
-                            } catch (e) {}
-                        }
-                    } else {
-                        try {
-                            await bot.telegram.sendMessage(referrerId, `👋 Новый друг присоединился по вашей ссылке! (Всего приглашено: ${count})`)
-                        } catch (e) {}
-                    }
-                }
-            }
-          } else {
-            // Supabase not configured: still notify referrer and admin so actions are visible in real time
-            try {
-              // Notify referrer directly (best-effort)
-              await bot.telegram.sendMessage(referrerId, `👋 По вашей ссылке присоединился новый участник (ID: ${userId}). Проверьте админку для деталей.`)
-            } catch (e) {
-              console.error('Failed to notify referrer without DB', e)
-            }
-            try {
-              const adminChat = process.env.TELEGRAM_ADMIN_CHAT_ID
-              if (adminChat) {
-                await bot.telegram.sendMessage(adminChat, `🔔 Новая реферальная регистрация: referee=${userId}, referrer=${referrerId}`)
-              } else {
-                console.log(`Referral (no DB): referee=${userId}, referrer=${referrerId}`)
+  if (startPayload && startPayload.startsWith('ref_')) {
+    const referrerId = startPayload.replace('ref_', '')
+    if (referrerId && referrerId != userId) {
+      if (supabase) {
+        const { data: existingRef } = await supabase
+          .from('contest_referrals')
+          .select('*')
+          .eq('referee_id', userId)
+          .single()
+        if (!existingRef) {
+          const { error: refError } = await supabase.from('contest_referrals').insert({
+            referrer_id: referrerId,
+            referee_id: userId,
+            status: 'joined'
+          })
+          if (!refError) {
+            const { count } = await supabase
+              .from('contest_referrals')
+              .select('*', { count: 'exact', head: true })
+              .eq('referrer_id', referrerId)
+            let reward = 0
+            if (count === 3) reward = 1
+            if (count === 5) reward = 2
+            if (count === 10) reward = 5
+            if (reward > 0) {
+              const { data: refUser } = await supabase.from('contest_participants').select('tickets').eq('user_id', referrerId).single()
+              if (refUser) {
+                await supabase.from('contest_participants').update({ tickets: refUser.tickets + reward }).eq('user_id', referrerId)
+                await supabase.from('contest_tickets_log').insert({ user_id: referrerId, amount: reward, reason: `referral_milestone_${count}` })
+                try { await bot.telegram.sendMessage(referrerId, `🎁 <b>Поздравляем!</b>\nВы пригласили ${count} друзей и получили +${reward} 🎟 билетов!`, { parse_mode: 'HTML' }) } catch (e) {}
               }
-            } catch (e) {
-              console.error('Failed to notify admin about referral without DB', e)
+            } else {
+              try { await bot.telegram.sendMessage(referrerId, `👋 Новый друг присоединился по вашей ссылке! (Всего приглашено: ${count})`) } catch (e) {}
             }
           }
+        }
+      } else {
+        try { await bot.telegram.sendMessage(referrerId, `👋 По вашей ссылке присоединился новый участник (ID: ${userId}). Проверьте админку для деталей.`) } catch (e) {}
+        try {
+          const adminChat = process.env.TELEGRAM_ADMIN_CHAT_ID
+          if (adminChat) {
+            await bot.telegram.sendMessage(adminChat, `🔔 Новая реферальная регистрация: referee=${userId}, referrer=${referrerId}`)
+          } else {
+            console.log(`Referral (no DB): referee=${userId}, referrer=${referrerId}`)
+          }
+        } catch (e) {}
       }
+    }
   }
 
   const separator = webAppUrl.includes('?') ? '&' : '?'
   const urlWithId = `${webAppUrl}${separator}client_id=${userId}`
   const contestUrl = `${webAppUrl}/contest${separator}client_id=${userId}`
-  
-  // Safe URLs for buttons (Must be HTTPS)
   const safeSeparator = safeWebAppUrl.includes('?') ? '&' : '?'
   const safeUrlWithId = `${safeWebAppUrl}${safeSeparator}client_id=${userId}`
   const safeContestUrl = `${safeWebAppUrl}/contest${safeSeparator}client_id=${userId}`
-
   const refLink = `https://t.me/${botUsername || (ctx.botInfo && ctx.botInfo.username) || ''}?start=ref_${userId}`
-
   const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(refLink)}&text=${encodeURIComponent('Присоединяйся к конкурсу "Дари Здоровье" и выигрывай призы!')}`
-
   const keyboard = Markup.inlineKeyboard([
     [Markup.button.webApp('🎁 Мои билеты и Конкурс', safeContestUrl)],
     [Markup.button.webApp('🛒 Магазин', safeUrlWithId)],
     [Markup.button.url('🔗 Поделиться ссылкой', shareUrl)]
   ])
-
   const ticketCount = Array.isArray(user.ticket_numbers) ? user.ticket_numbers.length : (user.tickets || 0)
   await ctx.replyWithHTML(
     `🎄 Привет, ${user.first_name}! \n\n` +
@@ -227,14 +210,94 @@ bot.on('text', async (ctx) => {
     keyboard
   )
 })
+}
 
- 
+async function handleStartOrKonkurs(ctx) {
+  const userId = ctx.from.id
+  const subscribed = await isSubscribedToOfficial(userId)
+  if (!subscribed) {
+    const keyboardSub = Markup.inlineKeyboard([[Markup.button.url('Открыть канал ЭТРА', 'https://t.me/etraproject_official')]])
+    await ctx.reply('Для участия подпишитесь на официальный канал @etraproject_official и снова отправьте команду «start».', keyboardSub)
+    return
+  }
 
+  const user = await getOrCreateUser(ctx)
+  if (!user) {
+    await ctx.reply('Произошла ошибка при регистрации в конкурсе.')
+    return
+  }
+
+  const startPayload = (ctx.startPayload || ctx.payload || '')
+  if (startPayload && startPayload.startsWith('ref_')) {
+    const referrerId = startPayload.replace('ref_', '')
+    if (referrerId && referrerId != userId) {
+      if (supabase) {
+        const { data: existingRef } = await supabase
+          .from('contest_referrals')
+          .select('*')
+          .eq('referee_id', userId)
+          .single()
+        if (!existingRef) {
+          const { error: refError } = await supabase.from('contest_referrals').insert({
+            referrer_id: referrerId,
+            referee_id: userId,
+            status: 'joined'
+          })
+          if (!refError) {
+            const { count } = await supabase
+              .from('contest_referrals')
+              .select('*', { count: 'exact', head: true })
+              .eq('referrer_id', referrerId)
+            let reward = 0
+            if (count === 3) reward = 1
+            if (count === 5) reward = 2
+            if (count === 10) reward = 5
+            if (reward > 0) {
+              const { data: refUser } = await supabase.from('contest_participants').select('tickets').eq('user_id', referrerId).single()
+              if (refUser) {
+                await supabase.from('contest_participants').update({ tickets: refUser.tickets + reward }).eq('user_id', referrerId)
+                await supabase.from('contest_tickets_log').insert({ user_id: referrerId, amount: reward, reason: `referral_milestone_${count}` })
+                try { await bot.telegram.sendMessage(referrerId, `🎁 <b>Поздравляем!</b>\nВы пригласили ${count} друзей и получили +${reward} 🎟 билетов!`, { parse_mode: 'HTML' }) } catch (e) {}
+              }
+            } else {
+              try { await bot.telegram.sendMessage(referrerId, `👋 Новый друг присоединился по вашей ссылке! (Всего приглашено: ${count})`) } catch (e) {}
+            }
+          }
+        }
+      } else {
+        try { await bot.telegram.sendMessage(referrerId, `👋 По вашей ссылке присоединился новый участник (ID: ${userId}). Проверьте админку для деталей.`) } catch (e) {}
+        try {
+          const adminChat = process.env.TELEGRAM_ADMIN_CHAT_ID
+          if (adminChat) {
+            await bot.telegram.sendMessage(adminChat, `🔔 Новая реферальная регистрация: referee=${userId}, referrer=${referrerId}`)
+          } else {
+            console.log(`Referral (no DB): referee=${userId}, referrer=${referrerId}`)
+          }
+        } catch (e) {}
+      }
+    }
+  }
+
+  const refLink = `https://t.me/${botUsername || (ctx.botInfo && ctx.botInfo.username) || ''}?start=ref_${userId}`
+  const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(refLink)}&text=${encodeURIComponent('Присоединяйся к конкурсу "Дари Здоровье" и выигрывай призы!')}`
+  const keyboard = Markup.inlineKeyboard([[Markup.button.url('Переслать', shareUrl)]])
+  const greeting = `🎄 Привет, ${user.first_name} | Разработка приложений и AI помощников!\nВот твоя реферальная ссылка для конкурса\n${refLink}`
+  await ctx.replyWithHTML(greeting, keyboard)
+}
+
+bot.start(handleStartOrKonkurs)
+bot.hears(/^\/konkurs(?:@\w+)?\b/i, handleStartOrKonkurs)
+bot.hears(/^\/конкурс\b/i, handleStartOrKonkurs)
+
+
+/*
 (async () => {
   try { await bot.telegram.deleteWebhook({ drop_pending_updates: false }) } catch (e) {}
   await bot.launch()
   console.log('Bot started (polling)')
 })()
+*/
+
 
 process.once('SIGINT', () => bot.stop('SIGINT'))
 process.once('SIGTERM', () => bot.stop('SIGTERM'))
