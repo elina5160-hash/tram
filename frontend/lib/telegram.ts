@@ -4,8 +4,12 @@ const TELEGRAM_ADMIN_CHAT_ID = process.env.TELEGRAM_ADMIN_CHAT_ID
 function normalizeChatId(id: string) {
   const s = String(id || "").trim()
   if (!s) return s
+  // If it starts with -100, it's already a supergroup/channel id
   if (/^\-100\d+$/.test(s)) return s
-  if (/^\d{9,}$/.test(s)) return `-100${s}`
+  // If it starts with -, leave it alone (group)
+  if (s.startsWith('-')) return s
+  // If it is a positive number, it is likely a user ID, do NOT prepend -100
+  // Previously we prepended -100 to any 9+ digit number, which broke user IDs like 6215554905
   return s
 }
 

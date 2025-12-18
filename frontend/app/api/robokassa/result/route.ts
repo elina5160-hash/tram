@@ -107,7 +107,46 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
           let client = getServiceSupabaseClient()
           if (!client) client = getSupabaseClient()
           if (client) {
+            // 1. Ensure order exists and is marked as paid
+            const orderData = {
+                id: Number(invId),
+                total_amount: Number(outSum),
+                items: items, // parsed from payload above
+                customer_info: {
+                    name: payload.name,
+                    phone: payload.phone,
+                    email: payload.email,
+                    address: payload.address,
+                    cdek: payload.cdek,
+                    client_id: payload.client
+                },
+                promo_code: payload.promo,
+                ref_code: payload.ref,
+                status: 'Оплачен',
+                ok: 'true',
+                paid_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+            }
+            // Use upsert to handle both creation and update
+            await client.from('orders').upsert(orderData)
+
             const refereeId = Number(payload.client)
+            
+            // 2. Award tickets for purchase (1 per 1000 rub)
+            const tickets = Math.floor(Number(outSum) / 1000)
+            if (tickets > 0) {
+                await addTickets(refereeId, tickets, 'purchase_reward', invId)
+            }
+
+            // 3. Award tickets for promo code owner
+            if (payload.promo) {
+                const { data: owner } = await client.from('contest_participants').select('user_id').eq('personal_promo_code', payload.promo).single()
+                if (owner && String(owner.user_id) !== String(refereeId)) {
+                    await addTickets(owner.user_id, 2, 'friend_purchase_promo', invId)
+                }
+            }
+
+            // 4. Referral logic
             // Create referral record based on ref code if not exists
             if (payload.ref) {
               const referrerId = Number(payload.ref)
