@@ -1,5 +1,5 @@
 "use client"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { AdminLogin } from "@/components/admin/AdminLogin"
 import { ProductList } from "@/components/admin/ProductList"
 import { ProductForm } from "@/components/admin/ProductForm"
@@ -16,6 +16,21 @@ type Tab = 'products' | 'bottom-banner' | 'contest' | 'orders'
 
 export function AdminPanel({ onClose }: AdminPanelProps) {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
+
+  useEffect(() => {
+    // Auto-login for admins
+    if (typeof window !== "undefined") {
+      const tg = (window as any).Telegram?.WebApp
+      if (tg?.initDataUnsafe?.user?.id) {
+        const userId = tg.initDataUnsafe.user.id
+        const admins = [1287944066, 5137709082]
+        if (admins.includes(userId)) {
+          setIsAuthenticated(true)
+        }
+      }
+    }
+  }, [])
+
   const [activeTab, setActiveTab] = useState<Tab>('orders')
   const [editingProduct, setEditingProduct] = useState<any | null>(null)
   const [isCreating, setIsCreating] = useState(false)
