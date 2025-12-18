@@ -10,6 +10,7 @@ import { AdminPanel } from "@/components/admin/AdminPanel"
 import { staticItems } from "@/data/staticItems"
 
 import BottomBanner from "@/components/ui/bottom-banner"
+import ContestBadge from "@/components/ui/contest-badge"
 
 
 import LazyVideo from "@/components/ui/lazy-video"
