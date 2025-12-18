@@ -6,11 +6,13 @@ export async function addTickets(userId: number | string, count: number, reason:
 
     try {
         // 1. Get current participant
-        const { data: user, error } = await supabase.from('contest_participants').select('*').eq('user_id', String(userId)).single()
+        const { data: user, error: fetchError } = await supabase.from('contest_participants').select('*').eq('user_id', String(userId)).single()
         
-        // If user doesn't exist, we should create them? 
-        // For now, if they are not in the contest table, we might create them or skip.
-        // Let's assume we create them if they don't exist, so they get their tickets.
+        if (fetchError && fetchError.code !== 'PGRST116') {
+            console.error('Error fetching user for tickets:', fetchError)
+            return
+        }
+        
         let currentTickets: string[] = []
         if (user) {
             currentTickets = user.ticket_numbers || []
@@ -25,19 +27,29 @@ export async function addTickets(userId: number | string, count: number, reason:
         // 3. Update or Insert
         if (user) {
             const updatedTickets = [...currentTickets, ...newTickets]
-            await supabase.from('contest_participants').update({ 
+            const { error: updateError } = await supabase.from('contest_participants').update({ 
                 ticket_numbers: updatedTickets,
                 tickets: updatedTickets.length
             }).eq('user_id', String(userId))
+            
+            if (updateError) {
+                console.error('Error updating tickets:', updateError)
+                return
+            }
         } else {
             // Create new participant
-            await supabase.from('contest_participants').insert({
+            const { error: insertError } = await supabase.from('contest_participants').insert({
                 user_id: String(userId),
                 ticket_numbers: newTickets,
                 tickets: newTickets.length,
                 status: 'active',
                 contact_info: {} // We might want to fill this later
             })
+            
+            if (insertError) {
+                console.error('Error inserting participant:', insertError)
+                return
+            }
         }
 
         // 4. Log (Optional)

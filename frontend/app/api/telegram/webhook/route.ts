@@ -109,9 +109,23 @@ export async function POST(req: Request) {
     // /contest отключен
 
     // Admin panel check
-    if (text === '/admin' || text === '/adminpanel') {
+    if (text === '/admin' || text === '/adminpanel' || text.startsWith('/addticket')) {
       const admins = [1287944066, 5137709082]
       if (admins.includes(userId)) {
+        if (text.startsWith('/addticket')) {
+           const parts = text.split(' ')
+           const targetId = parts[1]
+           const count = Number(parts[2])
+           if (targetId && !isNaN(count) && count > 0) {
+               await addTickets(targetId, count, 'admin_gift')
+               await sendMessage(`✅ Выдано ${count} билетов пользователю ${targetId}`, chatId)
+               return NextResponse.json({ ok: true })
+           } else {
+               await sendMessage(`⚠️ Формат: /addticket <userId> <count>`, chatId)
+               return NextResponse.json({ ok: true })
+           }
+        }
+
         let totalUsers = 0
         let topUsers: any[] = []
         if (sup) {
