@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import fs from 'fs';
-import path from 'path';
 import { writeFile } from 'fs/promises';
 
 export async function POST(request: Request) {
@@ -17,17 +16,15 @@ export async function POST(request: Request) {
 
     // Sanitize filename
     const filename = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-    const uploadDir = path.join(process.cwd(), process.cwd().endsWith('frontend') ? 'public/uploads' : 'frontend/public/uploads');
-    
-    // Ensure dir exists
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
+    const uploadDir = '/tmp/uploads';
 
-    const filepath = path.join(uploadDir, filename);
+    // Ensure dir exists
+    try { fs.mkdirSync(uploadDir, { recursive: true }); } catch {}
+
+    const filepath = `${uploadDir}/${filename}`;
     await writeFile(filepath, buffer);
 
-    return NextResponse.json({ url: `/uploads/${filename}` });
+    return NextResponse.json({ path: filepath });
   } catch (error) {
     console.error('Upload error:', error);
     return NextResponse.json({ error: 'Upload failed' }, { status: 500 });
