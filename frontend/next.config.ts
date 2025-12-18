@@ -23,7 +23,7 @@ const nextConfig: NextConfig = {
     ]
   },
   outputFileTracingExcludes: {
-    'app/api/**/route.*': ['public/**']
+    '**/*': ['public/**']
   },
 };
 
