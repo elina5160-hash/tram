@@ -108,6 +108,30 @@ export async function POST(req: Request) {
 
     // /contest отключен
 
+    // Admin panel check
+    if (text === '/admin' || text === '/adminpanel') {
+      const admins = [1287944066, 5137709082]
+      if (admins.includes(userId)) {
+        let totalUsers = 0
+        let topUsers: any[] = []
+        if (sup) {
+           const { count } = await sup.from('contest_participants').select('*', { count: 'exact', head: true })
+           totalUsers = count || 0
+           
+           const { data } = await sup.from('contest_participants').select('first_name, username, tickets').order('tickets', { ascending: false }).limit(20)
+           topUsers = data || []
+        }
+        
+        let report = `📊 Статистика бота:\n\n👥 Всего участников: ${totalUsers}\n\n🏆 Топ-20 участников по билетам:\n`
+        topUsers.forEach((u, i) => {
+           report += `${i+1}. ${u.first_name} (@${u.username || '-'}) — ${u.tickets} 🎫\n`
+        })
+        
+        await sendMessage(report, chatId)
+        return NextResponse.json({ ok: true })
+      }
+    }
+
     if (isStart || isKonkurs) {
       const user = await makeUser()
       let referralCount = 0
@@ -130,13 +154,22 @@ export async function POST(req: Request) {
       
       const ticketCount = user.tickets || 0
       
-      const greeting = `🎄 Привет, ${firstName} | Разработка приложений и AI помощников!
+      let greeting = ''
+      
+      if (isStart) {
+        greeting = `🎄 Привет, ${firstName}
+
+Вот твоя реферальная ссылка для конкурса
+${refLink}`
+      } else {
+        greeting = `🎄 Привет, ${firstName} | Разработка приложений и AI помощников!
 
 🎫 Твои билеты: ${ticketCount}
 👥 Приглашено друзей: ${referralCount}
 
 Вот твоя реферальная ссылка для конкурса
 ${refLink}`
+      }
 
       const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(refLink)}&text=${encodeURIComponent('Присоединяйся к конкурсу "Дари Здоровье" и выигрывай призы!')}`
       const replyMarkup = { inline_keyboard: [ [{ text: 'Переслать', url: shareUrl }] ] }

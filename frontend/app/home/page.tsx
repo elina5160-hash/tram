@@ -75,13 +75,16 @@ export default function HomePage() {
       <div className="w-full max-w-[420px] mx-auto px-4 pt-[calc(1.5rem+env(safe-area-inset-top))]">
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-semibold">Главная</h1>
-          <button
-            aria-label="Меню"
-            onClick={() => setMenuOpen(true)}
-            className="w-10 h-10 rounded-[12px] bg-white border border-gray-300 flex items-center justify-center"
-          >
-            <Image src="/Vector.png" alt="Меню" width={24} height={24} />
-          </button>
+          <div className="flex items-center gap-2">
+            <ContestBadge />
+            <button
+              aria-label="Меню"
+              onClick={() => setMenuOpen(true)}
+              className="w-10 h-10 rounded-[12px] bg-white border border-gray-300 flex items-center justify-center"
+            >
+              <Image src="/Vector.png" alt="Меню" width={24} height={24} />
+            </button>
+          </div>
         </div>
         <div
           aria-label="Баннер"
