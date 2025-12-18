@@ -2,7 +2,10 @@ import { getServiceSupabaseClient } from './supabase'
 
 export async function addTickets(userId: number | string, count: number, reason: string, relatedId?: string) {
     const supabase = getServiceSupabaseClient()
-    if (!supabase) return
+    if (!supabase) {
+        console.error("addTickets: No service client available")
+        return false
+    }
 
     try {
         // 1. Get current participant
@@ -10,7 +13,7 @@ export async function addTickets(userId: number | string, count: number, reason:
         
         if (fetchError && fetchError.code !== 'PGRST116') {
             console.error('Error fetching user for tickets:', fetchError)
-            return
+            return false
         }
         
         let currentTickets: string[] = []
@@ -34,7 +37,7 @@ export async function addTickets(userId: number | string, count: number, reason:
             
             if (updateError) {
                 console.error('Error updating tickets:', updateError)
-                return
+                return false
             }
         } else {
             // Create new participant
@@ -48,7 +51,7 @@ export async function addTickets(userId: number | string, count: number, reason:
             
             if (insertError) {
                 console.error('Error inserting participant:', insertError)
-                return
+                return false
             }
         }
 
@@ -69,9 +72,12 @@ export async function addTickets(userId: number | string, count: number, reason:
                  console.error("Failed to send notification", e)
              }
         }
+        
+        return true
 
     } catch (e) {
         console.error("Error in addTickets", e)
+        return false
     }
 }
 

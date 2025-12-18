@@ -118,8 +118,12 @@ export async function POST(req: Request) {
            const targetId = parts[1]
            const count = Number(parts[2])
            if (targetId && !isNaN(count) && count > 0) {
-               await addTickets(targetId, count, 'admin_gift')
-               await sendMessage(`✅ Выдано ${count} билетов пользователю ${targetId}`, chatId)
+               const success = await addTickets(targetId, count, 'admin_gift')
+               if (success) {
+                   await sendMessage(`✅ Выдано ${count} билетов пользователю ${targetId}`, chatId)
+               } else {
+                   await sendMessage(`❌ Ошибка выдачи. Проверьте логи сервера (возможно нет Service Role Key).`, chatId)
+               }
                return NextResponse.json({ ok: true })
            } else {
                await sendMessage(`⚠️ Формат: /addticket <userId> <count>`, chatId)
@@ -206,7 +210,9 @@ export async function POST(req: Request) {
       let greeting = ''
       
       // Temporary Debug for Admin
-      const debugInfo = (String(userId) === '1287944066') ? `\n\n(Debug: DB Tickets=${user.tickets}, Bonus=${bonusTickets}, FoundUser=${!!user})` : ''
+      const serviceSup = getServiceSupabaseClient()
+      const anonSup = getSupabaseClient()
+      const debugInfo = (String(userId) === '1287944066') ? `\n\n(Debug: DB Tickets=${user.tickets}, Bonus=${bonusTickets}, FoundUser=${!!user}, ServiceSup=${!!serviceSup}, AnonSup=${!!anonSup})` : ''
 
       if (isStart) {
         greeting = `🎄 Привет, ${firstName}
