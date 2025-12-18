@@ -6,15 +6,15 @@ const nextConfig: NextConfig = {
     formats: ['image/avif', 'image/webp'],
     minimumCacheTTL: 3600,
   },
+  outputFileTracingIgnores: [
+    'public/**',
+    '**/*.mp4',
+    '**/*.png',
+    '**/*.jpg',
+    '**/*.jpeg',
+    '**/*.webp',
+  ],
   experimental: {
-    outputFileTracingIgnores: [
-      'public/**',
-      '**/*.mp4',
-      '**/*.png',
-      '**/*.jpg',
-      '**/*.jpeg',
-      '**/*.webp',
-    ],
     turbopack: {
       root: __dirname,
     },
