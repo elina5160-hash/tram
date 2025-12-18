@@ -50,78 +50,11 @@ export async function POST(req: Request) {
       return created
     }
 
-    if (/^\/start\b/i.test(text)) {
-      const payload = text.split(/\s+/)[1] || ""
-      if (payload.startsWith('ref_')) {
-        const raw = Number(payload.replace('ref_', ''))
-        const referrerId = Number.isFinite(raw) ? raw : 0
-        if (!referrerId || referrerId <= 0) {
-          await logEvent('referral_invalid', 'Invalid referral payload', { userId, payload })
-        } else if (referrerId === userId) {
-          await logEvent('referral_self', 'Self-referral blocked', { userId })
-        } else {
-          if (sup) {
-            const { data: existing } = await sup.from('contest_referrals').select('*').eq('referee_id', userId).single()
-            if (!existing) {
-              await sup.from('contest_referrals').insert({ referrer_id: referrerId, referee_id: userId, status: 'joined' })
-              await logEvent('referral_joined', 'Referral recorded', { referee: userId, referrer: referrerId })
-              try { await addTickets(referrerId, 1, 'referral_bonus', String(userId)) } catch {}
-              await logEvent('referral_bonus_awarded', 'Tickets awarded', { to: referrerId, count: 1, by: userId })
-              try { await sendMessage(`👋 Новый друг присоединился по вашей ссылке! (Всего приглашено: больше 0)`, String(referrerId)) } catch {}
-            }
-          } else {
-            const adminChat = process.env.TELEGRAM_ADMIN_CHAT_ID || ""
-            if (adminChat) await sendMessage(`🔔 Новая реферальная регистрация: referee=${userId}, referrer=${referrerId}`, adminChat)
-            try { await sendMessage(`👋 По вашей ссылке присоединился новый участник (ID: ${userId}).`, String(referrerId)) } catch {}
-          }
-        }
-      }
-      const user = await makeUser()
-      const botUser = update?.my_chat_member?.new_chat_member?.user || null
-      const botUsername = process.env.TELEGRAM_BOT_USERNAME || String(update?.bot?.username || botUser?.username || "")
-      const refLink = `https://t.me/${botUsername}?start=ref_${userId}`
-      const webAppUrl = process.env.WEB_APP_URL || "https://google.com"
-      const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(refLink)}&text=${encodeURIComponent('Присоединяйся к конкурсу "Дари Здоровье" и выигрывай призы!')}`
-      const ticketCount = Array.isArray((user as any).ticket_numbers) ? (user as any).ticket_numbers.length : (user as any).tickets || 0
-      const replyMarkup = { inline_keyboard: [ [{ text: '🎁 Мои билеты и Конкурс', web_app: { url: `${webAppUrl}/contest?client_id=${userId}` } }], [{ text: '🛒 Магазин', web_app: { url: `${webAppUrl}?client_id=${userId}` } }], [{ text: '🔗 Поделиться ссылкой', url: shareUrl }] ] }
-      await sendMessage(
-        `🎄 Привет, ${user.first_name}! \n\n` +
-        `Ты участвуешь в конкурсе <b>"Дари Здоровье"</b>! 🎁\n\n` +
-        `🎫 Твои билеты: <b>${ticketCount}</b>\n` +
-        `🔖 Твой промокод для друзей: <code>${(user as any).personal_promo_code || ''}</code> (-15%)\n` +
-        `🔗 Твоя ссылка: <a href="${refLink}">${refLink}</a>\n\n` +
-        `Перешли это сообщение друзьям или нажми кнопку ниже, чтобы поделиться.`,
-        chatId,
-        replyMarkup
-      )
-      return NextResponse.json({ ok: true })
-    }
+    // /start отключен, чтобы не конфликтовать с другим ботом
 
-    if (/^\/tickets\b/i.test(text)) {
-      const user = await makeUser()
-      const count = Array.isArray((user as any).ticket_numbers) ? (user as any).ticket_numbers.length : (user as any).tickets || 0
-      const nums = Array.isArray((user as any).ticket_numbers) && (user as any).ticket_numbers.length ? (user as any).ticket_numbers.join(', ') : ''
-      const botUsername = process.env.TELEGRAM_BOT_USERNAME || String(update?.bot?.username || "")
-      const refLink = `https://t.me/${botUsername}?start=ref_${userId}`
-      const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(refLink)}&text=${encodeURIComponent('Присоединяйся к конкурсу "Дари Здоровье" и выигрывай призы!')}`
-      const replyMarkup = { inline_keyboard: [ [{ text: '🔗 Поделиться ссылкой', url: shareUrl }] ] }
-      await sendMessage(`🎫 Билетов: <b>${count}</b>${nums ? `\nНомера: ${nums}` : ''}`, chatId, replyMarkup)
-      return NextResponse.json({ ok: true })
-    }
+    // /tickets отключен
 
-    if (/^\/contest\b/i.test(text)) {
-      const user = await makeUser()
-      const webAppUrl = process.env.WEB_APP_URL || "https://google.com"
-      const replyMarkup = { inline_keyboard: [ [{ text: 'Открыть подробности', web_app: { url: `${webAppUrl}/contest?client_id=${userId}` } }] ] }
-      await sendMessage(
-        `🏆 <b>Твой профиль участника</b>\n\n` +
-        `🎫 Билетов: <b>${Array.isArray((user as any).ticket_numbers) ? (user as any).ticket_numbers.length : (user as any).tickets || 0}</b>\n` +
-        `🔖 Промокод: <code>${(user as any).personal_promo_code}</code>`,
-        chatId,
-        replyMarkup
-      )
-      return NextResponse.json({ ok: true })
-    }
+    // /contest отключен
 
     if (/^\/konkurs\b/i.test(text)) {
       const botUsername = process.env.TELEGRAM_BOT_USERNAME || String(update?.bot?.username || "")
