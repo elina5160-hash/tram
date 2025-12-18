@@ -94,6 +94,17 @@ function ConfirmContent() {
           clearCart()
           setIsPaid(true)
           setStatusText(`Оплата подтверждена. Заказ № ${invIdSuccess}`)
+          try {
+            const text = [
+              `<b>Оплачен заказ № ${invIdSuccess}</b>`,
+              `Сумма: ${Number(outSumSuccess).toLocaleString('ru-RU')} руб.`,
+            ].join('\n')
+            await fetch('/api/telegram/send', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ text })
+            })
+          } catch {}
         } else {
           setStatusText("Оплата подтверждена, но подтверждение на сервере не прошло. Свяжитесь с поддержкой.")
         }
