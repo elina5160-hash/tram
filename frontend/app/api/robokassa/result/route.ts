@@ -139,8 +139,21 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
         
         await sendTelegramMessage(text, chatId, replyMarkup)
         
-        // Google Sheets integration is handled via direct DB sync
-        // await appendToSheet(row)
+        // Google Sheets integration
+        const row = [
+            invId,
+            new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' }),
+            payload.name || '',
+            payload.phone || '',
+            payload.email || '',
+            payload.address || payload.cdek || '',
+            lines.join('\n'),
+            outSum,
+            payload.promo || '',
+            payload.ref || '',
+            'Оплачен'
+        ]
+        await appendToSheet(row)
 
         // DB Operations
         if (client) {
