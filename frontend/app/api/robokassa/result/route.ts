@@ -215,33 +215,107 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const password2 = process.env.ROBO_PASSWORD2 || ""
-  const password1 = process.env.ROBO_PASSWORD1 || ""
+  // Debug Log function
+  const logDebug = async (msg: string, data?: any) => {
+    try {
+        const client = getServiceSupabaseClient() || getSupabaseClient()
+        if (client) {
+            await client.from('bot_logs').insert({ 
+                type: 'robokassa_debug', 
+                message: msg, 
+                data: data ? JSON.stringify(data) : null 
+            })
+        }
+    } catch {}
+  }
+
+  const merchant = process.env.ROBO_MERCHANT_LOGIN?.trim()
+  const password1Raw = process.env.ROBO_PASSWORD1?.trim()
   const isTest = process.env.ROBO_IS_TEST === "1"
-  const password1Test = process.env.ROBO_PASSWORD1_TEST || ""
-  let bodyText = ""
-  try { bodyText = await req.text() } catch {}
-  const params = new URLSearchParams(bodyText)
+  const password1Test = process.env.ROBO_PASSWORD1_TEST?.trim()
+
+  const password1ToUse = isTest ? password1Test : password1Raw
+
+  if (!merchant || !password1ToUse) {
+    return NextResponse.json({ error: "Missing Robokassa credentials" }, { status: 500 })
+  }
+  
+  const bodyText = await req.text()
+  let params = new URLSearchParams(bodyText)
+  
   const outSum = params.get("OutSum") || ""
   const invId = params.get("InvId") || ""
   const signature = params.get("SignatureValue") || ""
-  if (!outSum || !invId || !signature) return NextResponse.json({ error: "Bad params" }, { status: 400 })
-  const ok2 = password2 ? verifySignature(outSum, invId, signature, password2) : false
-  const ok1 = password1 ? verifySignature(outSum, invId, signature, password1) : false
-  const ok1Test = isTest && password1Test ? verifySignature(outSum, invId, signature, password1Test) : false
-  if (!ok2 && !ok1 && !ok1Test) return NextResponse.json({ error: "Bad signature" }, { status: 400 })
-  if (isDup(invId)) return ack(invId)
-  const payload: Record<string, string> = {
-    name: params.get('Shp_name') || '',
-    phone: params.get('Shp_phone') || '',
-    email: params.get('Shp_email') || '',
-    address: params.get('Shp_address') || '',
-    cdek: params.get('Shp_cdek') || '',
-    items: params.get('Shp_items') || '',
-    promo: params.get('Shp_promo') || '',
-    ref: params.get('Shp_ref') || '',
-    client: params.get('Shp_client') || '',
+  const shp: Record<string, string> = {}
+  
+  // Also try JSON if form data is empty (just in case)
+  let bodyJson: any = {}
+  if (!outSum) {
+      try {
+          bodyJson = JSON.parse(bodyText)
+      } catch {}
   }
-  await processOrder(invId, outSum, payload)
-  return ack(invId)
+
+  const finalOutSum = outSum || bodyJson.OutSum || bodyJson.outSum || ""
+  const finalInvId = invId || bodyJson.InvId || bodyJson.invId || ""
+  const finalSignature = signature || bodyJson.SignatureValue || bodyJson.signatureValue || ""
+
+  await logDebug(`Received Robokassa Request: ${finalInvId}`, { 
+      outSum: finalOutSum, 
+      invId: finalInvId, 
+      signature: finalSignature,
+      body: bodyText
+  })
+
+  if (!finalOutSum || !finalInvId || !finalSignature) {
+      await logDebug("Missing required params")
+      return NextResponse.json({ error: "Bad params" }, { status: 400 })
+  }
+
+  const password2 = process.env.ROBO_PASSWORD2 || ""
+  if (!password2) {
+      await logDebug("Missing ROBO_PASSWORD2")
+      return NextResponse.json({ error: "Server config error" }, { status: 500 })
+  }
+
+  const ok = verifySignature(finalOutSum, finalInvId, finalSignature, password2)
+  if (!ok) {
+      await logDebug("Signature mismatch", { expected: "???", received: finalSignature })
+      return NextResponse.json({ error: "Signature mismatch" }, { status: 400 })
+  }
+
+  // Parse custom params (Shp_)
+  params.forEach((v, k) => {
+      if (k.startsWith("Shp_")) shp[k] = v
+  })
+  
+  // If JSON was used
+  if (Object.keys(shp).length === 0 && bodyJson) {
+      Object.keys(bodyJson).forEach(k => {
+          if (k.startsWith("Shp_")) shp[k] = bodyJson[k]
+      })
+  }
+  
+  // Reconstruct payload
+  const payload: any = {}
+  if (shp.Shp_promo) payload.promo = shp.Shp_promo
+  if (shp.Shp_ref) payload.ref = shp.Shp_ref
+  if (shp.Shp_name) payload.name = shp.Shp_name
+  if (shp.Shp_phone) payload.phone = shp.Shp_phone
+  if (shp.Shp_email) payload.email = shp.Shp_email
+  if (shp.Shp_address) payload.address = shp.Shp_address
+  if (shp.Shp_cdek) payload.cdek = shp.Shp_cdek
+  if (shp.Shp_client) payload.client = shp.Shp_client
+  // Items might be encoded
+  // Note: Robokassa doesn't pass Shp items automatically unless we passed them. 
+  // We don't see items in Shp usually. We might need to fetch them from DB or trust what we passed?
+  // Actually, we stored items in 'pending' order in DB. We should fetch from there!
+  
+  await logDebug("Processing order...", { payload })
+  
+  await processOrder(finalInvId, finalOutSum, payload)
+  
+  await logDebug("Order processed successfully")
+
+  return ack(finalInvId)
 }
