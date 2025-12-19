@@ -20,8 +20,27 @@ const logDebug = async (msg: string, data?: any) => {
     }
 }
 
-function verifySignature(outSum: string, invId: string, signature: string, password2: string) {
-  const base = `${outSum}:${invId}:${password2}`
+function verifySignature(outSum: string, invId: string, signature: string, password2: string, params?: URLSearchParams) {
+  let base = `${outSum}:${invId}:${password2}`
+  
+  // If params are provided, check for Shp_ parameters
+  if (params) {
+      const shpParams: { key: string, value: string }[] = []
+      params.forEach((value, key) => {
+          if (key.startsWith('Shp_')) {
+              shpParams.push({ key, value })
+          }
+      })
+      
+      // Sort alphabetically by key
+      shpParams.sort((a, b) => a.key.localeCompare(b.key))
+      
+      // Append to base string
+      shpParams.forEach(p => {
+          base += `:${p.key}=${p.value}`
+      })
+  }
+
   const calc = crypto.createHash("md5").update(base, "utf8").digest("hex").toLowerCase()
   return calc === String(signature || "").toLowerCase()
 }
@@ -271,119 +290,118 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
 
 export async function GET(req: Request) {
   const url = new URL(req.url)
-  const outSum = url.searchParams.get("OutSum") || ""
-  const invId = url.searchParams.get("InvId") || ""
-  const signature = url.searchParams.get("SignatureValue") || ""
+  const params = url.searchParams
+  
+  // Log incoming GET request
+  await logDebug("Received GET request from Robokassa", { 
+      params: Object.fromEntries(params.entries())
+  })
+
+  const outSum = params.get("OutSum") || ""
+  const invId = params.get("InvId") || ""
+  const signature = params.get("SignatureValue") || ""
+  
+  if (!outSum || !invId || !signature) {
+      await logDebug("GET: Missing required parameters", { outSum, invId, signature })
+      return NextResponse.json({ error: "Bad params" }, { status: 400 })
+  }
+
   const password2 = process.env.ROBO_PASSWORD2 || ""
   const password1 = process.env.ROBO_PASSWORD1 || process.env.NEXT_PUBLIC_ROBO_MERCHANT_LOGIN ? process.env.ROBO_PASSWORD1 || "" : ""
   const isTest = process.env.ROBO_IS_TEST === "1"
   const password1Test = process.env.ROBO_PASSWORD1_TEST || ""
-  if (!outSum || !invId || !signature) return NextResponse.json({ error: "Bad params" }, { status: 400 })
+  
   const ok2 = password2 ? verifySignature(outSum, invId, signature, password2) : false
   const ok1 = password1 ? verifySignature(outSum, invId, signature, password1) : false
   const ok1Test = isTest && password1Test ? verifySignature(outSum, invId, signature, password1Test) : false
-  if (!ok2 && !ok1 && !ok1Test) return NextResponse.json({ error: "Bad signature" }, { status: 400 })
-  if (isDup(invId)) return ack(invId)
+  
+  if (!ok2 && !ok1 && !ok1Test) {
+      await logDebug("GET: Signature verification failed", { 
+        outSum, invId, signature, 
+        calculated2: password2 ? crypto.createHash("md5").update(`${outSum}:${invId}:${password2}`, "utf8").digest("hex") : null
+      })
+      return NextResponse.json({ error: "Bad signature" }, { status: 400 })
+  }
+
+  if (isDup(invId)) {
+      await logDebug("GET: Duplicate request ignored", { invId })
+      return ack(invId)
+  }
+
   const payload: Record<string, string> = {
-    name: url.searchParams.get('Shp_name') || '',
-    phone: url.searchParams.get('Shp_phone') || '',
-    email: url.searchParams.get('Shp_email') || '',
-    address: url.searchParams.get('Shp_address') || '',
-    cdek: url.searchParams.get('Shp_cdek') || '',
-    items: url.searchParams.get('Shp_items') || '',
-    promo: url.searchParams.get('Shp_promo') || '',
-    ref: url.searchParams.get('Shp_ref') || '',
-    client: url.searchParams.get('Shp_client') || '',
+    name: params.get('Shp_name') || '',
+    phone: params.get('Shp_phone') || '',
+    email: params.get('Shp_email') || '',
+    address: params.get('Shp_address') || '',
+    cdek: params.get('Shp_cdek') || '',
+    items: params.get('Shp_items') || '',
+    promo: params.get('Shp_promo') || '',
+    ref: params.get('Shp_ref') || '',
+    client: params.get('Shp_client') || '',
   }
   await processOrder(invId, outSum, payload)
   return ack(invId)
 }
 
 export async function POST(req: Request) {
-  const merchant = process.env.ROBO_MERCHANT_LOGIN?.trim()
-  const password1Raw = process.env.ROBO_PASSWORD1?.trim()
-  const isTest = process.env.ROBO_IS_TEST === "1"
-  const password1Test = process.env.ROBO_PASSWORD1_TEST?.trim()
+  try {
+    const text = await req.text()
+    const params = new URLSearchParams(text)
+    
+    // Log incoming POST request
+    await logDebug("Received POST request from Robokassa", { 
+        params: Object.fromEntries(params.entries())
+    })
 
-  const password1ToUse = isTest ? password1Test : password1Raw
+    const outSum = params.get("OutSum") || ""
+    const invId = params.get("InvId") || ""
+    const signature = params.get("SignatureValue") || ""
+    
+    if (!outSum || !invId || !signature) {
+        await logDebug("POST: Missing required parameters", { outSum, invId, signature })
+        return NextResponse.json({ error: "Missing parameters" }, { status: 400 })
+    }
 
-  if (!merchant || !password1ToUse) {
-    return NextResponse.json({ error: "Missing Robokassa credentials" }, { status: 500 })
-  }
-  
-  const bodyText = await req.text()
-  let params = new URLSearchParams(bodyText)
-  
-  const outSum = params.get("OutSum") || ""
-  const invId = params.get("InvId") || ""
-  const signature = params.get("SignatureValue") || ""
-  const shp: Record<string, string> = {}
-  
-  // Also try JSON if form data is empty (just in case)
-  let bodyJson: any = {}
-  if (!outSum) {
-      try {
-          bodyJson = JSON.parse(bodyText)
-      } catch {}
-  }
+    const password2 = process.env.ROBO_PASSWORD2 || ""
+    const password1 = process.env.ROBO_PASSWORD1 || process.env.NEXT_PUBLIC_ROBO_MERCHANT_LOGIN ? process.env.ROBO_PASSWORD1 || "" : ""
+    const isTest = process.env.ROBO_IS_TEST === "1"
+    const password1Test = process.env.ROBO_PASSWORD1_TEST || ""
+    
+    const ok2 = password2 ? verifySignature(outSum, invId, signature, password2) : false
+    const ok1 = password1 ? verifySignature(outSum, invId, signature, password1) : false
+    const ok1Test = isTest && password1Test ? verifySignature(outSum, invId, signature, password1Test) : false
 
-  const finalOutSum = outSum || bodyJson.OutSum || bodyJson.outSum || ""
-  const finalInvId = invId || bodyJson.InvId || bodyJson.invId || ""
-  const finalSignature = signature || bodyJson.SignatureValue || bodyJson.signatureValue || ""
-
-  await logDebug(`Received Robokassa Request: ${finalInvId}`, { 
-      outSum: finalOutSum, 
-      invId: finalInvId, 
-      signature: finalSignature,
-      body: bodyText
-  })
-
-  if (!finalOutSum || !finalInvId || !finalSignature) {
-      await logDebug("Missing required params")
-      return NextResponse.json({ error: "Bad params" }, { status: 400 })
-  }
-
-  const password2 = process.env.ROBO_PASSWORD2 || ""
-  if (!password2) {
-      await logDebug("Missing ROBO_PASSWORD2")
-      return NextResponse.json({ error: "Server config error" }, { status: 500 })
-  }
-
-  const ok = verifySignature(finalOutSum, finalInvId, finalSignature, password2)
-  if (!ok) {
-      await logDebug("Signature mismatch", { expected: "???", received: finalSignature })
-      return NextResponse.json({ error: "Signature mismatch" }, { status: 400 })
-  }
-
-  // Parse custom params (Shp_)
-  params.forEach((v, k) => {
-      if (k.startsWith("Shp_")) shp[k] = v
-  })
-  
-  // If JSON was used
-  if (Object.keys(shp).length === 0 && bodyJson) {
-      Object.keys(bodyJson).forEach(k => {
-          if (k.startsWith("Shp_")) shp[k] = bodyJson[k]
+    if (!ok2 && !ok1 && !ok1Test) {
+      await logDebug("POST: Signature verification failed", { 
+          outSum, invId, signature, 
+          calculated2: password2 ? crypto.createHash("md5").update(`${outSum}:${invId}:${password2}`, "utf8").digest("hex") : null 
       })
-  }
-  
-  // Reconstruct payload
-  const payload: any = {}
-  if (shp.Shp_promo) payload.promo = shp.Shp_promo
-  if (shp.Shp_ref) payload.ref = shp.Shp_ref
-  if (shp.Shp_name) payload.name = shp.Shp_name
-  if (shp.Shp_phone) payload.phone = shp.Shp_phone
-  if (shp.Shp_email) payload.email = shp.Shp_email
-  if (shp.Shp_address) payload.address = shp.Shp_address
-  if (shp.Shp_cdek) payload.cdek = shp.Shp_cdek
-  if (shp.Shp_client) payload.client = shp.Shp_client
-  if (shp.Shp_items) payload.items = shp.Shp_items
-  
-  await logDebug("Processing order...", { payload })
-  
-  await processOrder(finalInvId, finalOutSum, payload)
-  
-  await logDebug("Order processed successfully")
+      return NextResponse.json({ error: "Invalid signature" }, { status: 400 })
+    }
 
-  return ack(finalInvId)
+    if (isDup(invId)) {
+        await logDebug("POST: Duplicate request ignored", { invId })
+        return ack(invId)
+    }
+
+    // Parse Shp_ items
+    const payload: Record<string, string> = {
+        name: params.get('Shp_name') || '',
+        phone: params.get('Shp_phone') || '',
+        email: params.get('Shp_email') || '',
+        address: params.get('Shp_address') || '',
+        cdek: params.get('Shp_cdek') || '',
+        items: params.get('Shp_items') || '',
+        promo: params.get('Shp_promo') || '',
+        ref: params.get('Shp_ref') || '',
+        client: params.get('Shp_client') || '',
+    }
+
+    await processOrder(invId, outSum, payload)
+    return ack(invId)
+  } catch (e) {
+    console.error("Error processing POST", e)
+    await logDebug("Error processing POST request", { error: String(e) })
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 })
+  }
 }
