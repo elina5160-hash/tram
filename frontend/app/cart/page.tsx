@@ -26,7 +26,7 @@ function CartContent() {
   const searchParams = useSearchParams()
   const [items, setItems] = useState<{ id: number; title: string; qty: number }[]>(() => getCart())
   
-  const { products: fetchedProducts } = useProducts()
+  const { products: fetchedProducts, isLoading: isProductsLoading } = useProducts()
   
   // Form State
   const [email, setEmail] = useState<string>("")
@@ -108,9 +108,13 @@ function CartContent() {
     if (fetchedProducts && fetchedProducts.length > 0) {
       return fetchedProducts
     }
-    // Fallback to static items if API fails or is loading
-    return staticItems
-  }, [fetchedProducts])
+    // Only fallback to static items if we are NOT loading and have no products
+    // This prevents flashing old prices during load
+    if (!isProductsLoading) {
+      return staticItems
+    }
+    return []
+  }, [fetchedProducts, isProductsLoading])
 
   const priceMap = useMemo(() => {
     const m: Record<number, number> = {}

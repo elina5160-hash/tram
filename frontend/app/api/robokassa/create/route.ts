@@ -60,29 +60,44 @@ export async function POST(req: Request) {
 
   if (client) {
     const currentTime = new Date().toISOString();
-    // Try to insert without ID to let DB generate it (if configured as IDENTITY)
-    // If not IDENTITY, we need to provide ID. 
-    // We'll try to insert with the generated invId first to be safe with current schema.
-    // If user changes schema to IDENTITY, we could omit it, but providing it is safe for "BY DEFAULT".
     
-    // Actually, to support "remove id" request, let's try to NOT send ID if we can get it back.
-    // But since we don't know if schema is updated, let's stick to sending invId but ensure updated_at is present.
-    
-    const { error } = await client.from("orders").insert({
-      id: invId,
-      total_amount: outSum,
-      items: body.items || [],
-      customer_info: body.customerInfo || { email },
-      promo_code: body.promoCode,
-      ref_code: body.refCode,
-      status: 'pending',
-      updated_at: currentTime
-    })
-    
-    if (error) {
-      console.error("Error creating pending order in Supabase:", error)
-      // If error is about "id" missing or duplicate, we might want to retry?
-      // But for now, we just proceed to payment generation so we don't block the user.
+    // Attempt to insert WITHOUT ID first (let DB generate it)
+    let insertSuccess = false;
+    try {
+        const { data, error } = await client.from("orders").insert({
+          total_amount: outSum,
+          items: body.items || [],
+          customer_info: body.customerInfo || { email },
+          promo_code: body.promoCode,
+          ref_code: body.refCode,
+          status: 'pending',
+          updated_at: currentTime
+        }).select('id').single()
+
+        if (!error && data && data.id) {
+            invId = data.id; // Use DB-generated ID
+            insertSuccess = true;
+        }
+    } catch (e) {
+        console.error("Auto-ID insert failed, falling back to manual ID", e)
+    }
+
+    // Fallback: If DB didn't generate ID (or error occurred), try inserting with manual invId
+    if (!insertSuccess) {
+        const { error } = await client.from("orders").insert({
+          id: invId,
+          total_amount: outSum,
+          items: body.items || [],
+          customer_info: body.customerInfo || { email },
+          promo_code: body.promoCode,
+          ref_code: body.refCode,
+          status: 'pending',
+          updated_at: currentTime
+        })
+        
+        if (error) {
+          console.error("Error creating pending order in Supabase (manual ID):", error)
+        }
     }
   }
 

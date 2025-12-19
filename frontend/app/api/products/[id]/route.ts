@@ -36,10 +36,12 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
     
     if (supabase) {
         // Use maybeSingle() to avoid error if row doesn't exist
+        console.log(`Attempting to update product ${id} in Supabase`, updates);
         const { data, error } = await supabase.from('products').update(updates).eq('id', id).select().maybeSingle();
         
         if (!error) {
              if (data) {
+                 console.log(`Product ${id} updated successfully in Supabase`, data);
                  supabaseSuccess = true;
              } else {
                  // Product not found in Supabase. Try to insert it (sync from JSON logic essentially)
