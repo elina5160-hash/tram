@@ -234,7 +234,7 @@ ${friendName} пригласил тебя в конкурс ЭТРА!
             // We need to sum 'total_amount' from orders where client_id = userId
             // Not implemented efficiently, but let's try
             const { data: orders } = await sup.from('orders').select('total_amount').eq('customer_info->>client_id', String(userId))
-            if (orders) totalSpent = orders.reduce((sum, o) => sum + (o.total_amount || 0), 0)
+            if (orders) totalSpent = orders.reduce((sum: number, o: any) => sum + (o.total_amount || 0), 0)
             
             const { count } = await sup.from('contest_referrals').select('*', { count: 'exact', head: true }).eq('referrer_id', userId)
             invitedCount = count || 0
@@ -323,7 +323,7 @@ ${friendName} пригласил тебя в конкурс ЭТРА!
         
         if (sup) {
             const { data: orders } = await sup.from('orders').select('total_amount').eq('customer_info->>client_id', String(userId))
-            if (orders) totalSpent = orders.reduce((sum, o) => sum + (o.total_amount || 0), 0)
+            if (orders) totalSpent = orders.reduce((sum: number, o: any) => sum + (o.total_amount || 0), 0)
             
             const { count } = await sup.from('contest_referrals').select('*', { count: 'exact', head: true }).eq('referrer_id', userId)
             invitedCount = count || 0
