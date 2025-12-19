@@ -154,16 +154,22 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
                 initialData={editingProduct}
                 onSubmit={async (data: any) => {
                 try {
+                    const button = document.activeElement as HTMLButtonElement;
+                    if (button) button.disabled = true;
+                    
                     if (editingProduct) {
                     await updateProduct(editingProduct.id, data)
                     } else {
                     await addProduct(data)
                     }
+                    alert('Товар успешно сохранен!');
                     setEditingProduct(null)
                     setIsCreating(false)
                     setMode('initial')
                 } catch (e: any) {
                     alert("Ошибка сохранения: " + e.message)
+                    const button = document.activeElement as HTMLButtonElement;
+                    if (button) button.disabled = false;
                 }
                 }}
                 onCancel={() => {
