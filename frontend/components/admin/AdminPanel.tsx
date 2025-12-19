@@ -165,7 +165,7 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
                     alert('Товар успешно сохранен!');
                     setEditingProduct(null)
                     setIsCreating(false)
-                    setMode('initial')
+                    setMode('list') // Go back to list instead of initial
                 } catch (e: any) {
                     alert("Ошибка сохранения: " + e.message)
                     const button = document.activeElement as HTMLButtonElement;
