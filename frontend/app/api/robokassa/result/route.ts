@@ -101,11 +101,17 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
         const when = dt.toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })
         
         const text = [
-          `<b>Оплачен заказ № ${invId}</b>`,
-          `Сумма: ${Number(outSum).toLocaleString('ru-RU')} руб.`,
-          `Дата: ${when}`,
-          lines.length ? `\n<b>Товары:</b>\n${lines.join('\n')}` : '',
-          contact ? `\n<b>Пользователь</b>\n${contact}` : '',
+          `✅ Новый заказ № ${invId}`,
+          ``,
+          name ? `👤 ${name}` : '',
+          phone ? `📞 ${phone}` : '',
+          address ? `📍 ${address}` : '',
+          email ? `✉️ ${email}` : '',
+          ``,
+          lines.length ? `📦 Заказ:\n${lines.join('\n')}` : '',
+          ``,
+          `🚚 Доставка: ${address || 'Не указана'}`,
+          `🔗 https://t.me/KonkursEtraBot/app`,
           [promo, ref].filter(Boolean).length ? `\n${[promo, ref].filter(Boolean).join('\n')}` : '',
         ].filter(Boolean).join('\n')
         
@@ -114,8 +120,8 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
         
         await sendTelegramMessage(text, chatId, replyMarkup)
         
-        const row = [new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' }), invId, Number(outSum), contact.replace(/\n/g, ' | '), payload.ref || '']
-        await appendToSheet(row)
+        // Google Sheets integration is handled via direct DB sync
+        // await appendToSheet(row)
 
         // DB Operations
         if (client) {
