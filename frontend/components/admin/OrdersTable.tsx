@@ -1,9 +1,11 @@
 "use client"
 import { useEffect, useMemo, useState } from "react"
+import { OrderDetails } from "./OrderDetails"
 
 type OrderRow = {
   id: number
   created_at: string
+  updated_at?: string
   paid_at?: string
   total_amount: number
   status: string
@@ -17,6 +19,7 @@ export function OrdersTable() {
   const [orders, setOrders] = useState<OrderRow[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState("")
+  const [selectedOrder, setSelectedOrder] = useState<OrderRow | null>(null)
 
   useEffect(() => {
     let timer: any
@@ -49,9 +52,13 @@ export function OrdersTable() {
 
   if (loading) return <div className="p-4">Загрузка...</div>
 
+  if (selectedOrder) {
+    return <OrderDetails order={selectedOrder} onBack={() => setSelectedOrder(null)} />
+  }
+
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between gap-4">
+    <div className="space-y-4 h-full flex flex-col">
+      <div className="flex items-center justify-between gap-4 flex-shrink-0">
         <input
           type="text"
           placeholder="Поиск по ID, имени, телефону, email"
@@ -90,9 +97,9 @@ export function OrdersTable() {
         </button>
       </div>
 
-      <div className="rounded-lg border border-gray-200 overflow-hidden">
+      <div className="rounded-lg border border-gray-200 overflow-hidden flex-1 overflow-y-auto">
         <table className="w-full text-sm text-left">
-          <thead className="bg-gray-50 text-gray-700 font-medium border-b border-gray-200">
+          <thead className="bg-gray-50 text-gray-700 font-medium border-b border-gray-200 sticky top-0">
             <tr>
               <th className="px-4 py-3">ID</th>
               <th className="px-4 py-3">Статус</th>
@@ -104,35 +111,45 @@ export function OrdersTable() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {filtered.map((o) => {
-              const name = String(o?.customer_info?.name || "")
-              const phone = String(o?.customer_info?.phone || "")
-              const email = String(o?.customer_info?.email || "")
-              const address = String(o?.customer_info?.address || o?.customer_info?.cdek || "")
-              const codes = [o.promo_code, o.ref_code].filter(Boolean).join(" | ")
-              return (
-                <tr key={o.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 text-gray-500">{o.id}</td>
-                  <td className="px-4 py-3">{o.status}</td>
-                  <td className="px-4 py-3 font-medium">{Number(o.total_amount).toLocaleString("ru-RU")} руб.</td>
-                  <td className="px-4 py-3">{name || ""}</td>
-                  <td className="px-4 py-3">
-                    <div className="space-y-0.5">
-                      {phone && <div>{phone}</div>}
-                      {email && <div>{email}</div>}
-                      {address && <div className="text-gray-600">{address}</div>}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">{codes}</td>
-                  <td className="px-4 py-3 text-gray-500">{new Date(o.paid_at || o.created_at).toLocaleString("ru-RU")}</td>
-                </tr>
-              )
-            })}
-            {filtered.length === 0 && (
-              <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-gray-500">Нет заказов</td>
+            {filtered.map((o) => (
+              <tr 
+                key={o.id} 
+                className="hover:bg-gray-50 cursor-pointer transition-colors"
+                onClick={() => setSelectedOrder(o)}
+              >
+                <td className="px-4 py-3 font-medium text-gray-900">
+                    <span className="text-blue-600 hover:underline">{o.id}</span>
+                </td>
+                <td className="px-4 py-3">
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    o.status === 'Оплачен' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
+                  }`}>
+                    {o.status}
+                  </span>
+                </td>
+                <td className="px-4 py-3 font-medium whitespace-nowrap">
+                  {Number(o.total_amount).toLocaleString()} руб.
+                </td>
+                <td className="px-4 py-3">
+                  <div className="font-medium text-gray-900">{o.customer_info?.name || "—"}</div>
+                </td>
+                <td className="px-4 py-3">
+                  <div className="text-gray-900">{o.customer_info?.phone}</div>
+                  <div className="text-gray-500 text-xs">{o.customer_info?.email}</div>
+                  <div className="text-gray-500 text-xs truncate max-w-[200px]">{o.customer_info?.address || o.customer_info?.cdek}</div>
+                </td>
+                <td className="px-4 py-3 text-xs text-gray-500">
+                  {o.promo_code && <div>Promo: {o.promo_code}</div>}
+                  {o.ref_code && <div>Ref: {o.ref_code}</div>}
+                </td>
+                <td className="px-4 py-3 text-gray-500 whitespace-nowrap text-xs">
+                  {new Date(o.paid_at || o.created_at).toLocaleString("ru-RU", {
+                    day: '2-digit', month: '2-digit', year: 'numeric',
+                    hour: '2-digit', minute: '2-digit'
+                  })}
+                </td>
               </tr>
-            )}
+            ))}
           </tbody>
         </table>
       </div>
