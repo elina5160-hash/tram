@@ -86,7 +86,12 @@ export default function HomeClient() {
         <div className="flex items-center justify-between">
           <h1 
             className="text-xl font-semibold cursor-pointer active:opacity-70"
-            onClick={() => setAdminOpen(true)}
+            onClick={() => {
+              const pwd = window.prompt("Введите пароль администратора")
+              if (pwd === "6789") {
+                setAdminOpen(true)
+              }
+            }}
           >
             Главная
           </h1>
