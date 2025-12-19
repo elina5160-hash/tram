@@ -162,8 +162,8 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
                     setEditingProduct(null)
                     setIsCreating(false)
                     setMode('initial')
-                } catch (e) {
-                    alert("Ошибка сохранения")
+                } catch (e: any) {
+                    alert("Ошибка сохранения: " + e.message)
                 }
                 }}
                 onCancel={() => {

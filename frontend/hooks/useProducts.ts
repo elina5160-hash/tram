@@ -20,7 +20,8 @@ export function useProducts() {
       mutate('/api/products');
       return await res.json();
     }
-    throw new Error('Failed to add product');
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to add product');
   };
 
   const updateProduct = async (id: number, updates: any) => {
@@ -33,7 +34,8 @@ export function useProducts() {
       mutate('/api/products');
       return await res.json();
     }
-    throw new Error('Failed to update product');
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to update product');
   };
 
   const deleteProduct = async (id: number) => {

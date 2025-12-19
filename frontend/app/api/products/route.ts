@@ -76,7 +76,10 @@ export async function POST(request: Request) {
         if (!error && data) {
             return NextResponse.json(data, { status: 201 });
         }
-        if (error) console.error('Supabase insert failed', error);
+        if (error) {
+            console.error('Supabase insert failed', error);
+            return NextResponse.json({ error: 'Supabase insert failed: ' + error.message }, { status: 500 });
+        }
     }
 
     // Fallback to JSON

@@ -37,6 +37,7 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
              supabaseSuccess = true;
         } else {
              console.error('Supabase update failed', error);
+             return NextResponse.json({ error: 'Supabase update failed: ' + error.message }, { status: 500 });
         }
     }
 

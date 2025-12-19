@@ -91,20 +91,7 @@ export default function HomeClient() {
         <div className="flex items-center justify-between">
           <h1 
             className="text-xl font-semibold cursor-pointer active:opacity-70 select-none"
-            onClick={() => {
-              const now = Date.now()
-              if (now - lastClickTime < 500) {
-                const newClicks = adminClicks + 1
-                setAdminClicks(newClicks)
-                if (newClicks >= 5) {
-                  setAdminOpen(true)
-                  setAdminClicks(0)
-                }
-              } else {
-                setAdminClicks(1)
-              }
-              setLastClickTime(now)
-            }}
+            onClick={() => setAdminOpen(true)}
           >
             Главная
           </h1>
