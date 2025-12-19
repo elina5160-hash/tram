@@ -69,13 +69,27 @@ export default function HomeClient() {
       if (ref) {
         window.localStorage.setItem("referral_code", ref)
       }
-      const cid = p.get("client_id")
-      if (cid) {
-        setClientId(cid)
-        window.localStorage.setItem("user_id", cid)
-      } else {
-        const stored = window.localStorage.getItem("user_id")
-        if (stored) setClientId(stored)
+      
+      let finalId = p.get("client_id")
+
+      // Try Telegram WebApp
+      if (!finalId && typeof window !== "undefined") {
+          const tg = (window as any).Telegram?.WebApp
+          if (tg) {
+              tg.ready() // Notify Telegram we are ready
+              if (tg.initDataUnsafe?.user?.id) {
+                  finalId = String(tg.initDataUnsafe.user.id)
+              }
+          }
+      }
+
+      if (!finalId) {
+          finalId = window.localStorage.getItem("user_id")
+      }
+
+      if (finalId) {
+        setClientId(finalId)
+        window.localStorage.setItem("user_id", finalId)
       }
     } catch {}
   }, [])
