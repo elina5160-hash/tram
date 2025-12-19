@@ -5,15 +5,28 @@ import Image from "next/image"
 import { HoverButton } from "@/components/ui/hover-button"
 import { useRouter, useSearchParams } from "next/navigation"
 import { addToCart, clearCart, getCart, incrementQty, removeFromCart } from "@/lib/cart"
+import { getPriceValue } from "@/lib/price"
+import { useProducts } from "@/hooks/useProducts"
+import { staticItems } from "@/data/staticItems"
 import BackButton from "@/components/ui/back-button"
 import BottomBanner from "@/components/ui/bottom-banner"
 
 import LazyVideo from "@/components/ui/lazy-video"
 
+interface Product {
+  id: number
+  title: string
+  price: number | string
+  image: string
+  [key: string]: any
+}
+
 function CartContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [items, setItems] = useState<{ id: number; title: string; qty: number }[]>(() => getCart())
+  
+  const { products: fetchedProducts } = useProducts()
   
   // Form State
   const [email, setEmail] = useState<string>("")
@@ -91,41 +104,26 @@ function CartContent() {
     }
   }, [])
 
-  const catalog = useMemo(
-    () => [
-      { id: 1, title: "Закваска ПРАЭнзим", image: "/1500x2000 3-4 Zakvaska.mp4", price: 3000 },
-      { id: 2, title: "🎉 АКЦИЯ ДВА КУРСА смены микробиома 🎉", image: "/1.jpg", price: 24000 },
-      { id: 3, title: "💫 Чистое утро", image: "/4.png", price: 2400 },
-      { id: 4, title: "БифидумФаната﻿🍊﻿", image: "/ETRA Bottle Fanta2.mp4", price: 1200 },
-      { id: 6, title: "Набор СЕЗОННЫЙ", image: "/2.jpg", price: 4200 },
-      { id: 7, title: "Бак для приготовления энзимных напитков", image: "/2.png", price: 53000 },
-      { id: 8, title: "Супер пробка", image: "/пробка.jpg", price: 950 },
-      { id: 9, title: "☀️ Курс Чистка Микробиома 🌛", image: "/афиша.png", price: 16000 },
-      { id: 10, title: "Сыродавленные масла", image: "/9.png", price: 0 },
-      { id: 11, title: "Энзимный напиток Еловый", image: "/Eloviy PROMO strz 2.mp4", price: 750 },
-      { id: 12, title: "Энзимный напиток Детский", image: "/Etra PROMO strz Detskii.mp4", price: 750 },
-      { id: 13, title: "Энзимный напиток Хмель", image: "/хмель1.png", price: 900 },
-      { id: 1013, title: "Энзимный напиток Хмель 0.5л", image: "/хмель1.png", price: 490 },
-      { id: 14, title: "Энзимный напиток Розлинг", image: "/розлинг1.jpg", price: 800 },
-      { id: 1014, title: "Энзимный напиток Розлинг 0.5л", image: "/розлинг1.jpg", price: 490 },
-      { id: 15, title: "Полезный энергетик", image: "/нг.png", price: 750 },
-      { id: 1015, title: "Полезный энергетик 0.5л", image: "/нг.png", price: 490 },
-      { id: 16, title: "Энзимный напиток Рислинг", image: "/рислинг1.png", price: 800 },
-      { id: 17, title: "Энзимный напиток Апельсин", image: "/Etra PROMO ORANGE-2.mp4", price: 800 },
-      { id: 18, title: "Антипаразитарные пребиотики ПАРАЗИТОФФ", image: "/PARAZITOFF 1500x2667 9-16 PROMO-4_1.mp4", price: 750 },
-      { id: 19, title: "Каша ЭТРАсУТРА 200гр", image: "/KASHA PROMO Demo.mp4", price: 750 },
-      { id: 1019, title: "Каша ЭТРАсУТРА 2кг", image: "/KASHA PROMO Demo.mp4", price: 6300 },
-      { id: 20, title: "НАБОР СЕМЕЙНЫЙ", image: "/Набор семейный.png", price: 4200 },
-      { id: 21, title: "Набор для бани", image: "/баня.PNG", price: 4200 },
-      { id: 22, title: "Супер Квас", image: "/1500x2000 3-4 SK.mp4", price: 750 },
-      { id: 999, title: "Тестовый товар", image: "/главная4.png", price: 2 },
-    ],
-    []
-  )
+  const catalog = useMemo<Product[]>(() => {
+    if (fetchedProducts && fetchedProducts.length > 0) {
+      return fetchedProducts
+    }
+    // Fallback to static items if API fails or is loading
+    return staticItems
+  }, [fetchedProducts])
 
   const priceMap = useMemo(() => {
     const m: Record<number, number> = {}
-    catalog.forEach((c) => (m[c.id] = c.price))
+    catalog.forEach((c) => {
+        // Handle both string prices ("3000 руб") and number prices (3000)
+        let p = 0
+        if (typeof c.price === 'number') {
+            p = c.price
+        } else {
+            p = getPriceValue(c.price)
+        }
+        m[c.id] = p
+    })
     return m
   }, [catalog])
 
@@ -614,7 +612,7 @@ function CartContent() {
                         )}
                       </div>
                       <div className="mt-2 text-[13px] font-semibold" style={{ color: "#000000" }}>{s.title}</div>
-                      <div className="text-[12px] font-semibold" style={{ color: "#000000" }}>{formatRub(s.price)}</div>
+                      <div className="text-[12px] font-semibold" style={{ color: "#000000" }}>{formatRub(priceMap[s.id] || 0)}</div>
                       <button
                         className="mt-2 rounded-[12px] bg-white border border-gray-300 px-3 py-2 text-[13px] active:scale-105"
                         onClick={() => addToCart({ id: s.id, title: s.title, qty: 1 })}
