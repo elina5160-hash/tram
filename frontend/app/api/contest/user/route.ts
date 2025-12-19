@@ -38,12 +38,15 @@ export async function GET(req: Request) {
             .from('contest_participants')
             .select('*')
             .eq('user_id', userId)
-            .single()
+            .maybeSingle()
 
         if (error) {
-            // If user not found even after potential creation (e.g. not subscribed), return 404
-            // But if addTickets was called, user should exist.
-            return NextResponse.json({ error: 'User not found' }, { status: 404 })
+            console.error("Database error fetching user:", error)
+            return NextResponse.json({ error: 'Database error: ' + error.message }, { status: 500 })
+        }
+
+        if (!data) {
+            return NextResponse.json({ error: 'User not found in participants table' }, { status: 404 })
         }
 
         return NextResponse.json(data)

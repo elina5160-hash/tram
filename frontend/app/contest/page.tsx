@@ -29,21 +29,27 @@ function ContestContent() {
         }
     }, [searchParams])
 
+    const [errorMsg, setErrorMsg] = useState<string | null>(null)
+
     useEffect(() => {
         if (!clientId) return
         
         async function fetchData() {
             setLoading(true)
+            setErrorMsg(null)
             try {
                 const res = await fetch(`/api/contest/user?userId=${clientId}`)
                 if (res.ok) {
                     const data = await res.json()
                     setUser(data)
                 } else {
-                    console.error("Failed to fetch contest user data")
+                    const errData = await res.json().catch(() => ({}))
+                    console.error("Failed to fetch contest user data", errData)
+                    setErrorMsg(errData.error || "User not found or error")
                 }
-            } catch (e) {
+            } catch (e: any) {
                 console.error("Error fetching contest data", e)
+                setErrorMsg(e.message || "Network error")
             } finally {
                 setLoading(false)
             }
@@ -81,6 +87,7 @@ function ContestContent() {
             ) : !user ? (
                 <div className="p-4 text-center flex flex-col items-center">
                     <p className="mb-4">Вы пока не зарегистрированы в конкурсе.</p>
+                    {errorMsg && <p className="text-red-500 text-xs mb-4">Debug: {errorMsg} (ID: {clientId})</p>}
                     <a 
                         href="https://t.me/KonkursEtraBot?start=start" 
                         target="_blank" 
