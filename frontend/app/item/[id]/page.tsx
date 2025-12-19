@@ -697,6 +697,7 @@ export default function ItemPage() {
             В корзину
           </HoverButton>
         </div>
+        <div className="h-32 w-full" />
       </div>
       <BottomBanner />
     </div>

@@ -16,6 +16,9 @@ export default function ContestBadge({ className = '', clientId }: { className?:
              const tg = (window as any).Telegram?.WebApp
              if (tg?.initDataUnsafe?.user?.id) {
                  setActiveId(tg.initDataUnsafe.user.id)
+             } else {
+                 const stored = localStorage.getItem("user_id")
+                 if (stored) setActiveId(stored)
              }
         }
     }, [clientId])

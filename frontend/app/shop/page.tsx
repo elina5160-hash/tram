@@ -85,7 +85,6 @@ export default function Shop() {
                               alt={it.title}
                               fill
                               className="object-cover"
-                              loading="lazy"
                               sizes="(max-width: 420px) 50vw, 33vw"
                               quality={60}
                               priority={idx < 2}
@@ -183,7 +182,6 @@ export default function Shop() {
                               alt={it.title}
                               fill
                               className="object-cover"
-                              loading="lazy"
                               sizes="(max-width: 420px) 50vw, 33vw"
                               quality={60}
                               priority={idx < 2}

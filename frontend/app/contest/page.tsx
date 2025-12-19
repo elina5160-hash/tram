@@ -16,8 +16,16 @@ function ContestContent() {
         const idFromUrl = searchParams.get('client_id')
         if (idFromUrl) {
             setClientId(idFromUrl)
-        } else if (typeof window !== "undefined" && (window as any).Telegram?.WebApp?.initDataUnsafe?.user?.id) {
-            setClientId((window as any).Telegram.WebApp.initDataUnsafe.user.id)
+            if (typeof window !== "undefined") localStorage.setItem('user_id', idFromUrl)
+        } else if (typeof window !== "undefined") {
+            const tgId = (window as any).Telegram?.WebApp?.initDataUnsafe?.user?.id
+            if (tgId) {
+                setClientId(tgId.toString())
+                localStorage.setItem('user_id', tgId.toString())
+            } else {
+                const storedId = localStorage.getItem('user_id')
+                if (storedId) setClientId(storedId)
+            }
         }
     }, [searchParams])
 
@@ -71,9 +79,15 @@ function ContestContent() {
             {loading ? (
                 <div className="p-4 text-center">Загрузка...</div>
             ) : !user ? (
-                <div className="p-4 text-center">
+                <div className="p-4 text-center flex flex-col items-center">
                     <p className="mb-4">Вы пока не зарегистрированы в конкурсе.</p>
-                    <p className="text-sm text-gray-500">Перезапустите бота командой /start</p>
+                    <a 
+                        href="https://t.me/KonkursEtraBot?start=start" 
+                        target="_blank" 
+                        className="text-sm text-[#E14D2A] underline font-medium active:opacity-70"
+                    >
+                        Перезапустите бота командой /start
+                    </a>
                 </div>
             ) : (
                 <div className="px-4 space-y-6 relative z-10">

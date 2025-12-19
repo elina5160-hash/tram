@@ -70,7 +70,13 @@ export default function HomeClient() {
         window.localStorage.setItem("referral_code", ref)
       }
       const cid = p.get("client_id")
-      if (cid) setClientId(cid)
+      if (cid) {
+        setClientId(cid)
+        window.localStorage.setItem("user_id", cid)
+      } else {
+        const stored = window.localStorage.getItem("user_id")
+        if (stored) setClientId(stored)
+      }
     } catch {}
   }, [])
 
@@ -95,9 +101,30 @@ export default function HomeClient() {
         <div
           aria-label="Баннер"
           className="mt-3 h-[220px] relative rounded-[20px] overflow-hidden cursor-pointer"
-          onClick={() => setAdminOpen(true)}
+          onClick={() => {
+              // Secret tap zone for admin (top right corner, 20% width/height)
+              // But now the main action is redirect to bot
+              // We'll keep admin access via long press or specific zone later if needed
+              // For now, let's just check if the click was in the top right corner for admin
+              // Or just add a hidden button elsewhere.
+              // Given the request "img при нажатии на главную плашку давай будет переадрессация сюда @KonkursEtraBot",
+              // we will prioritize the link.
+              // To preserve admin access, we can add a small invisible button or just use a specific area.
+              // Let's make the whole image a link, but keep a small invisible div for admin.
+          }}
         >
-          <Image src="/нг.png" alt="Афиша" fill className="object-contain rounded-[20px]" priority />
+          <a href="https://t.me/KonkursEtraBot" target="_blank" rel="noopener noreferrer" className="block w-full h-full relative">
+            <Image src="/нг.png" alt="Афиша" fill className="object-contain rounded-[20px]" priority />
+          </a>
+          {/* Secret Admin Button (Top Right 40x40) */}
+          <div 
+            className="absolute top-0 right-0 w-10 h-10 z-10"
+            onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setAdminOpen(true);
+            }}
+          />
         </div>
 
         <div className="mt-2 -mx-4 h-[34px] relative overflow-hidden bg-[#0E1C1D]/60">
