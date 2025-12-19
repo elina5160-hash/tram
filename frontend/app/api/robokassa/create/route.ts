@@ -61,6 +61,23 @@ export async function POST(req: Request) {
   if (client) {
     const currentTime = new Date().toISOString();
     
+    // Prepare flat data for integration
+    const ci = body.customerInfo as any || {}
+    const itemsText = body.items ? body.items.map((it: any) => {
+        const n = String(it.name || 'Товар')
+        const q = Number(it.quantity || 1)
+        const s = Number((it.cost || 0) * q)
+        return `• ${n} × ${q} — ${s.toLocaleString('ru-RU')} руб.`
+    }).join('\n') : ''
+
+    const flatData = {
+        customer_name: ci.name,
+        customer_phone: ci.phone,
+        customer_email: ci.email || body.email,
+        delivery_address: ci.address || ci.cdek,
+        order_items_text: itemsText
+    }
+    
     // Attempt to insert WITHOUT ID first (let DB generate it)
     let insertSuccess = false;
     try {
@@ -68,6 +85,7 @@ export async function POST(req: Request) {
           total_amount: outSum,
           items: body.items || [],
           customer_info: body.customerInfo || { email },
+          ...flatData,
           promo_code: body.promoCode,
           ref_code: body.refCode,
           status: 'pending',
@@ -89,6 +107,7 @@ export async function POST(req: Request) {
           total_amount: outSum,
           items: body.items || [],
           customer_info: body.customerInfo || { email },
+          ...flatData,
           promo_code: body.promoCode,
           ref_code: body.refCode,
           status: 'pending',
