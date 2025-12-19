@@ -85,7 +85,7 @@ export async function POST(req: Request) {
           total_amount: outSum,
           items: body.items || [],
           customer_info: body.customerInfo || { email },
-          // ...flatData, // Temporarily disabled until DB migration is applied
+          ...flatData,
           promo_code: body.promoCode,
           ref_code: body.refCode,
           status: 'pending',
@@ -107,7 +107,7 @@ export async function POST(req: Request) {
           total_amount: outSum,
           items: body.items || [],
           customer_info: body.customerInfo || { email },
-          // ...flatData, // Temporarily disabled until DB migration is applied
+          ...flatData,
           promo_code: body.promoCode,
           ref_code: body.refCode,
           status: 'pending',

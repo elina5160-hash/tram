@@ -138,12 +138,12 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
                     cdek: payload.cdek,
                     client_id: payload.client 
                 },
-                // Flat columns for integration (Temporarily disabled)
-                // customer_name: payload.name,
-                // customer_phone: payload.phone,
-                // customer_email: payload.email,
-                // delivery_address: payload.address || payload.cdek,
-                // order_items_text: lines.join('\n'),
+                // Flat columns for integration
+                customer_name: payload.name,
+                customer_phone: payload.phone,
+                customer_email: payload.email,
+                delivery_address: payload.address || payload.cdek,
+                order_items_text: lines.join('\n'),
 
                 promo_code: payload.promo,
                 ref_code: payload.ref,

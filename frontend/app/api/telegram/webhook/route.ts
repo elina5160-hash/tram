@@ -46,13 +46,48 @@ export async function POST(req: Request) {
     const isAdminCmd = text.toLowerCase().startsWith('/admin')
     const isShare = text.toLowerCase().startsWith('/share') || text === 'Поделиться ссылкой' || text === '👥 Пригласить друзей' || text === '👥 Позвать друзей' || text === '👥 Пригласить' || text === '👥 Пригласить ещё'
 
-    if (!chatId || !text) return NextResponse.json({ ok: true })
-
     const sup = getServiceSupabaseClient() || getSupabaseClient()
     const botUsername = process.env.TELEGRAM_BOT_USERNAME || "KonkursEtraBot"
 
     // Helper to get ref link
     const getRefLink = (uid: number | string) => `https://t.me/${botUsername}?start=ref_${uid}`
+
+    // Callback Query Handling
+    const callbackQuery = update?.callback_query
+    if (callbackQuery) {
+        const cbData = callbackQuery.data
+        const cbChatId = callbackQuery.message.chat.id
+        const cbUserId = callbackQuery.from.id
+
+        if (cbData === 'copy_link') {
+            // Send the link in a separate message so user can copy it easily
+            const refLink = getRefLink(cbUserId)
+            await sendTelegramMessage(`Твоя реферальная ссылка:\n\`${refLink}\``, String(cbChatId))
+        }
+
+        if (cbData === 'share_cmd') {
+             // Reuse Share logic
+             const msg10 = `👥 Пригласи друзей — получи больше билетов!
+Отправь им эту ссылку:
+\`${getRefLink(cbUserId)}\`
+
+Как это работает?
+1. Друг переходит по ссылке
+2. Друг регистрируется в конкурсе
+3. Друг получает приветственный бонус от ЭТРА
+4. Друг покупает — ты получаешь +1 билет
+
+Чем больше друзей — тем больше шансов! 💪`
+            const kb10 = { inline_keyboard: [
+                [{ text: '📤 Поделиться ссылкой', url: `https://t.me/share/url?url=${encodeURIComponent(getRefLink(cbUserId))}&text=${encodeURIComponent('🎁 Участвуй в конкурсе ЭТРА!\n101 победитель\nГлавный приз ЭТРАГЕНЕЗ\nРозыгрыш 7 января\n\nРегистрируйся по моей ссылке и получи приветственный бонус:')}` }] 
+            ] }
+            await sendTelegramMessage(msg10, String(cbChatId), kb10)
+        }
+        
+        return NextResponse.json({ ok: true })
+    }
+
+    if (!chatId || !text) return NextResponse.json({ ok: true })
 
     const makeUser = async () => {
       if (!sup) return { user_id: String(userId), first_name: firstName, username: String(msg?.from?.username || ""), personal_promo_code: transliterate(firstName) + "15", tickets: 0, ticket_numbers: [] as string[] }
