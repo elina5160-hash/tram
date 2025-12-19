@@ -20,5 +20,5 @@
   { "id": 20, "title": "НАБОР СЕМЕЙНЫЙ", "price": "4 200 руб.", "image": "/Набор семейный.png", "category": "sets" },
   { "id": 21, "title": "Набор для бани", "price": "4 200 руб.", "image": "/баня.PNG", "category": "sets" },
   { "id": 22, "title": "Супер Квас", "price": "750 руб.", "image": "/1500x2000 3-4 SK.mp4", "category": "drinks" },
-  { "id": 999, "title": "Тестовый товар", "price": "5 руб.", "image": "/главная4.png", "category": "sets" }
+  { "id": 999, "title": "Тестовый товар", "price": "2 руб.", "image": "/главная4.png", "category": "sets" }
 ]
