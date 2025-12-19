@@ -33,6 +33,7 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
     // Try Supabase
     const supabase = getServiceSupabaseClient();
     let supabaseSuccess = false;
+    
     if (supabase) {
         // Use maybeSingle() to avoid error if row doesn't exist
         const { data, error } = await supabase.from('products').update(updates).eq('id', id).select().maybeSingle();
@@ -42,12 +43,8 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
                  supabaseSuccess = true;
              } else {
                  // Product not found in Supabase. Try to insert it (sync from JSON logic essentially)
-                 // We need to make sure 'updates' contains all required fields OR we just assume it's a sync.
-                 // However, 'updates' might be partial. 
-                 // Let's try to fetch from JSON to get full object if needed, or just upsert what we have + id
                  console.log('Product not found in Supabase during update, attempting insert...', id);
                  
-                 // Try to get existing from JSON to fill gaps?
                  const products = getProductsFromJson();
                  const existing = products.find((p: any) => p.id === id);
                  const toInsert = existing ? { ...existing, ...updates, id } : { ...updates, id };
@@ -57,16 +54,16 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
                      supabaseSuccess = true;
                  } else {
                      console.error('Supabase insert fallback failed', insertError);
-                     // Don't fail the request, fall back to JSON
+                     return NextResponse.json({ error: 'Database insert failed: ' + insertError.message }, { status: 500 });
                  }
              }
         } else {
              console.error('Supabase update failed', error);
-             // Don't return error yet, try JSON fallback
+             return NextResponse.json({ error: 'Database update failed: ' + error.message }, { status: 500 });
         }
     }
 
-    // Always update JSON as well to keep in sync
+    // Update JSON as backup/sync (only if Supabase succeeded or was skipped/unavailable)
     const products = getProductsFromJson();
     
     const index = products.findIndex((p: any) => p.id === id);
