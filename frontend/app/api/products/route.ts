@@ -72,12 +72,23 @@ export async function POST(request: Request) {
     // Try Supabase first
     const supabase = getServiceSupabaseClient(); // Use service role for writing if available
     if (supabase) {
+        // Manually generate ID to avoid schema issues (if id is not auto-increment)
+        if (!newProduct.id) {
+            const { data: maxData } = await supabase.from('products').select('id').order('id', { ascending: false }).limit(1).maybeSingle();
+            const maxId = maxData?.id || 0;
+            newProduct.id = maxId + 1;
+        }
+
         const { data, error } = await supabase.from('products').insert(newProduct).select().single();
         if (!error && data) {
             return NextResponse.json(data, { status: 201 });
         }
         if (error) {
             console.error('Supabase insert failed', error);
+            // If Supabase fails, we might want to try JSON fallback?
+            // But usually we should return error. 
+            // However, to keep it working if Supabase is broken, let's just log and continue to JSON?
+            // No, that creates inconsistency. Return error is safer.
             return NextResponse.json({ error: 'Supabase insert failed: ' + error.message }, { status: 500 });
         }
     }
