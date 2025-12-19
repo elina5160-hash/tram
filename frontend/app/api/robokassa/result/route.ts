@@ -4,6 +4,22 @@ import { getServiceSupabaseClient, getSupabaseClient } from "@/lib/supabase"
 import { addTickets } from "@/lib/contest"
 import { sendTelegramMessage } from "@/lib/telegram"
 
+// Helper for logging
+const logDebug = async (msg: string, data?: any) => {
+    try {
+        const client = getServiceSupabaseClient() || getSupabaseClient()
+        if (client) {
+            await client.from('bot_logs').insert({ 
+                type: 'robokassa_result', 
+                message: msg, 
+                data: data ? JSON.stringify(data) : null 
+            })
+        }
+    } catch (e) {
+        console.error('Failed to log to bot_logs', e)
+    }
+}
+
 function verifySignature(outSum: string, invId: string, signature: string, password2: string) {
   const base = `${outSum}:${invId}:${password2}`
   const calc = crypto.createHash("md5").update(base, "utf8").digest("hex").toLowerCase()
@@ -47,6 +63,8 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
     if (!client) {
       client = getSupabaseClient()
     }
+
+    await logDebug("Processing order...", { invId, outSum, payload })
     
     // Always parse payload and send notifications
     if (payload && Object.keys(payload).length > 0) {
@@ -269,20 +287,6 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  // Debug Log function
-  const logDebug = async (msg: string, data?: any) => {
-    try {
-        const client = getServiceSupabaseClient() || getSupabaseClient()
-        if (client) {
-            await client.from('bot_logs').insert({ 
-                type: 'robokassa_debug', 
-                message: msg, 
-                data: data ? JSON.stringify(data) : null 
-            })
-        }
-    } catch {}
-  }
-
   const merchant = process.env.ROBO_MERCHANT_LOGIN?.trim()
   const password1Raw = process.env.ROBO_PASSWORD1?.trim()
   const isTest = process.env.ROBO_IS_TEST === "1"
