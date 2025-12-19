@@ -32,12 +32,35 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
     const supabase = getServiceSupabaseClient();
     let supabaseSuccess = false;
     if (supabase) {
-        const { data, error } = await supabase.from('products').update(updates).eq('id', id).select().single();
+        // Use maybeSingle() to avoid error if row doesn't exist
+        const { data, error } = await supabase.from('products').update(updates).eq('id', id).select().maybeSingle();
+        
         if (!error) {
-             supabaseSuccess = true;
+             if (data) {
+                 supabaseSuccess = true;
+             } else {
+                 // Product not found in Supabase. Try to insert it (sync from JSON logic essentially)
+                 // We need to make sure 'updates' contains all required fields OR we just assume it's a sync.
+                 // However, 'updates' might be partial. 
+                 // Let's try to fetch from JSON to get full object if needed, or just upsert what we have + id
+                 console.log('Product not found in Supabase during update, attempting insert...', id);
+                 
+                 // Try to get existing from JSON to fill gaps?
+                 const products = getProductsFromJson();
+                 const existing = products.find((p: any) => p.id === id);
+                 const toInsert = existing ? { ...existing, ...updates, id } : { ...updates, id };
+                 
+                 const { error: insertError } = await supabase.from('products').insert(toInsert).select().maybeSingle();
+                 if (!insertError) {
+                     supabaseSuccess = true;
+                 } else {
+                     console.error('Supabase insert fallback failed', insertError);
+                     // Don't fail the request, fall back to JSON
+                 }
+             }
         } else {
              console.error('Supabase update failed', error);
-             return NextResponse.json({ error: 'Supabase update failed: ' + error.message }, { status: 500 });
+             // Don't return error yet, try JSON fallback
         }
     }
 
