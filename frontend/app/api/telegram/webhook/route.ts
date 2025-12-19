@@ -43,6 +43,7 @@ export async function POST(req: Request) {
     const isHelp = text.toLowerCase().startsWith('/help')
     const isRules = text.toLowerCase().startsWith('/rules') || text.toLowerCase() === 'правила'
     const isStats = text.toLowerCase().startsWith('/stats') || text.toLowerCase() === 'моя статистика' || text.toLowerCase() === 'статистика'
+    const isAdminCmd = text.toLowerCase().startsWith('/admin')
     const isShare = text.toLowerCase().startsWith('/share') || text === 'Поделиться ссылкой' || text === '👥 Пригласить друзей' || text === '👥 Позвать друзей' || text === '👥 Пригласить' || text === '👥 Пригласить ещё'
 
     if (!chatId || !text) return NextResponse.json({ ok: true })
@@ -404,6 +405,34 @@ ${friendName} пригласил тебя в конкурс ЭТРА!
         return NextResponse.json({ ok: true })
     }
     
+    // 17. ADMIN COMMAND
+    if (isAdminCmd) {
+        if (sup) {
+            // 1. Total participants
+            const { count: totalUsers } = await sup.from('contest_participants').select('*', { count: 'exact', head: true })
+            
+            // 2. Top 20
+            const { data: topUsers } = await sup.from('contest_participants')
+                .select('first_name, username, tickets')
+                .order('tickets', { ascending: false })
+                .limit(20)
+                
+            let msgAdmin = `📊 Статистика бота:\n\n👥 Всего участников: ${totalUsers || 0}\n\n🏆 Топ-20 участников по билетам:\n`
+            
+            if (topUsers && topUsers.length > 0) {
+                topUsers.forEach((u: any, i: number) => {
+                    const name = u.username ? `${u.first_name} (@${u.username})` : u.first_name
+                    msgAdmin += `${i + 1}. ${name} — ${u.tickets} 🎫\n`
+                })
+            } else {
+                msgAdmin += "Пока нет участников с билетами."
+            }
+            
+            await sendTelegramMessage(msgAdmin, chatId)
+        }
+        return NextResponse.json({ ok: true })
+    }
+
     // Callback query handling (for buttons like 'Я подписался')
     if (update.callback_query) {
         const cb = update.callback_query
