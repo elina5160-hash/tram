@@ -13,6 +13,20 @@ function normalizeChatId(id: string) {
   return s
 }
 
+export async function isSubscribedToOfficial(userId: number | string) {
+  const token = process.env.TELEGRAM_BOT_TOKEN || ""
+  if (!token || !userId) return false
+  const channel = '@etraproject_official'
+  try {
+    const res = await fetch(`https://api.telegram.org/bot${token}/getChatMember?chat_id=${encodeURIComponent(channel)}&user_id=${userId}`)
+    const data = await res.json()
+    const st = String(data?.result?.status || '')
+    return ['member', 'creator', 'administrator'].includes(st)
+  } catch {
+    return false
+  }
+}
+
 export async function sendTelegramMessage(text: string, chatId?: string, replyMarkup?: unknown) {
   if (!TELEGRAM_BOT_TOKEN) {
     console.error("TELEGRAM_BOT_TOKEN is missing")

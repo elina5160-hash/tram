@@ -1,39 +1,38 @@
 "use client"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import BottomBanner from "@/components/ui/bottom-banner"
-import { addToCart, incrementQty } from "@/lib/cart"
+import { addToCart, incrementQty, getCart } from "@/lib/cart"
+import { useProducts } from "@/hooks/useProducts"
+import { staticItems } from "@/data/staticItems"
 
 import LazyVideo from "@/components/ui/lazy-video"
 
 export default function Catalog() {
   const router = useRouter()
-  const items = [
-    { id: 1, title: "Закваска ПРАЭнзим", price: "3 000 руб / 1л", image: "/1500x2000 3-4 Zakvaska.mp4" },
-    { id: 2, title: "АКЦИЯ ДВА КУРСА смены микробиома", price: "24 000 руб", image: "/1.jpg" },
-    { id: 3, title: "Чистое утро", price: "2400 руб / 2 л + 100гр", image: "/4.png" },
-    { id: 4, title: "БифидумФаната", price: "1 200 руб / 1л", image: "/ETRA Bottle Fanta2.mp4" },
-    { id: 6, title: "Набор СЕЗОННЫЙ", price: "4 200 руб / 6л", image: "/2.jpg" },
-    { id: 7, title: "Бак для приготовления энзимных напитков", price: "53 000 руб / 19л", image: "/2.png" },
-    { id: 8, title: "Супер пробка", price: "950 руб.", image: "/пробка.jpg" },
-    { id: 9, title: "Курс Чистка Микробиома", price: "16 000 руб", image: "/афиша.png" },
-    { id: 10, title: "Сыродавленные масла", price: "", image: "/9.png" },
-    { id: 11, title: "Энзимный напиток Еловый", price: "750 руб.", image: "/Eloviy PROMO strz 2.mp4" },
-    { id: 12, title: "Энзимный напиток Детский", price: "750 руб.", image: "/Etra PROMO strz Detskii.mp4" },
-    { id: 13, title: "Энзимный напиток Хмель", price: "900 руб / 1л", image: "/хмель1.png" },
-    { id: 14, title: "Энзимный напиток Розлинг", price: "800 руб / 1л", image: "/розлинг1.jpg" },
-    { id: 15, title: "Полезный энергетик", price: "750 руб / 1л", image: "/нг.png" },
-    { id: 16, title: "Энзимный напиток Рислинг", price: "800 руб.", image: "/рислинг1.png" },
-    { id: 17, title: "Энзимный напиток Апельсин", price: "800 руб.", image: "/Etra PROMO ORANGE-2.mp4" },
-    { id: 18, title: "Антипаразитарные пребиотики ПАРАЗИТОФФ", price: "750 руб.", image: "/PARAZITOFF 1500x2667 9-16 PROMO-4_1.mp4" },
-    { id: 19, title: "Каша ЭТРАсУТРА", price: "750 руб / 200гр", image: "/KASHA PROMO Demo.mp4" },
-    { id: 20, title: "НАБОР СЕМЕЙНЫЙ", price: "4 200 руб.", image: "/Набор семейный.png" },
-    { id: 21, title: "Набор для бани", price: "4 200 руб.", image: "/баня.PNG" },
-    { id: 22, title: "Супер Квас", price: "750 руб.", image: "/1500x2000 3-4 SK.mp4" },
-  ]
+  const { products: fetchedProducts, isLoading } = useProducts()
+  
+  // Use fetched products if available, otherwise fallback to staticItems
+  const items = useMemo(() => {
+    if (fetchedProducts && fetchedProducts.length > 0) {
+      return fetchedProducts
+    }
+    return staticItems
+  }, [fetchedProducts])
+
+  const [searchTerm, setSearchTerm] = useState("")
+
+  const filteredItems = useMemo(() => {
+    if (!searchTerm) return items
+    return items.filter((it: any) => 
+      it.title.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+  }, [items, searchTerm])
+
   function splitPrice(s: string) {
+    if (!s) return { main: "", sub: "" }
     const m = s.match(/^(.*?руб\.?)/i)
     if (m) {
       const main = m[1].trim()
@@ -44,11 +43,22 @@ export default function Catalog() {
     const parts = s.split("/")
     return { main: (parts[0] || "").trim(), sub: (parts[1] || "").trim() }
   }
-  const [qty, setQty] = useState<Record<number, number>>(() => {
-    const initial: Record<number, number> = {}
-    items.forEach((it) => (initial[it.id] = 0))
-    return initial
-  })
+  
+  const [qty, setQty] = useState<Record<number, number>>({})
+
+  // Sync qty with cart
+  useEffect(() => {
+    const update = () => {
+        const cart = getCart()
+        const newQty: Record<number, number> = {}
+        cart.forEach((c) => (newQty[c.id] = c.qty))
+        setQty(newQty)
+    }
+    update()
+    window.addEventListener("cart:changed", update)
+    return () => window.removeEventListener("cart:changed", update)
+  }, [])
+
   const [pressedId, setPressedId] = useState<number | null>(null)
   const [catalogEntered, setCatalogEntered] = useState(false)
   useEffect(() => {
@@ -59,14 +69,31 @@ export default function Catalog() {
   return (
     <div className="min-h-[100dvh] w-full bg-white flex flex-col justify-start relative pb-56">
       <div className="w-full max-w-[420px] mx-auto px-6 pt-[calc(1.5rem+env(safe-area-inset-top))]">
-        <div className="flex items-center gap-2">
-          <h1 className="text-xl font-semibold">Товары</h1>
-          <svg width="27" height="27" viewBox="0 0 27 27" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M11.7391 0H0.586957C0.26413 0 0 0.26413 0 0.586957V11.7391C0 12.062 0.26413 12.3261 0.586957 12.3261H11.7391C12.062 12.3261 12.3261 12.062 12.3261 11.7391V0.586957C12.3261 0.26413 12.062 0 11.7391 0ZM9.83152 9.83152H2.49457V2.49457H9.83152V9.83152ZM26.413 0H15.2609C14.938 0 14.6739 0.26413 14.6739 0.586957V11.7391C14.6739 12.062 14.938 12.3261 15.2609 12.3261H26.413C26.7359 12.3261 27 12.062 27 11.7391V0.586957C27 0.26413 26.7359 0 26.413 0ZM24.5054 9.83152H17.1685V2.49457H24.5054V9.83152ZM11.7391 14.6739H0.586957C0.26413 14.6739 0 14.938 0 15.2609V26.413C0 26.7359 0.26413 27 0.586957 27H11.7391C12.062 27 12.3261 26.7359 12.3261 26.413V15.2609C12.3261 14.938 12.062 14.6739 11.7391 14.6739ZM9.83152 24.5054H2.49457V17.1685H9.83152V24.5054ZM26.413 14.6739H15.2609C14.938 14.6739 14.6739 14.938 14.6739 15.2609V26.413C14.6739 26.7359 14.938 27 15.2609 27H26.413C26.7359 27 27 26.7359 27 26.413V15.2609C27 14.938 26.7359 14.6739 26.413 14.6739ZM24.5054 24.5054H17.1685V17.1685H24.5054V24.5054Z" fill="#B7B1B1" />
-          </svg>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-semibold">Товары</h1>
+            <svg width="27" height="27" viewBox="0 0 27 27" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M11.7391 0H0.586957C0.26413 0 0 0.26413 0 0.586957V11.7391C0 12.062 0.26413 12.3261 0.586957 12.3261H11.7391C12.062 12.3261 12.3261 12.062 12.3261 11.7391V0.586957C12.3261 0.26413 12.062 0 11.7391 0ZM9.83152 9.83152H2.49457V2.49457H9.83152V9.83152ZM26.413 0H15.2609C14.938 0 14.6739 0.26413 14.6739 0.586957V11.7391C14.6739 12.062 14.938 12.3261 15.2609 12.3261H26.413C26.7359 12.3261 27 12.062 27 11.7391V0.586957C27 0.26413 26.7359 0 26.413 0ZM24.5054 9.83152H17.1685V2.49457H24.5054V9.83152ZM11.7391 14.6739H0.586957C0.26413 14.6739 0 14.938 0 15.2609V26.413C0 26.7359 0.26413 27 0.586957 27H11.7391C12.062 27 12.3261 26.7359 12.3261 26.413V15.2609C12.3261 14.938 12.062 14.6739 11.7391 14.6739ZM9.83152 24.5054H2.49457V17.1685H9.83152V24.5054ZM26.413 14.6739H15.2609C14.938 14.6739 14.6739 14.938 14.6739 15.2609V26.413C14.6739 26.7359 14.938 27 15.2609 27H26.413C26.7359 27 27 26.7359 27 26.413V15.2609C27 14.938 26.7359 14.6739 26.413 14.6739ZM24.5054 24.5054H17.1685V17.1685H24.5054V24.5054Z" fill="#B7B1B1" />
+            </svg>
+          </div>
         </div>
-        <div className="mt-3 inline-grid grid-cols-2 gap-2 mx-auto">
-          {items.map((it, idx) => (
+
+        {/* Search Bar */}
+        <div className="mb-4 relative">
+            <input 
+                type="text" 
+                placeholder="Поиск товаров..." 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full h-10 pl-10 pr-4 rounded-xl bg-gray-100 border-none outline-none text-sm placeholder-gray-500 focus:ring-2 focus:ring-blue-500/50 transition-all"
+            />
+            <svg className="absolute left-3 top-2.5 w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+        </div>
+
+        <div className="mt-3 inline-grid grid-cols-2 gap-2 mx-auto w-full">
+          {filteredItems.map((it: any, idx: number) => (
             <div
               key={it.id}
               className={`bg-white rounded-[20px] border border-gray-300 p-2 transition-all duration-500 ease-out transform-gpu ${catalogEntered ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-3"}`}

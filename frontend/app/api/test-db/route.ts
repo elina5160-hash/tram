@@ -28,6 +28,19 @@ export async function GET() {
     return NextResponse.json({ ...results, error: "No Supabase client available" }, { status: 500 })
   }
 
+  // Check for specific order 1766140271
+  const { data: missingOrder, error: missingOrderError } = await client
+    .from("orders")
+    .select("*")
+    .eq("id", 1766140271)
+    .maybeSingle()
+
+  const checkResult = {
+      found: !!missingOrder,
+      data: missingOrder,
+      error: missingOrderError
+  }
+
   const testId = Math.floor(Date.now() / 1000)
   const currentTime = new Date().toISOString();
 
@@ -52,5 +65,5 @@ export async function GET() {
     results.insertTest = `Exception: ${e}`
   }
 
-  return NextResponse.json(results)
+  return NextResponse.json({ ...results, checkResult })
 }

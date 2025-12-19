@@ -80,17 +80,30 @@ export default function HomeClient() {
     } catch {}
   }, [])
 
+  const [adminClicks, setAdminClicks] = useState(0)
+  const [lastClickTime, setLastClickTime] = useState(0)
+
+  // ...
+  
   return (
     <div className="min-h-[100dvh] w-full bg-[#FAFAFA] flex flex-col justify-start relative pb-56">
       <div className="w-full max-w-[420px] mx-auto px-4 pt-[calc(1.5rem+env(safe-area-inset-top))]">
         <div className="flex items-center justify-between">
           <h1 
-            className="text-xl font-semibold cursor-pointer active:opacity-70"
+            className="text-xl font-semibold cursor-pointer active:opacity-70 select-none"
             onClick={() => {
-              const pwd = window.prompt("Введите пароль администратора")
-              if (pwd === "6789") {
-                setAdminOpen(true)
+              const now = Date.now()
+              if (now - lastClickTime < 500) {
+                const newClicks = adminClicks + 1
+                setAdminClicks(newClicks)
+                if (newClicks >= 5) {
+                  setAdminOpen(true)
+                  setAdminClicks(0)
+                }
+              } else {
+                setAdminClicks(1)
               }
+              setLastClickTime(now)
             }}
           >
             Главная

@@ -55,11 +55,16 @@ export async function addTickets(userId: number | string, count: number, reason:
             }
         }
 
-        // 4. Log (Optional)
-        // await supabase.from('contest_tickets_log').insert(...)
+        // 4. Log
+        await supabase.from('contest_tickets_log').insert({
+            user_id: String(userId),
+            amount: count,
+            reason: reason,
+            related_id: relatedId
+        })
 
         // 5. Notify
-        if (process.env.TELEGRAM_BOT_TOKEN) {
+        if (process.env.TELEGRAM_BOT_TOKEN && count > 0) {
              const token = process.env.TELEGRAM_BOT_TOKEN
              const msg = `🎉 Вам начислено ${count} билетов! Ваши номера: ${newTickets.join(', ')}`
              try {

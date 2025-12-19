@@ -2,6 +2,8 @@ import { NextResponse } from "next/server"
 import { getSupabaseClient, getServiceSupabaseClient } from "@/lib/supabase"
 import { addTickets } from "@/lib/contest"
 
+import { isSubscribedToOfficial } from "@/lib/telegram"
+
 export const runtime = 'edge'
 export const dynamic = 'force-dynamic'
 
@@ -53,19 +55,7 @@ async function logEvent(type: string, message: string, data?: unknown) {
   }
 }
 
-async function isSubscribedToOfficial(userId: number) {
-  const token = process.env.TELEGRAM_BOT_TOKEN || ""
-  if (!token || !userId) return false
-  const channel = '@etraproject_official'
-  try {
-    const res = await fetch(`https://api.telegram.org/bot${token}/getChatMember?chat_id=${encodeURIComponent(channel)}&user_id=${userId}`)
-    const data = await res.json()
-    const st = String(data?.result?.status || '')
-    return ['member', 'creator', 'administrator'].includes(st)
-  } catch {
-    return false
-  }
-}
+
 
 export async function POST(req: Request) {
   try {

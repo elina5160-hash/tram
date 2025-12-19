@@ -67,10 +67,17 @@ function CartContent() {
     const idFromUrl = searchParams.get('client_id')
     if (idFromUrl) {
       setClientId(idFromUrl)
-    } else if (typeof window !== "undefined" && (window as any).Telegram?.WebApp?.initDataUnsafe?.user?.id) {
-      const user = (window as any).Telegram.WebApp.initDataUnsafe.user
-      setClientId(user.id)
-      if (user.username) setUsername(user.username)
+      if (typeof window !== "undefined") localStorage.setItem("user_id", idFromUrl)
+    } else if (typeof window !== "undefined") {
+      if ((window as any).Telegram?.WebApp?.initDataUnsafe?.user?.id) {
+        const user = (window as any).Telegram.WebApp.initDataUnsafe.user
+        setClientId(user.id)
+        if (user.username) setUsername(user.username)
+        localStorage.setItem("user_id", String(user.id))
+      } else {
+        const stored = localStorage.getItem("user_id")
+        if (stored) setClientId(stored)
+      }
     }
   }, [searchParams])
 

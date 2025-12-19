@@ -134,7 +134,7 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
                 ref_code: payload.ref,
                 status: 'Оплачен',
                 ok: 'true',
-                paid_at: new Date().toISOString(),
+                // paid_at: new Date().toISOString(), // Column missing
                 updated_at: new Date().toISOString()
             }
             

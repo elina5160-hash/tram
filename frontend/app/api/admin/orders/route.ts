@@ -9,10 +9,9 @@ export async function GET() {
 
     const paidRes = await client
       .from("orders")
-      .select("id,created_at,paid_at,total_amount,status,customer_info,promo_code,ref_code")
+      .select("id,created_at,total_amount,status,customer_info,promo_code,ref_code")
       .in("status", ["Оплачен", "paid"]) 
-      .order("paid_at", { ascending: false, nullsFirst: false })
-      .order("created_at", { ascending: false })
+      .order("created_at", { ascending: false, nullsFirst: false })
       .limit(200)
 
     const pendingRes = await client
