@@ -360,6 +360,7 @@ export async function POST(req: Request) {
   if (shp.Shp_address) payload.address = shp.Shp_address
   if (shp.Shp_cdek) payload.cdek = shp.Shp_cdek
   if (shp.Shp_client) payload.client = shp.Shp_client
+  if (shp.Shp_items) payload.items = shp.Shp_items
   
   await logDebug("Processing order...", { payload })
   
