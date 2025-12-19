@@ -14,21 +14,6 @@ function ack(invId: string) {
   return new Response(`OK${invId}`)
 }
 
-function formatCustomerInfo(ci: unknown, emailFallback: string = "") {
-  if (typeof ci === "string") return ci.trim()
-  if (typeof ci === "object" && ci !== null) {
-    const o = ci as Record<string, unknown>
-    const name = typeof o.name === "string" ? o.name.trim() : ""
-    const phone = typeof o.phone === "string" ? o.phone.trim() : ""
-    const address = typeof o.address === "string" ? o.address.trim() : ""
-    const cdek = typeof o.cdek === "string" ? o.cdek.trim() : ""
-    const email = typeof o.email === "string" ? o.email.trim() : emailFallback
-    const addr = address ? `${address} (курьер)` : (cdek ? `ПВЗ СДЭК: ${cdek}` : "")
-    return [name, phone, addr, email].filter(Boolean).join("\n")
-  }
-  return emailFallback
-}
-
 const recent = new Map<string, number>()
 const TTL = 10 * 60 * 1000
 function isDup(k: string) {
@@ -117,7 +102,6 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
         // DB Operations
         if (client) {
             // 1. Upsert order (Create or Update)
-            // Even if client_id is missing, we must save the order!
             const orderData = {
                 id: Number(invId),
                 total_amount: Number(outSum),
@@ -128,12 +112,11 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
                     email: payload.email,
                     address: payload.address,
                     cdek: payload.cdek,
-                    client_id: payload.client // might be empty string
+                    client_id: payload.client 
                 },
                 promo_code: payload.promo,
                 ref_code: payload.ref,
                 status: 'Оплачен',
-                // paid_at: new Date().toISOString(),
                 updated_at: new Date().toISOString()
             }
             
@@ -148,15 +131,45 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
                 
                 // Award tickets for purchase (1 per 1000 rub)
                 const tickets = Math.floor(Number(outSum) / 1000)
+                let newTotalTickets = 0
+                
                 if (tickets > 0) {
-                    await addTickets(refereeId, tickets, 'purchase_reward', invId)
+                    await addTickets(refereeId, tickets, 'purchase_reward', invId, true)
+                    
+                    // Fetch updated tickets for notification (Scenario 6)
+                    const { data: user } = await client.from('contest_participants').select('tickets').eq('user_id', String(refereeId)).single()
+                    newTotalTickets = user?.tickets || 0
+                    
+                    const msg6 = `🎉 Покупка засчитана!
+Ты купил на ${Number(outSum)} руб
+Получил: +${tickets} билетов 🎟
+Всего билетов: ${newTotalTickets}
+
+Чем больше покупаешь — тем больше шансов! 🔥
+Проверить билеты можешь в @PRAEnzyme_bot`
+                    
+                    const kb6 = { inline_keyboard: [ [{ text: '🛒 Купить ещё', url: 'https://t.me/PRAEnzyme_bot' }] ] }
+                    await sendTelegramMessage(msg6, String(refereeId), kb6)
+                } else {
+                    // Scenario 11: Purchase < 1000
+                    const short = 1000 - Number(outSum)
+                    const msg11 = `Спасибо за покупку!
+Сумма: ${Number(outSum)} руб
+
+До билета не хватило: ${short} руб
+Купи еще на ${short} руб, чтобы получить билет!
+
+Билеты начисляются за каждые 1000 руб в чеке.`
+                    
+                    const kb11 = { inline_keyboard: [ [{ text: '🛒 Купить ещё', url: 'https://t.me/PRAEnzyme_bot' }] ] }
+                    await sendTelegramMessage(msg11, String(refereeId), kb11)
                 }
 
                 // Award tickets for promo code owner
                 if (payload.promo) {
                     const { data: owner } = await client.from('contest_participants').select('user_id').eq('personal_promo_code', payload.promo).single()
                     if (owner && String(owner.user_id) !== String(refereeId)) {
-                        await addTickets(owner.user_id, 2, 'friend_purchase_promo', invId)
+                        await addTickets(owner.user_id, 2, 'friend_purchase_promo', invId, true)
                     }
                 }
 
@@ -170,11 +183,52 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
                         }
                     }
                 }
+                
+                // Check referral linkage and award bonus if applicable
                 const { data: referral } = await client.from('contest_referrals').select('referrer_id,status').eq('referee_id', refereeId).single()
-                if (referral && referral.status !== 'paid') {
-                    await addTickets(referral.referrer_id, 1, 'referral_purchase_bonus', invId)
-                    await addTickets(refereeId, 1, 'welcome_bonus', invId)
-                    await client.from('contest_referrals').update({ status: 'paid' }).eq('referee_id', refereeId)
+                
+                // If linked and this is a purchase (we are processing a paid order)
+                // "За каждую покупку друга получишь +1 билет" -> Always give +1 ticket to referrer on purchase?
+                // The prompt says: "8. УВЕДОМЛЕНИЕ: ДРУГ КУПИЛ ... Твой друг купил ... Ты получил +1 билет"
+                // Previous logic was "welcome_bonus" only once. New logic seems "Every purchase"?
+                // "За каждую покупку друга получишь +1 билет" - YES.
+                
+                if (referral) {
+                    // Always award +1 to referrer for friend's purchase
+                    await addTickets(referral.referrer_id, 1, 'referral_purchase_bonus', invId, true)
+                    
+                    // Send Notification to Referrer (Scenario 8)
+                    const { data: referrerUser } = await client.from('contest_participants').select('tickets').eq('user_id', String(referral.referrer_id)).single()
+                    const referrerTotal = referrerUser?.tickets || 0
+                    
+                    // Get Buyer Name
+                    let buyerName = payload.name || "Твой друг"
+                    const { data: buyerUser } = await client.from('contest_participants').select('first_name').eq('user_id', String(refereeId)).single()
+                    if (buyerUser?.first_name) buyerName = buyerUser.first_name
+                    
+                    const msg8 = `💰 Класс!
+Твой друг ${buyerName} купил на ${Number(outSum)} руб!
+Ты получил: +1 билетов 🎟
+Всего билетов: ${referrerTotal}
+
+Шансы растут! Приглашай ещё 🔥`
+
+                    const botUsername = process.env.TELEGRAM_BOT_USERNAME || "KonkursEtraBot"
+                    const refLink = `https://t.me/${botUsername}?start=ref_${referral.referrer_id}`
+                    const kb8 = { inline_keyboard: [ [{ text: '👥 Пригласить друзей', url: `https://t.me/share/url?url=${encodeURIComponent(refLink)}&text=${encodeURIComponent('Участвуй в конкурсе ЭТРА!')}` }] ] }
+                    
+                    await sendTelegramMessage(msg8, String(referral.referrer_id), kb8)
+
+                    // Also handle "welcome bonus" for the friend (first purchase)?
+                    // Logic says: "3. Друг получает приветственный бонус" (handled at subscription/start?)
+                    // If this is the FIRST purchase, maybe we update status to 'paid'
+                    if (referral.status !== 'paid') {
+                        // Maybe award extra bonus if defined? Or just mark as paid.
+                        // Existing code awarded 'welcome_bonus' here.
+                        // I'll keep 'welcome_bonus' but suppressed, just in case.
+                         await addTickets(refereeId, 1, 'welcome_bonus', invId, true)
+                         await client.from('contest_referrals').update({ status: 'paid' }).eq('referee_id', refereeId)
+                    }
                 }
             }
         }
@@ -306,10 +360,6 @@ export async function POST(req: Request) {
   if (shp.Shp_address) payload.address = shp.Shp_address
   if (shp.Shp_cdek) payload.cdek = shp.Shp_cdek
   if (shp.Shp_client) payload.client = shp.Shp_client
-  // Items might be encoded
-  // Note: Robokassa doesn't pass Shp items automatically unless we passed them. 
-  // We don't see items in Shp usually. We might need to fetch them from DB or trust what we passed?
-  // Actually, we stored items in 'pending' order in DB. We should fetch from there!
   
   await logDebug("Processing order...", { payload })
   

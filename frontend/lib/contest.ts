@@ -1,6 +1,6 @@
 import { getServiceSupabaseClient } from './supabase'
 
-export async function addTickets(userId: number | string, count: number, reason: string, relatedId?: string) {
+export async function addTickets(userId: number | string, count: number, reason: string, relatedId?: string, suppressNotification: boolean = false) {
     const supabase = getServiceSupabaseClient()
     if (!supabase) {
         console.error("addTickets: No service client available")
@@ -69,7 +69,7 @@ export async function addTickets(userId: number | string, count: number, reason:
         }
 
         // 5. Notify
-        if (process.env.TELEGRAM_BOT_TOKEN && count > 0) {
+        if (!suppressNotification && process.env.TELEGRAM_BOT_TOKEN && count > 0) {
              const token = process.env.TELEGRAM_BOT_TOKEN
              const msg = `🎉 Вам начислено ${count} билетов! Ваши номера: ${newTickets.join(', ')}`
              try {
