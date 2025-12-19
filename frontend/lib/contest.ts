@@ -4,7 +4,7 @@ export async function addTickets(userId: number | string, count: number, reason:
     const supabase = getServiceSupabaseClient()
     if (!supabase) {
         console.error("addTickets: No service client available")
-        return false
+        return { success: false, error: "No service client" }
     }
 
     try {
@@ -13,7 +13,7 @@ export async function addTickets(userId: number | string, count: number, reason:
         
         if (fetchError && fetchError.code !== 'PGRST116') {
             console.error('Error fetching user for tickets:', fetchError)
-            return false
+            return { success: false, error: fetchError }
         }
         
         let currentTickets: string[] = []
@@ -37,7 +37,7 @@ export async function addTickets(userId: number | string, count: number, reason:
             
             if (updateError) {
                 console.error('Error updating tickets:', updateError)
-                return false
+                return { success: false, error: updateError }
             }
         } else {
             // Create new participant
@@ -51,17 +51,22 @@ export async function addTickets(userId: number | string, count: number, reason:
             
             if (insertError) {
                 console.error('Error inserting participant:', insertError)
-                return false
+                return { success: false, error: insertError }
             }
         }
 
         // 4. Log
-        await supabase.from('contest_tickets_log').insert({
+        const { error: logError } = await supabase.from('contest_tickets_log').insert({
             user_id: String(userId),
             amount: count,
             reason: reason,
             related_id: relatedId
         })
+        
+        if (logError) {
+             console.error('Error logging tickets:', logError)
+             // We don't fail the whole operation if log fails, but it's good to know
+        }
 
         // 5. Notify
         if (process.env.TELEGRAM_BOT_TOKEN && count > 0) {
@@ -78,11 +83,11 @@ export async function addTickets(userId: number | string, count: number, reason:
              }
         }
         
-        return true
+        return { success: true }
 
     } catch (e) {
         console.error("Error in addTickets", e)
-        return false
+        return { success: false, error: e }
     }
 }
 

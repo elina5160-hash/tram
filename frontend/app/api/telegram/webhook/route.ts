@@ -108,11 +108,11 @@ export async function POST(req: Request) {
            const targetId = parts[1]
            const count = Number(parts[2])
            if (targetId && !isNaN(count) && count > 0) {
-               const success = await addTickets(targetId, count, 'admin_gift')
-               if (success) {
+               const res = await addTickets(targetId, count, 'admin_gift')
+               if (res.success) {
                    await sendMessage(`✅ Выдано ${count} билетов пользователю ${targetId}`, chatId)
                } else {
-                   await sendMessage(`❌ Ошибка выдачи. Проверьте логи сервера (возможно нет Service Role Key).`, chatId)
+                   await sendMessage(`❌ Ошибка выдачи. Проверьте логи сервера.`, chatId)
                }
                return NextResponse.json({ ok: true })
            } else {

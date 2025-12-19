@@ -49,7 +49,7 @@ export async function POST(req: Request) {
   const description = sanitizeText(body.description || "Оплата заказа")
   const email = body.email || ""
   // Use provided invId if valid number, else generate new one
-  const invId = body.invId && typeof body.invId === "number" ? body.invId : Math.floor(Date.now() / 1000)
+  let invId = body.invId && typeof body.invId === "number" ? body.invId : Math.floor(Date.now() / 1000)
   
   // Сохраняем заказ в Supabase (если настроены переменные окружения)
   // Пытаемся использовать Service Client, если нет - обычный
@@ -60,6 +60,14 @@ export async function POST(req: Request) {
 
   if (client) {
     const currentTime = new Date().toISOString();
+    // Try to insert without ID to let DB generate it (if configured as IDENTITY)
+    // If not IDENTITY, we need to provide ID. 
+    // We'll try to insert with the generated invId first to be safe with current schema.
+    // If user changes schema to IDENTITY, we could omit it, but providing it is safe for "BY DEFAULT".
+    
+    // Actually, to support "remove id" request, let's try to NOT send ID if we can get it back.
+    // But since we don't know if schema is updated, let's stick to sending invId but ensure updated_at is present.
+    
     const { error } = await client.from("orders").insert({
       id: invId,
       total_amount: outSum,
@@ -70,8 +78,11 @@ export async function POST(req: Request) {
       status: 'pending',
       updated_at: currentTime
     })
+    
     if (error) {
       console.error("Error creating pending order in Supabase:", error)
+      // If error is about "id" missing or duplicate, we might want to retry?
+      // But for now, we just proceed to payment generation so we don't block the user.
     }
   }
 

@@ -7,7 +7,8 @@ create table if not exists orders (
   customer_info jsonb default '{}'::jsonb, -- Email, имя и т.д.
   promo_code text,
   ref_code text,
-  status text default 'pending' -- pending, paid, cancelled, test_success
+  status text default 'pending', -- pending, paid, cancelled, test_success
+  updated_at timestamp with time zone default now()
 );
 
 -- Включение RLS

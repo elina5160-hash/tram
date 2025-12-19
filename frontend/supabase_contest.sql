@@ -7,6 +7,7 @@ create table if not exists contest_participants (
   first_name text,
   username text,
   tickets integer default 0,
+  ticket_numbers text[] default array[]::text[],
   personal_promo_code text unique,
   referrer_id bigint references contest_participants(user_id),
   created_at timestamptz default now()
