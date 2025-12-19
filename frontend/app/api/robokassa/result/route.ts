@@ -62,6 +62,8 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
     if (!client) {
       client = getSupabaseClient()
     }
+    
+    // Always parse payload and send notifications
     if (payload && Object.keys(payload).length > 0) {
       try {
         const name = payload.name || ""
@@ -74,22 +76,27 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
           const dec = decodeURIComponent(itemsStr)
           items = JSON.parse(dec)
         } catch {}
+        
+        // Prepare items for display
         const lines = Array.isArray(items) ? items.map((it) => {
           const n = String((it?.n ?? it?.name ?? 'Товар'))
           const q = Number((it?.q ?? it?.quantity ?? 1))
           const s = Number((it?.s ?? it?.sum ?? 0))
           return `• ${n} × ${q} — ${s.toLocaleString('ru-RU')} руб.`
         }) : []
+        
         const contact = [
           name ? `👤 ${name}` : '',
           phone ? `📞 <a href="tel:${phone}">${phone}</a>` : '',
           address ? `📍 ${address}` : '',
           email ? `✉️ <a href="mailto:${email}">${email}</a>` : '',
         ].filter(Boolean).join('\n')
+        
         const promo = payload.promo ? `Промокод: ${payload.promo}` : ''
         const ref = payload.ref ? `Реф-код: ${payload.ref}` : ''
         const dt = new Date()
         const when = dt.toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })
+        
         const text = [
           `<b>Оплачен заказ № ${invId}</b>`,
           `Сумма: ${Number(outSum).toLocaleString('ru-RU')} руб.`,
@@ -98,27 +105,30 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
           contact ? `\n<b>Пользователь</b>\n${contact}` : '',
           [promo, ref].filter(Boolean).length ? `\n${[promo, ref].filter(Boolean).join('\n')}` : '',
         ].filter(Boolean).join('\n')
+        
         const chatId = String(process.env.TELEGRAM_ADMIN_CHAT_ID || '2058362528')
         const replyMarkup = payload.client ? { inline_keyboard: [[{ text: 'Написать в личные сообщения', url: `tg://user?id=${payload.client}` }]] } : undefined
+        
         await sendTelegramMessage(text, chatId, replyMarkup)
+        
         const row = [new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' }), invId, Number(outSum), contact.replace(/\n/g, ' | '), payload.ref || '']
         await appendToSheet(row)
-        if (payload.client) {
-          let client = getServiceSupabaseClient()
-          if (!client) client = getSupabaseClient()
-          if (client) {
-            // 1. Ensure order exists and is marked as paid
+
+        // DB Operations
+        if (client) {
+            // 1. Upsert order (Create or Update)
+            // Even if client_id is missing, we must save the order!
             const orderData = {
                 id: Number(invId),
                 total_amount: Number(outSum),
-                items: items, // parsed from payload above
+                items: items, 
                 customer_info: {
                     name: payload.name,
                     phone: payload.phone,
                     email: payload.email,
                     address: payload.address,
                     cdek: payload.cdek,
-                    client_id: payload.client
+                    client_id: payload.client // might be empty string
                 },
                 promo_code: payload.promo,
                 ref_code: payload.ref,
@@ -127,154 +137,51 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
                 paid_at: new Date().toISOString(),
                 updated_at: new Date().toISOString()
             }
-            // Use upsert to handle both creation and update
-            await client.from('orders').upsert(orderData)
-
-            const refereeId = Number(payload.client)
             
-            // 2. Award tickets for purchase (1 per 1000 rub)
-            const tickets = Math.floor(Number(outSum) / 1000)
-            if (tickets > 0) {
-                await addTickets(refereeId, tickets, 'purchase_reward', invId)
+            const { error: upsertError } = await client.from('orders').upsert(orderData)
+            if (upsertError) {
+                console.error('Error upserting order:', upsertError)
             }
 
-            // 3. Award tickets for promo code owner
-            if (payload.promo) {
-                const { data: owner } = await client.from('contest_participants').select('user_id').eq('personal_promo_code', payload.promo).single()
-                if (owner && String(owner.user_id) !== String(refereeId)) {
-                    await addTickets(owner.user_id, 2, 'friend_purchase_promo', invId)
+            // 2. Contest/Referral Logic (Only if client_id exists)
+            if (payload.client) {
+                const refereeId = Number(payload.client)
+                
+                // Award tickets for purchase (1 per 1000 rub)
+                const tickets = Math.floor(Number(outSum) / 1000)
+                if (tickets > 0) {
+                    await addTickets(refereeId, tickets, 'purchase_reward', invId)
                 }
-            }
 
-            // 4. Referral logic
-            // Create referral record based on ref code if not exists
-            if (payload.ref) {
-              const referrerId = Number(payload.ref)
-              if (Number.isFinite(referrerId) && referrerId > 0 && referrerId !== refereeId) {
-                const { data: existingRef } = await client.from('contest_referrals').select('referrer_id,referee_id').eq('referee_id', refereeId).single()
-                if (!existingRef) {
-                  await client.from('contest_referrals').insert({ referrer_id: referrerId, referee_id: refereeId, status: 'joined' })
-                }
-              }
-            }
-            const { data: referral } = await client.from('contest_referrals').select('referrer_id,status').eq('referee_id', refereeId).single()
-            if (referral && referral.status !== 'paid') {
-              await addTickets(referral.referrer_id, 1, 'referral_purchase_bonus', invId)
-              await addTickets(refereeId, 1, 'welcome_bonus', invId)
-              await client.from('contest_referrals').update({ status: 'paid' }).eq('referee_id', refereeId)
-            }
-          }
-        }
-      } catch (e) {
-        console.error('Error sending telegram without DB', e)
-      }
-      return
-    }
-    if (!client) {
-      try {
-        const chatId = String(process.env.TELEGRAM_ADMIN_CHAT_ID || '-1003590157576')
-        const text = [`<b>Оплачен заказ № ${invId}</b>`, `Сумма: ${Number(outSum).toLocaleString('ru-RU')} руб.`].join('\n')
-        await sendTelegramMessage(text, chatId)
-      } catch {}
-      return
-    }
-    try {
-        const { data: order } = await client.from("orders").select('*').eq("id", Number(invId)).single()
-        let finalOrder = order
-        if (!finalOrder) {
-            const { data: pending } = await client.from("pending_orders").select('*').eq("id", Number(invId)).single()
-            if (pending) {
-                const paidAt = new Date().toISOString()
-                const items = pending.items || []
-                const totalQty = Array.isArray(items) ? items.reduce((s: number, it: unknown) => {
-                    if (typeof it === 'object' && it !== null) {
-                        const obj = it as Record<string, unknown>
-                        const q = obj.quantity ?? obj.qty
-                        const qn = typeof q === 'number' ? q : Number(q || 0)
-                        return s + (isNaN(qn as number) ? 0 : (qn as number))
+                // Award tickets for promo code owner
+                if (payload.promo) {
+                    const { data: owner } = await client.from('contest_participants').select('user_id').eq('personal_promo_code', payload.promo).single()
+                    if (owner && String(owner.user_id) !== String(refereeId)) {
+                        await addTickets(owner.user_id, 2, 'friend_purchase_promo', invId)
                     }
-                    return s
-                }, 0) : 0
-                const currentTime = new Date().toISOString()
-                await client.from("orders").insert({
-                    id: Number(invId),
-                    total_amount: Number(outSum),
-                    items,
-                    customer_info: formatCustomerInfo(pending.customer_info, ""),
-                    promo_code: pending.promo_code,
-                    ref_code: pending.ref_code,
-                    status: "Оплачен",
-                    ok: "true",
-                    paid_at: paidAt,
-                    total_qty: totalQty,
-                    updated_at: currentTime
-                })
-                finalOrder = pending
-                await client.from("pending_orders").delete().eq("id", Number(invId))
-            }
-        }
-        if (finalOrder && finalOrder.status !== 'paid' && finalOrder.status !== 'Оплачен') {
-            const currentTime2 = new Date().toISOString()
-            await client.from("orders").update({ status: "Оплачен", ok: "true", updated_at: currentTime2 }).eq("id", Number(invId))
-            const amount = Number(outSum)
-            const tickets = Math.floor(amount / 1000)
-            const clientId = finalOrder.customer_info?.client_id
-            if (tickets > 0 && clientId) {
-                await addTickets(clientId, tickets, 'purchase_reward', invId)
-            }
-            const promoCode = finalOrder.promo_code
-            if (promoCode) {
-                const { data: owner } = await client.from('contest_participants').select('user_id').eq('personal_promo_code', promoCode).single()
-                if (owner && String(owner.user_id) !== String(clientId)) {
-                    await addTickets(owner.user_id, 2, 'friend_purchase_promo', invId)
                 }
-            }
-            if (clientId) {
-                const { data: referral } = await client.from('contest_referrals').select('referrer_id,status').eq('referee_id', clientId).single()
+
+                // Referral logic
+                if (payload.ref) {
+                    const referrerId = Number(payload.ref)
+                    if (Number.isFinite(referrerId) && referrerId > 0 && referrerId !== refereeId) {
+                        const { data: existingRef } = await client.from('contest_referrals').select('referrer_id,referee_id').eq('referee_id', refereeId).single()
+                        if (!existingRef) {
+                            await client.from('contest_referrals').insert({ referrer_id: referrerId, referee_id: refereeId, status: 'joined' })
+                        }
+                    }
+                }
+                const { data: referral } = await client.from('contest_referrals').select('referrer_id,status').eq('referee_id', refereeId).single()
                 if (referral && referral.status !== 'paid') {
                     await addTickets(referral.referrer_id, 1, 'referral_purchase_bonus', invId)
-                    await addTickets(clientId, 1, 'welcome_bonus', invId)
-                    await client.from('contest_referrals').update({ status: 'paid' }).eq('referee_id', clientId)
+                    await addTickets(refereeId, 1, 'welcome_bonus', invId)
+                    await client.from('contest_referrals').update({ status: 'paid' }).eq('referee_id', refereeId)
                 }
             }
-            try {
-              const itemsArr = Array.isArray(finalOrder.items) ? finalOrder.items : []
-              const lines = itemsArr.map((it: any) => {
-                const name = String((it?.name ?? it?.title ?? 'Товар'))
-                const qty = Number((it?.quantity ?? it?.qty ?? 1))
-                const sum = Number(it?.sum ?? it?.cost ?? 0)
-                return `• ${name} × ${qty} — ${sum.toLocaleString('ru-RU')} руб.`
-              })
-              const ci = finalOrder.customer_info || {}
-              const name = String(ci?.name || '')
-              const phone = String(ci?.phone || '')
-              const email = String(ci?.email || '')
-              const address = String(ci?.address || ci?.cdek || '')
-              const clientId = ci?.client_id ? String(ci.client_id) : ''
-              const promo = finalOrder.promo_code ? `Промокод: ${finalOrder.promo_code}` : ''
-              const ref = finalOrder.ref_code ? `Реф-код: ${finalOrder.ref_code}` : ''
-              const contactLines = [
-                name ? `👤 ${name}` : '',
-                phone ? `📞 <a href="tel:${phone}">${phone}</a>` : '',
-                address ? `📍 ${address}` : '',
-                email ? `✉️ <a href="mailto:${email}">${email}</a>` : '',
-              ].filter(Boolean).join('\n')
-              const text = [
-                `<b>Оплачен заказ № ${invId}</b>`,
-                `Сумма: ${Number(outSum).toLocaleString('ru-RU')} руб.`,
-                lines.length ? `\n<b>Товары:</b>\n${lines.join('\n')}` : '',
-                contactLines ? `\n<b>Пользователь</b>\n${contactLines}` : '',
-                [promo, ref].filter(Boolean).length ? `\n${[promo, ref].filter(Boolean).join('\n')}` : '',
-              ].filter(Boolean).join('\n')
-              const chatId = String(process.env.TELEGRAM_ADMIN_CHAT_ID || '2058362528')
-              const replyMarkup = clientId ? { inline_keyboard: [[{ text: 'Написать в личные сообщения', url: `tg://user?id=${clientId}` }]] } : undefined
-              await sendTelegramMessage(text, chatId, replyMarkup)
-              const row = [new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' }), invId, Number(outSum), contactLines.replace(/\n/g, ' | '), finalOrder.ref_code || finalOrder.promo_code || '']
-              await appendToSheet(row)
-            } catch {}
         }
-    } catch (e) {
-        console.error("Error processing order", e)
+      } catch (e) {
+        console.error('Error processing order payload', e)
+      }
     }
 }
 
