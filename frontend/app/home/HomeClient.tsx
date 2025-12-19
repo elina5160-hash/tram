@@ -84,7 +84,12 @@ export default function HomeClient() {
     <div className="min-h-[100dvh] w-full bg-[#FAFAFA] flex flex-col justify-start relative pb-56">
       <div className="w-full max-w-[420px] mx-auto px-4 pt-[calc(1.5rem+env(safe-area-inset-top))]">
         <div className="flex items-center justify-between">
-          <h1 className="text-xl font-semibold">Главная</h1>
+          <h1 
+            className="text-xl font-semibold cursor-pointer active:opacity-70"
+            onClick={() => setAdminOpen(true)}
+          >
+            Главная
+          </h1>
           <div className="flex items-center gap-2">
             <Suspense fallback={null}>
               <ContestBadge clientId={clientId} />
@@ -116,15 +121,6 @@ export default function HomeClient() {
           <a href="https://t.me/KonkursEtraBot" target="_blank" rel="noopener noreferrer" className="block w-full h-full relative">
             <Image src="/нг.png" alt="Афиша" fill className="object-contain rounded-[20px]" priority />
           </a>
-          {/* Secret Admin Button (Top Right 40x40) */}
-          <div 
-            className="absolute top-0 right-0 w-10 h-10 z-10"
-            onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setAdminOpen(true);
-            }}
-          />
         </div>
 
         <div className="mt-2 -mx-4 h-[34px] relative overflow-hidden bg-[#0E1C1D]/60">

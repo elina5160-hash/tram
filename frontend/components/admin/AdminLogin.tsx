@@ -11,7 +11,7 @@ export function AdminLogin({ onLogin }: AdminLoginProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (password === "123") {
+    if (password === "6789") {
       onLogin()
     } else {
       setError("Неверный пароль")

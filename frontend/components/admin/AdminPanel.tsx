@@ -18,7 +18,8 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
 
   useEffect(() => {
-    // Auto-login for admins
+    // Auto-login disabled as per request: password 6789 for everyone
+    /*
     if (typeof window !== "undefined") {
       const tg = (window as any).Telegram?.WebApp
       if (tg?.initDataUnsafe?.user?.id) {
@@ -29,6 +30,7 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
         }
       }
     }
+    */
   }, [])
 
   const [activeTab, setActiveTab] = useState<Tab>('orders')
