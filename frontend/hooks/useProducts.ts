@@ -4,10 +4,9 @@ const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export function useProducts() {
   const { data, error, isLoading } = useSWR('/api/products', fetcher, {
-    revalidateOnFocus: false, // Don't revalidate on window focus
+    revalidateOnFocus: true, 
     revalidateOnReconnect: true,
-    dedupingInterval: 60000, // Dedupe requests within 1 minute
-    keepPreviousData: true, // Keep showing old data while fetching new
+    keepPreviousData: true, 
   });
 
   const addProduct = async (product: any) => {
@@ -17,7 +16,7 @@ export function useProducts() {
       body: JSON.stringify(product),
     });
     if (res.ok) {
-      mutate('/api/products');
+      await mutate('/api/products');
       return await res.json();
     }
     const err = await res.json().catch(() => ({}));
@@ -31,7 +30,7 @@ export function useProducts() {
       body: JSON.stringify(updates),
     });
     if (res.ok) {
-      mutate('/api/products');
+      await mutate('/api/products');
       return await res.json();
     }
     const err = await res.json().catch(() => ({}));
@@ -43,7 +42,7 @@ export function useProducts() {
       method: 'DELETE',
     });
     if (res.ok) {
-      mutate('/api/products');
+      await mutate('/api/products');
       return true;
     }
     throw new Error('Failed to delete product');
