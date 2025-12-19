@@ -12,9 +12,11 @@ function ContestContent() {
     const [user, setUser] = useState<any>(null)
     const [loading, setLoading] = useState(true)
 
+    const [isCheckingId, setIsCheckingId] = useState(true)
+
     useEffect(() => {
         const idFromUrl = searchParams.get('client_id')
-        if (idFromUrl) {
+        if (idFromUrl && idFromUrl !== 'null' && idFromUrl !== 'undefined') {
             setClientId(idFromUrl)
             if (typeof window !== "undefined") localStorage.setItem('user_id', idFromUrl)
         } else if (typeof window !== "undefined") {
@@ -24,15 +26,22 @@ function ContestContent() {
                 localStorage.setItem('user_id', tgId.toString())
             } else {
                 const storedId = localStorage.getItem('user_id')
-                if (storedId) setClientId(storedId)
+                if (storedId && storedId !== 'null' && storedId !== 'undefined') {
+                    setClientId(storedId)
+                } else {
+                    // Clean up bad data
+                    localStorage.removeItem('user_id')
+                    setClientId(null)
+                }
             }
         }
+        setIsCheckingId(false)
     }, [searchParams])
 
     const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
     useEffect(() => {
-        if (!clientId) return
+        if (!clientId || clientId === 'null' || clientId === 'undefined') return
         
         async function fetchData() {
             setLoading(true)
@@ -65,9 +74,24 @@ function ContestContent() {
     }
 
     if (!clientId) {
+        if (isCheckingId) {
+            return (
+                <div className="min-h-screen bg-[#FDF8F5] p-4 flex items-center justify-center">
+                    <p className="text-gray-500">Загрузка данных пользователя...</p>
+                </div>
+            )
+        }
         return (
-            <div className="min-h-screen bg-[#FDF8F5] p-4 flex items-center justify-center">
-                <p className="text-gray-500">Загрузка данных пользователя...</p>
+            <div className="min-h-screen bg-[#FDF8F5] p-4 flex flex-col items-center justify-center text-center">
+                <h1 className="text-xl font-bold mb-4">Не удалось определить пользователя</h1>
+                <p className="text-gray-500 mb-4">Пожалуйста, откройте приложение через бота или используйте ссылку с ID.</p>
+                <a 
+                    href="https://t.me/KonkursEtraBot?start=start" 
+                    target="_blank" 
+                    className="text-[#E14D2A] underline"
+                >
+                    Перейти в бота
+                </a>
             </div>
         )
     }

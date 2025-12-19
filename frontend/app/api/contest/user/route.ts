@@ -9,8 +9,13 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url)
     const userId = searchParams.get('userId')
 
-    if (!userId) {
-        return NextResponse.json({ error: 'User ID is required' }, { status: 400 })
+    if (!userId || userId === 'null' || userId === 'undefined') {
+        return NextResponse.json({ error: 'Valid User ID is required' }, { status: 400 })
+    }
+
+    // Validate that userId is numeric (bigint safe)
+    if (!/^\d+$/.test(userId)) {
+         return NextResponse.json({ error: 'User ID must be numeric' }, { status: 400 })
     }
 
     const supabase = getServiceSupabaseClient()
