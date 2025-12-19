@@ -3,6 +3,8 @@ import fs from 'fs';
 import path from 'path';
 import { getSupabaseClient, getServiceSupabaseClient } from '@/lib/supabase';
 
+export const dynamic = 'force-dynamic';
+
 const dataPath = path.join(process.cwd(), process.cwd().endsWith('frontend') ? 'data/products.json' : 'frontend/data/products.json');
 
 // Helper to read data from JSON (Fallback)
