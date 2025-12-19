@@ -30,26 +30,35 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
 
     // Try Supabase
     const supabase = getServiceSupabaseClient();
+    let supabaseSuccess = false;
     if (supabase) {
         const { data, error } = await supabase.from('products').update(updates).eq('id', id).select().single();
         if (!error) {
-             return NextResponse.json(data || { ...updates, id });
+             supabaseSuccess = true;
+        } else {
+             console.error('Supabase update failed', error);
         }
-        console.error('Supabase update failed', error);
     }
 
-    // Fallback JSON
+    // Always update JSON as well to keep in sync
     const products = getProductsFromJson();
     
     const index = products.findIndex((p: any) => p.id === id);
-    if (index === -1) {
-      return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+    if (index !== -1) {
+       products[index] = { ...products[index], ...updates };
+       saveProductsToJson(products);
     }
     
-    products[index] = { ...products[index], ...updates };
-    saveProductsToJson(products);
+    if (supabaseSuccess) {
+         // Return the updated data (or updates)
+         return NextResponse.json({ ...updates, id });
+    }
     
-    return NextResponse.json(products[index]);
+    if (index !== -1) {
+        return NextResponse.json(products[index]);
+    }
+
+    return NextResponse.json({ error: 'Product not found' }, { status: 404 });
   } catch (error) {
     return NextResponse.json({ error: 'Failed to update product' }, { status: 500 });
   }
@@ -62,27 +71,31 @@ export async function DELETE(request: Request, props: { params: Promise<{ id: st
 
     // Try Supabase
     const supabase = getServiceSupabaseClient();
+    let supabaseSuccess = false;
     if (supabase) {
         const { error } = await supabase.from('products').delete().eq('id', id);
         if (!error) {
-            return NextResponse.json({ success: true });
+            supabaseSuccess = true;
+        } else {
+            console.error('Supabase delete failed', error);
         }
-        console.error('Supabase delete failed', error);
     }
 
-    // Fallback JSON
+    // Always try JSON as well
     const products = getProductsFromJson();
     
     const newProducts = products.filter((p: any) => p.id !== id);
-    if (newProducts.length === products.length) {
-      // If JSON didn't have it, maybe it was only in DB (which failed?) or truly missing
-      // But if DB failed, we already logged it.
-      return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+    const jsonDeleted = newProducts.length !== products.length;
+    
+    if (jsonDeleted) {
+       saveProductsToJson(newProducts);
     }
     
-    saveProductsToJson(newProducts);
+    if (supabaseSuccess || jsonDeleted) {
+       return NextResponse.json({ success: true });
+    }
     
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ error: 'Product not found' }, { status: 404 });
   } catch (error) {
     return NextResponse.json({ error: 'Failed to delete product' }, { status: 500 });
   }
