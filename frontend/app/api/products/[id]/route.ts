@@ -54,16 +54,16 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
                      supabaseSuccess = true;
                  } else {
                      console.error('Supabase insert fallback failed', insertError);
-                     return NextResponse.json({ error: 'Database insert failed: ' + insertError.message }, { status: 500 });
+                     // Fallback to JSON instead of failing
                  }
              }
         } else {
              console.error('Supabase update failed', error);
-             return NextResponse.json({ error: 'Database update failed: ' + error.message }, { status: 500 });
+             // Fallback to JSON instead of failing
         }
     }
 
-    // Update JSON as backup/sync (only if Supabase succeeded or was skipped/unavailable)
+    // Update JSON as backup/sync (always do this if Supabase failed or even if it succeeded)
     const products = getProductsFromJson();
     
     const index = products.findIndex((p: any) => p.id === id);

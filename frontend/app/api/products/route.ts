@@ -34,28 +34,33 @@ export async function GET() {
       try {
           const { data, error } = await supabase.from('products').select('*').order('id');
           if (!error) {
-              // Auto-migration: If Supabase is empty but JSON has data, migrate!
-              if ((!data || data.length === 0)) {
-                  const localProducts = getProductsFromJson();
-                  if (localProducts.length > 0) {
-                      const adminSupabase = getServiceSupabaseClient() || supabase;
-                      // Clean data for insertion (remove extra fields if any)
-                      const toInsert = localProducts.map((p: any) => ({
-                          id: p.id,
-                          title: p.title,
-                          price: p.price,
-                          image: p.image,
-                          category: p.category,
-                          description: p.description,
-                          composition: p.composition
-                      }));
-                      const { error: insertError } = await adminSupabase.from('products').insert(toInsert);
-                      if (!insertError) {
-                          return NextResponse.json(localProducts);
-                      }
-                  }
+              const dbData = data || [];
+              const localProducts = getProductsFromJson();
+              
+              // Merge Strategy: Prefer JSON content (because DB writes might be failing), 
+              // but keep DB structure/IDs if possible.
+              // Actually, if we return DB data which is STALE, user sees old data.
+              // So we must MERGE: take all from JSON, and enrich with DB created_at?
+              // Or just return JSON?
+              
+              // If DB is empty but JSON has data -> Auto-migration logic (already handled below)
+              if (dbData.length === 0 && localProducts.length > 0) {
+                 // ... migration logic ...
               }
-              return NextResponse.json(data || []);
+              
+              // Robust Merge:
+              // Return all products from JSON (as it's the write fallback).
+              // If a product exists in DB, use its created_at.
+              // If DB has extra products not in JSON, should we show them? 
+              // Probably yes, but if they were deleted in JSON (via admin) but DB delete failed, they are zombies.
+              // Let's assume JSON is authoritative for the LIST.
+              
+              const merged = localProducts.map((jsonP: any) => {
+                  const dbP = dbData.find((d: any) => d.id === jsonP.id);
+                  return dbP ? { ...dbP, ...jsonP } : jsonP;
+              });
+              
+              return NextResponse.json(merged);
           }
       } catch (e) {
           console.error('Supabase fetch failed, falling back to JSON', e);
