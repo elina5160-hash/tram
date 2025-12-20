@@ -50,7 +50,7 @@ export function ProductCard({ item, index, isVisible, onClick, showBadge, showCa
 
   return (
     <div
-      className={`relative shrink-0 w-[151px] h-[244px] rounded-[15px] p-1 flex flex-col transition-all duration-500 ease-out transform-gpu ${
+      className={`relative w-full aspect-[151/244] rounded-[15px] p-1 flex flex-col transition-all duration-500 ease-out transform-gpu ${
         isVisible ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-3"
       } snap-start cursor-pointer`}
       style={{
@@ -60,7 +60,7 @@ export function ProductCard({ item, index, isVisible, onClick, showBadge, showCa
       onClick={onClick}
     >
       {/* Image Container */}
-      <div className="relative w-[143px] h-[143px] rounded-[15px] overflow-hidden bg-white mx-auto mt-[4px] shrink-0">
+      <div className="relative w-full aspect-square rounded-[15px] overflow-hidden bg-white mx-auto mt-[1px] shrink-0">
         <Link href={`/item/${item.id}`} className="block w-full h-full" aria-label="Открыть товар">
           {item.image.endsWith(".mp4") ? (
             <LazyVideo src={item.image} className="w-full h-full object-cover" />
@@ -99,11 +99,11 @@ export function ProductCard({ item, index, isVisible, onClick, showBadge, showCa
         {/* Price/Volume & Cart Button */}
         <div className={`w-full mt-auto pl-[8px] pr-[4px] pb-3 flex items-end gap-2 font-[family-name:var(--font-family)] ${showCartButton ? "justify-between" : "justify-end"}`}>
            <div className={showCartButton ? "text-left" : "text-right"}>
-               <span className="text-[10px] font-extrabold text-[#222222]">
+               <span className={`${showCartButton ? "text-[13px]" : "text-[10px]"} font-extrabold text-[#222222]`}>
                  {isDiscounted ? (item.id === 6 ? "4200руб" : item.id === 2 ? "24 000 р." : priceParts.main) : priceParts.main}
                </span>
                {priceParts.sub && (
-                 <span className="text-[10px] font-extrabold text-[#7b7b7b]">/{priceParts.sub}</span>
+                 <span className={`${showCartButton ? "text-[13px]" : "text-[10px]"} font-extrabold text-[#7b7b7b]`}>/{priceParts.sub}</span>
                )}
            </div>
            

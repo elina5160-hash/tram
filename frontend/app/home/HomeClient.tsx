@@ -168,13 +168,14 @@ export default function HomeClient() {
           </div>
           <div className="mt-3 overflow-x-auto flex gap-3 snap-x snap-mandatory pb-2">
             {promos.map((it: any, idx: number) => (
-              <ProductCard
-                key={it.id}
-                item={it}
-                index={idx}
-                isVisible={catalogEntered}
-                onClick={() => router.push(`/item/${it.id}`)}
-              />
+              <div key={it.id} className="w-[151px] shrink-0">
+                <ProductCard
+                  item={it}
+                  index={idx}
+                  isVisible={catalogEntered}
+                  onClick={() => router.push(`/item/${it.id}`)}
+                />
+              </div>
             ))}
           </div>
         </section>
@@ -184,13 +185,14 @@ export default function HomeClient() {
           <h2 className="text-[15px] font-semibold">Выбор покупателей</h2>
           <div className="mt-3 overflow-x-auto flex gap-3 snap-x snap-mandatory pb-2">
             {bests.map((it: any, idx: number) => (
-              <ProductCard
-                key={it.id}
-                item={it}
-                index={idx}
-                isVisible={catalogEntered}
-                onClick={() => router.push(`/item/${it.id}`)}
-              />
+              <div key={it.id} className="w-[151px] shrink-0">
+                <ProductCard
+                  item={it}
+                  index={idx}
+                  isVisible={catalogEntered}
+                  onClick={() => router.push(`/item/${it.id}`)}
+                />
+              </div>
             ))}
           </div>
         </section>
@@ -198,14 +200,15 @@ export default function HomeClient() {
           <h2 className="text-[15px] font-semibold">Новинки</h2>
           <div className="mt-3 overflow-x-auto flex gap-3 snap-x snap-mandatory pb-2">
             {novelties.map((it: any, idx: number) => (
-              <ProductCard
-                key={it.id}
-                item={it}
-                index={idx}
-                isVisible={catalogEntered}
-                onClick={() => router.push(`/item/${it.id}`)}
-                showBadge
-              />
+              <div key={it.id} className="w-[151px] shrink-0">
+                <ProductCard
+                  item={it}
+                  index={idx}
+                  isVisible={catalogEntered}
+                  onClick={() => router.push(`/item/${it.id}`)}
+                  showBadge
+                />
+              </div>
             ))}
           </div>
         </section>

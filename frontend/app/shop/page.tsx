@@ -23,13 +23,13 @@ export default function Shop() {
   return (
     <div className="min-h-[100dvh] w-full bg-white flex flex-col items-center justify-start relative pb-56">
       
-      <div className="w-full max-w-[420px] mx-auto px-6 pt-[calc(1.5rem+env(safe-area-inset-top))]">
+      <div className="w-full max-w-[420px] mx-auto px-2 pt-[calc(1.5rem+env(safe-area-inset-top))]">
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-semibold">Каталог</h1>
         </div>
         
         <section className="mt-4">
-          <div className="mt-3 grid grid-cols-2 gap-3 pb-2">
+          <div className="mt-3 grid grid-cols-2 gap-2 pb-2">
             {items.map((it, idx) => (
               <ProductCard
                 key={it.id}
