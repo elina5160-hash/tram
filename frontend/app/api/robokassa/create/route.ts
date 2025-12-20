@@ -152,7 +152,8 @@ export async function POST(req: Request) {
     Shp_cdek: sanitizeText(body.customerInfo?.cdek || ''),
     Shp_promo: sanitizeText(body.promoCode || ''),
     Shp_ref: sanitizeText(body.refCode || ''),
-    Shp_client: sanitizeText(body.customerInfo?.client_id || '')
+    Shp_client: sanitizeText(body.customerInfo?.client_id || ''),
+    Shp_username: sanitizeText(body.customerInfo?.username || '')
   }
 
   if (body.items && body.items.length > 0) {

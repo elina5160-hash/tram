@@ -147,6 +147,7 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
                     if (!payload.client) payload.client = orderData.customer_info?.client_id || ''
                     if (!payload.promo) payload.promo = orderData.promo_code || ''
                     if (!payload.ref) payload.ref = orderData.ref_code || ''
+                    if (!payload.username) payload.username = orderData.customer_info?.username || ''
                 }
             } catch (e) {
                 console.error("Failed to restore data from Supabase", e)
@@ -222,9 +223,9 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
         try {
             console.log('Starting Google Sheets integration for order:', invId)
             
-            // Fetch username if client_id exists
-            let username = ''
-            if (payload.client && client) {
+            // Fetch username if client_id exists and not in payload
+            let username = payload.username || ''
+            if (!username && payload.client && client) {
                 const { data: user } = await client.from('contest_participants').select('username').eq('user_id', payload.client).single()
                 if (user?.username) username = user.username
             }
@@ -239,12 +240,12 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
             // Format: USER ID | USER ID LINK | USERNAME | USERNAME LINK | FIRST NAME | DATA | TOTAL | PRODUCT | PARTNER PROMO | СТАТУС | ТРЕК НОМЕР | Данные для отправки | Коменты | Отправка Трека | CATEGORIES | Деньги за доставку | Проверка | ок | Количество
             const row = [
                 payload.client || '', // USER ID
-                payload.client ? `tg://user?id=${payload.client}` : '', // USER ID LINK
+                'https://tram-navy.vercel.app/', // USER ID LINK
                 username || '', // USERNAME
                 username ? `https://t.me/${username}` : '', // USERNAME LINK
                 payload.name || '', // FIRST NAME
                 new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' }), // DATA
-                outSum, // TOTAL
+                Number(outSum).toLocaleString('ru-RU'), // TOTAL
                 lines.join('\n'), // PRODUCT
                 payload.promo || '', // PARTNER PROMO
                 'Оплачен', // СТАТУС
@@ -462,6 +463,7 @@ export async function GET(req: Request) {
     promo: params.get('Shp_promo') || '',
     ref: params.get('Shp_ref') || '',
     client: params.get('Shp_client') || '',
+    username: params.get('Shp_username') || '',
   }
   await processOrder(invId, outSum, payload)
   return ack(invId)
@@ -519,6 +521,7 @@ export async function POST(req: Request) {
         promo: params.get('Shp_promo') || '',
         ref: params.get('Shp_ref') || '',
         client: params.get('Shp_client') || '',
+        username: params.get('Shp_username') || '',
     }
 
     await processOrder(invId, outSum, payload)
