@@ -463,6 +463,7 @@ function CartContent() {
 
                     const refCode = typeof window !== "undefined" ? (window.localStorage.getItem("referral_code") || "") : ""
                     const invoiceItems = items.map((it) => ({
+                      id: it.id, // Include ID for repeat order functionality
                       name: it.title,
                       quantity: it.qty || 1,
                       cost: priceMap[it.id] || 0,

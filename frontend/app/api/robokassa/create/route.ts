@@ -19,6 +19,7 @@ export async function POST(req: Request) {
   }
   
   type ReceiptItemInput = {
+    id?: number
     name?: string
     quantity?: number
     cost?: number
@@ -30,7 +31,7 @@ export async function POST(req: Request) {
     outSum?: number
     description?: string
     email?: string
-    customerInfo?: unknown
+    customerInfo?: any
     promoCode?: string
     refCode?: string
     items?: ReceiptItemInput[]
@@ -40,6 +41,8 @@ export async function POST(req: Request) {
   try {
     body = await req.json()
   } catch {}
+
+  const outSum = body.outSum
   if (!outSum || outSum <= 0) {
     return NextResponse.json({ error: "Invalid amount" }, { status: 400 })
   }
@@ -50,9 +53,6 @@ export async function POST(req: Request) {
   let invId = body.invId && typeof body.invId === "number" ? body.invId : Math.floor(Date.now() / 1000)
   
   // Сохраняем заказ в Supabase (если настроены переменные окружения)
-  // Пытаемся использовать Service Client, если нет - обычный
-  // Сохраняем заказ в Supabase (если настроены переменные окружения)
-  // Пытаемся использовать Service Client, если нет - обычный
   let client = getServiceSupabaseClient()
   if (!client) {
     client = getSupabaseClient()
@@ -60,11 +60,49 @@ export async function POST(req: Request) {
 
   if (client) {
     const currentTime = new Date().toISOString();
+    
+    // Generate text format for items to match standard order format
+    let itemsText = "Товары не указаны";
+    let itemsBackup: { id?: number; name: string; quantity: number; price: number; sum: number }[] = [];
+    
+    if (body.items && Array.isArray(body.items)) {
+        itemsText = body.items.map(it => 
+            `- ${it.name || 'Товар'} x${it.quantity || 1} (${(it.cost || 0) * (it.quantity || 1)} руб.)`
+        ).join('\n');
+        
+        // Prepare backup with IDs for repeat functionality
+        itemsBackup = body.items.map(it => ({
+            id: it.id,
+            name: it.name || "Товар",
+            quantity: it.quantity || 1,
+            price: it.cost || 0,
+            sum: (it.cost || 0) * (it.quantity || 1)
+        }));
+    }
+
+    const fullText = [
+        `📦 ЗАКАЗ #${invId}`,
+        `💰 Сумма: ${outSum} руб.`,
+        `👤 Клиент: ${body.customerInfo?.name || 'Не указано'}`,
+        `🆔 ID клиента: ${body.customerInfo?.client_id || 'Не указано'}`,
+        `📧 Email: ${email || 'Не указано'}`,
+        `📍 Адрес: ${body.customerInfo?.address || body.customerInfo?.cdek || 'Не указано'}`,
+        ``,
+        `🛒 Товары:`,
+        itemsText,
+        ``,
+        `🎁 Конкурс:`,
+        `Начислено билетов: 0 (ожидает оплаты)`
+    ].join('\n');
+
     const { error } = await client.from("orders").insert({
       id: invId,
       total_amount: outSum,
-      items: body.items || [],
-      customer_info: body.customerInfo || { email },
+      items: fullText,
+      customer_info: { 
+        ...(body.customerInfo || { email }),
+        items_backup: itemsBackup 
+      },
       promo_code: body.promoCode,
       ref_code: body.refCode,
       status: 'pending',
@@ -73,33 +111,12 @@ export async function POST(req: Request) {
     if (error) {
       console.error("Error creating pending order in Supabase:", error)
     }
-          ...flatData,
-          promo_code: body.promoCode,
-          ref_code: body.refCode,
-          status: 'pending',
-          updated_at: currentTime
-        }).select('id').single()
-
-        if (!error && data && data.id) {
-            invId = data.id; // Use DB-generated ID
-            insertSuccess = true;
-        }
-    } catch (e) {
-        console.error("Auto-ID insert failed, falling back to manual ID", e)
-    }
-
-    // Fallback: If DB didn't generate ID (or error occurred), try inserting with manual invId
-    if (!insertSuccess) {
-        const { error } = await client.from("orders").insert({
-          id: invId,
-          total_amount: outSum,
-          items: body.items || [],
-          customer_info: body.customerInfo || { email },
-          ...flatData,
-          promo_code: body.promoCode,
+  }
 
   let receiptEncodedOnce = ""
   let receiptEncodedTwice = ""
+  const shp: Record<string, string> = {}
+
   if (body.items && body.items.length > 0) {
     try {
       const receiptItems = body.items.map((it: ReceiptItemInput) => ({
@@ -114,59 +131,26 @@ export async function POST(req: Request) {
       receiptEncodedOnce = encodeURIComponent(receiptJson)
       receiptEncodedTwice = encodeURIComponent(receiptEncodedOnce)
       try {
-        const itemsSimple = JSON.stringify(receiptItems.map((x) => ({ n: x.name, q: x.quantity, s: x.sum })))
+        const itemsSimple = JSON.stringify(receiptItems.map((x, index) => ({ 
+            n: x.name, 
+            q: x.quantity, 
+            s: x.sum,
+            i: body.items?.[index]?.id // Pass ID for restoration
+        })))
         shp.Shp_items = encodeURIComponent(itemsSimple)
       } catch {}
     } catch {}
   }
 
+  const out = outSum.toString()
   const baseParts = [merchant, out, String(invId)]
   if (receiptEncodedOnce) baseParts.push(receiptEncodedOnce)
   baseParts.push(password1ToUse as string)
   let signatureBase = baseParts.join(":")
-  if (shpString) signatureBase = `${signatureBase}:${shpString}`
-  const signature = crypto.createHash("md5").update(signatureBase, "utf8").digest("hex")
   
-  console.log(`[Robokassa] Base: ${signatureBase}`)
-  console.log(`[Robokassa] Signature: ${signature}`)
+  const sortedKeys = Object.keys(shp).sort()
+  const shpString = sortedKeys.map(k => `${k}=${shp[k]}`).join(':')
 
-  const params = new URLSearchParams()
-  params.set("MerchantLogin", merchant)
-  params.set("OutSum", out)
-  params.set("InvId", String(invId))
-  params.set("Description", description)
-  params.set("SignatureValue", signature)
-  if (receiptEncodedTwice) params.set("Receipt", receiptEncodedTwice)
-  
-  if (email) params.set("Email", email)
-  sortedKeys.forEach((k) => params.set(k, shp[k]))
-  if (isTest) params.set("IsTest", "1")
-  
-  params.set("Culture", "ru")
-  
-  const url = `https://auth.robokassa.ru/Merchant/Index.aspx?${params.toString()}`
-  return NextResponse.json({ url, invId })
-        name: sanitizeText(it.name || "Товар"),
-        quantity: it.quantity || 1,
-        sum: (it.cost || 0) * (it.quantity || 1),
-        tax: it.tax || "none",
-        payment_method: it.paymentMethod || "full_prepayment",
-        payment_object: it.paymentObject || "commodity"
-      }))
-      const receiptJson = JSON.stringify({ items: receiptItems })
-      receiptEncodedOnce = encodeURIComponent(receiptJson)
-      receiptEncodedTwice = encodeURIComponent(receiptEncodedOnce)
-      try {
-        const itemsSimple = JSON.stringify(receiptItems.map((x) => ({ n: x.name, q: x.quantity, s: x.sum })))
-        shp.Shp_items = encodeURIComponent(itemsSimple)
-      } catch {}
-    } catch {}
-  }
-
-  const baseParts = [merchant, out, String(invId)]
-  if (receiptEncodedOnce) baseParts.push(receiptEncodedOnce)
-  baseParts.push(password1ToUse as string)
-  let signatureBase = baseParts.join(":")
   if (shpString) signatureBase = `${signatureBase}:${shpString}`
   const signature = crypto.createHash("md5").update(signatureBase, "utf8").digest("hex")
   

@@ -100,13 +100,23 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
           items = JSON.parse(dec)
         } catch {}
         
-        // Prepare items for display
-        const lines = Array.isArray(items) ? items.map((it) => {
-          const n = String((it?.n ?? it?.name ?? 'Товар'))
-          const q = Number((it?.q ?? it?.quantity ?? 1))
-          const s = Number((it?.s ?? it?.sum ?? 0))
-          return `• ${n} × ${q} — ${s.toLocaleString('ru-RU')} руб.`
+        // Transform items to standard format for database and display
+        const standardizedItems = Array.isArray(items) ? items.map((it) => {
+             const quantity = Number(it?.q ?? it?.quantity ?? 1)
+             const sum = Number(it?.s ?? it?.sum ?? 0)
+             return {
+                 id: it?.i ?? it?.id,
+                 name: String(it?.n ?? it?.name ?? 'Товар'),
+                 quantity: quantity,
+                 price: quantity > 0 ? sum / quantity : 0,
+                 sum: sum
+             }
         }) : []
+
+        // Prepare items for display
+        const lines = standardizedItems.map((it) => {
+          return `• ${it.name} × ${it.quantity} — ${it.sum.toLocaleString('ru-RU')} руб.`
+        })
         
         const contact = [
           name ? `👤 ${name}` : '',
@@ -135,11 +145,41 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
           [promo, ref].filter(Boolean).length ? `\n${[promo, ref].filter(Boolean).join('\n')}` : '',
         ].filter(Boolean).join('\n')
         
+        // Calculate tickets
+        let ticketsEarned = 0
+        if (payload.client) {
+             ticketsEarned = Math.floor(Number(outSum) / 1000)
+        }
+
+        // Send formatted notification to specific channel
+        const notificationText = [
+            `📦 ТЕСТОВЫЙ ЗАКАЗ #${invId}`,
+            `💰 Сумма: ${Number(outSum).toLocaleString('ru-RU')} руб.`,
+            `👤 Клиент: ${payload.name || 'Не указано'}`,
+            `🆔 ID клиента: ${payload.client || 'Не указано'}`,
+            `📧 Email: ${payload.email || 'Не указано'}`,
+            `📍 Адрес: ${payload.address || payload.cdek || 'Не указано'}`,
+            ``,
+            `🛒 Товары:`,
+            standardizedItems.map((it) => {
+                return `- ${it.name} x${it.quantity} (${it.sum.toLocaleString('ru-RU')} руб.)`
+            }).join('\n'),
+            ``,
+            `🎁 Конкурс:`,
+            `Начислено билетов: ${ticketsEarned}`
+        ].join('\n')
+
+        await sendTelegramMessage(notificationText, '-1003590157576', undefined)
+        
+        // Also send to admin chat (existing logic)
         const chatId = String(process.env.TELEGRAM_ADMIN_CHAT_ID || '2058362528')
         const replyMarkup = payload.client ? { inline_keyboard: [[{ text: 'Написать в личные сообщения', url: `tg://user?id=${payload.client}` }]] } : undefined
         
+        // Keep sending the original admin notification as well
         await sendTelegramMessage(text, chatId, replyMarkup)
         
+        // Google Sheets integration
+
         // Google Sheets integration
         const row = [
             invId,
@@ -155,20 +195,12 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
             'Оплачен'
         ]
         await appendToSheet(row)
-
-        // Calculate tickets
-        let ticketsEarned = 0
-        if (payload.client) {
-             ticketsEarned = Math.floor(Number(outSum) / 1000)
-        }
-
-        // DB Operations
         try {
             // 1. Upsert order (Create or Update) via centralized logic
             await createOrder({
                 id: Number(invId),
                 total_amount: Number(outSum),
-                items: items, 
+                items: standardizedItems, 
                 customer_info: {
                     name: payload.name,
                     phone: payload.phone,

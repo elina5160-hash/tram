@@ -2,7 +2,6 @@
 
 import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { db } from '@/lib/db'
 import BackButton from '@/components/ui/back-button'
 import { motion } from 'framer-motion'
 
@@ -98,18 +97,17 @@ function ContestContent() {
 
     return (
         <main className="min-h-screen bg-[#FDF8F5] pb-20 relative overflow-hidden">
-            <BackButton href="/catalog" />
-            
             {/* Header */}
-            <div className="pt-16 px-4 mb-6 relative z-10">
-                <h1 className="text-3xl font-serif text-[#232323] mb-2">Конкурс</h1>
-                <p className="text-[#232323]/60 text-sm">Дари здоровье — получай подарки! 🎁</p>
-            </div>
+            <header className="sticky top-0 z-10 bg-[#FDF8F5]/90 backdrop-blur-md border-b border-[#E14D2A]/10 px-4 py-3 flex items-center justify-between">
+                <BackButton />
+                <h1 className="text-lg font-bold text-gray-900">Профиль участника</h1>
+                <div className="w-10" />
+            </header>
 
             {loading ? (
-                <div className="p-4 text-center">Загрузка...</div>
+                <div className="p-4 text-center mt-10">Загрузка...</div>
             ) : !user ? (
-                <div className="p-4 text-center flex flex-col items-center">
+                <div className="p-4 text-center flex flex-col items-center mt-10">
                     <p className="mb-4">Вы пока не зарегистрированы в конкурсе.</p>
                     {errorMsg && <p className="text-red-500 text-xs mb-4">Debug: {errorMsg} (ID: {clientId})</p>}
                     <a 
@@ -121,8 +119,32 @@ function ContestContent() {
                     </a>
                 </div>
             ) : (
-                <div className="px-4 space-y-6 relative z-10">
-                    
+                <div className="p-4 space-y-6">
+                    {/* Orders Link */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.1 }}
+                    >
+                        <a 
+                            href={`/profile/orders?client_id=${clientId}`}
+                            className="block bg-white rounded-2xl p-4 shadow-sm border border-[#E14D2A]/10 flex items-center justify-between active:scale-95 transition-transform"
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center text-xl">
+                                    🛍️
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-gray-900">История покупок</h3>
+                                    <p className="text-xs text-gray-500">Ваши заказы и статусы</p>
+                                </div>
+                            </div>
+                            <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                        </a>
+                    </motion.div>
+
                     {/* Tickets Card */}
                     <motion.div 
                         initial={{ opacity: 0, y: 20 }}

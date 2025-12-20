@@ -3,6 +3,7 @@ import { z } from "zod"
 
 // Zod Schemas for Validation
 const OrderItemSchema = z.object({
+  id: z.number().optional(), // Product ID for repeat orders
   name: z.string().min(1, "Item name is required"),
   quantity: z.number().min(1, "Quantity must be at least 1"),
   price: z.number().min(0, "Price cannot be negative"),
@@ -66,7 +67,7 @@ export async function createOrder(data: CreateOrderDTO) {
   // 1. Validation
   const validationResult = CreateOrderSchema.safeParse(data)
   if (!validationResult.success) {
-    const errors = validationResult.error.errors.map((e: any) => `${e.path.join('.')}: ${e.message}`).join(', ')
+    const errors = (validationResult as any).error.errors.map((e: any) => `${e.path.join('.')}: ${e.message}`).join(', ')
     await logOrderOperation('create_validation', data.id || 'unknown', 'error', { errors, data })
     throw new Error(`Validation failed: ${errors}`)
   }
@@ -97,7 +98,10 @@ export async function createOrder(data: CreateOrderDTO) {
     id: validData.id,
     total_amount: validData.total_amount,
     items: fullText, // Storing text instead of JSON array
-    customer_info: validData.customer_info, // Keep structured for admin search
+    customer_info: {
+        ...validData.customer_info,
+        items_backup: validData.items // Backup structured items for "Repeat Order" functionality
+    },
     
     // Flat columns (optional, kept for compatibility if they exist)
     customer_name: validData.customer_info.name || '',
@@ -174,8 +178,80 @@ export async function archiveOrder(id: number) {
   return updateOrderStatus(id, 'archived')
 }
 
-// 5. List Orders (Admin)
-export async function listOrders(options: { limit?: number; status?: string | string[] } = {}) {
+// 5. Request Return
+export async function requestOrderReturn(id: number, reason: string) {
+  const client = getServiceSupabaseClient() || getSupabaseClient()
+  if (!client) throw new Error('Database connection failed')
+
+  // 1. Update status to return_requested
+  // We also append the reason to the internal logs or we could store it in a separate table
+  // For now, we'll log it and update the status.
+  
+  const { data, error } = await client
+    .from(ORDERS_TABLE)
+    .update({ 
+        status: 'return_requested',
+        updated_at: new Date().toISOString()
+    })
+    .eq('id', id)
+    .select()
+    .single()
+
+  if (error) {
+    await logOrderOperation('return_request', id, 'error', { error, reason })
+    throw new Error(`Failed to request return: ${error.message}`)
+  }
+
+  await logOrderOperation('return_request', id, 'success', { reason })
+  return data
+}
+
+// 6. Submit Review
+export async function submitOrderReview(id: number, rating: number, text: string) {
+    const client = getServiceSupabaseClient() || getSupabaseClient()
+    if (!client) throw new Error('Database connection failed')
+
+    // Get current order to preserve customer_info
+    const { data: order, error: fetchError } = await client
+        .from(ORDERS_TABLE)
+        .select('customer_info')
+        .eq('id', id)
+        .single()
+    
+    if (fetchError || !order) {
+        throw new Error('Order not found')
+    }
+
+    const updatedInfo = {
+        ...order.customer_info,
+        review: {
+            rating,
+            text,
+            date: new Date().toISOString()
+        }
+    }
+
+    const { data, error } = await client
+        .from(ORDERS_TABLE)
+        .update({ 
+            customer_info: updatedInfo,
+            updated_at: new Date().toISOString()
+        })
+        .eq('id', id)
+        .select()
+        .single()
+
+    if (error) {
+        await logOrderOperation('submit_review', id, 'error', { error, rating, text })
+        throw new Error(`Failed to submit review: ${error.message}`)
+    }
+
+    await logOrderOperation('submit_review', id, 'success', { rating })
+    return data
+}
+
+// 7. List Orders (Admin & User)
+export async function listOrders(options: { limit?: number; status?: string | string[]; client_id?: string } = {}) {
   const client = getServiceSupabaseClient() || getSupabaseClient()
   if (!client) throw new Error('Database connection failed')
 
@@ -194,6 +270,12 @@ export async function listOrders(options: { limit?: number; status?: string | st
     } else {
        query = query.eq('status', options.status)
     }
+  }
+
+  // Filter by client_id inside the JSONB column customer_info
+  if (options.client_id) {
+    // We use the arrow operator ->> to get the value as text
+    query = query.eq('customer_info->>client_id', options.client_id)
   }
 
   const { data, error } = await query
