@@ -193,21 +193,20 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
         }
 
         // Send formatted notification to specific channel
+        const productNames = standardizedItems.map(it => it.name).join(', ')
         const notificationText = [
-            `📦 ТЕСТОВЫЙ ЗАКАЗ #${invId}`,
+            `📦 ${productNames} ТЕСТОВЫЙ ЗАКАЗ #${invId}`,
             `💰 Сумма: ${Number(outSum).toLocaleString('ru-RU')} руб.`,
             `👤 Клиент: ${payload.name || 'Не указано'}`,
             `🆔 ID клиента: ${payload.client || 'Не указано'}`,
             `📧 Email: ${payload.email || 'Не указано'}`,
             `📍 Адрес: ${payload.address || payload.cdek || 'Не указано'}`,
             ``,
-            `🛒 Товары:`,
-            standardizedItems.map((it) => {
-                return `- ${it.name} x${it.quantity} (${it.sum.toLocaleString('ru-RU')} руб.)`
-            }).join('\n'),
-            ``,
             `🎁 Конкурс:`,
-            `Начислено билетов: ${ticketsEarned}`
+            `Начислено билетов: ${ticketsEarned}`,
+            `1000р -1 билет`,
+            `2000р - 2 билета`,
+            `3000р -3 билета`
         ].join('\n')
 
         await sendTelegramMessage(notificationText, '-1003590157576', undefined)
