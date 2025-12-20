@@ -1,21 +1,26 @@
-export function getPriceValue(priceStr: string): number {
-  if (!priceStr) return 0
-  const match = priceStr.match(/^([\d\s]+)/)
+export function getPriceValue(price: string | number): number {
+  if (typeof price === 'number') return price
+  if (!price) return 0
+  const match = String(price).match(/^([\d\s]+)/)
   if (match) {
     return parseInt(match[1].replace(/\s/g, ''), 10)
   }
   return 0
 }
 
-export function splitPrice(s: string) {
+export function splitPrice(s: string | number) {
+  if (typeof s === 'number') {
+    return { main: s.toLocaleString('ru-RU') + ' руб.', sub: '' }
+  }
   if (!s) return { main: "", sub: "" }
-  const m = s.match(/^(.*?руб\.?)/i)
+  const str = String(s)
+  const m = str.match(/^(.*?руб\.?)/i)
   if (m) {
     const main = m[1].trim()
-    let rest = s.slice(m[1].length).trim()
+    let rest = str.slice(m[1].length).trim()
     if (rest.startsWith("/")) rest = rest.slice(1).trim()
     return { main, sub: rest }
   }
-  const parts = s.split("/")
+  const parts = str.split("/")
   return { main: (parts[0] || "").trim(), sub: (parts[1] || "").trim() }
 }

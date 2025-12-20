@@ -235,7 +235,7 @@ export default function HomeClient() {
                         <span className="text-[12px] whitespace-nowrap" style={{ color: "#8A8A8A", textDecoration: "line-through" }}>32 000 р.</span>
                       )}
                       {it.id !== 10 && (
-                        <span className="text-[12px] whitespace-nowrap font-semibold" style={{ color: "#000000" }}>{it.id === 6 ? "4200руб" : it.id === 2 ? "24 000 р." : splitPrice(it.price).main}</span>
+                        <span className="text-[12px] whitespace-nowrap font-semibold" style={{ color: "#000000" }}>{it.id === 6 ? "4200руб" : splitPrice(it.price).main}</span>
                       )}
                       {it.id !== 6 && it.id !== 2 && splitPrice(it.price).sub && (
                         <span className="text-[12px]" style={{ color: "#8A8A8A" }}>{splitPrice(it.price).sub}</span>
