@@ -113,30 +113,43 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
              }
         }) : []
 
-        // Fallback: If no items from payload, try to fetch from Supabase order
-        if (standardizedItems.length === 0 && client) {
+        // Fallback: If no items from payload or missing client info, try to fetch from Supabase order
+        if (client) {
             try {
                 const { data: orderData } = await client
                     .from('orders')
-                    .select('customer_info')
+                    .select('*')
                     .eq('id', invId)
                     .single()
                 
-                if (orderData?.customer_info?.items_backup) {
-                    const backup = orderData.customer_info.items_backup
-                    if (Array.isArray(backup)) {
-                        standardizedItems = backup.map((it: any) => ({
-                            id: it.id,
-                            name: it.name,
-                            quantity: it.quantity,
-                            price: it.price,
-                            sum: it.sum
-                        }))
-                        await logDebug("Restored items from Supabase backup", { count: standardizedItems.length })
+                if (orderData) {
+                    // Restore items if needed
+                    if (standardizedItems.length === 0 && orderData.customer_info?.items_backup) {
+                        const backup = orderData.customer_info.items_backup
+                        if (Array.isArray(backup)) {
+                            standardizedItems = backup.map((it: any) => ({
+                                id: it.id,
+                                name: it.name,
+                                quantity: it.quantity,
+                                price: it.price,
+                                sum: it.sum
+                            }))
+                            await logDebug("Restored items from Supabase backup", { count: standardizedItems.length })
+                        }
                     }
+
+                    // Restore customer info if missing in payload
+                    if (!payload.name) payload.name = orderData.customer_info?.name || ''
+                    if (!payload.phone) payload.phone = orderData.customer_info?.phone || ''
+                    if (!payload.email) payload.email = orderData.customer_info?.email || ''
+                    if (!payload.address) payload.address = orderData.customer_info?.address || ''
+                    if (!payload.cdek) payload.cdek = orderData.customer_info?.cdek || ''
+                    if (!payload.client) payload.client = orderData.customer_info?.client_id || ''
+                    if (!payload.promo) payload.promo = orderData.promo_code || ''
+                    if (!payload.ref) payload.ref = orderData.ref_code || ''
                 }
             } catch (e) {
-                console.error("Failed to restore items from Supabase", e)
+                console.error("Failed to restore data from Supabase", e)
             }
         }
 
@@ -208,20 +221,53 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
         // Google Sheets integration
 
         // Google Sheets integration
-        const row = [
-            invId,
-            new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' }),
-            payload.name || '',
-            payload.phone || '',
-            payload.email || '',
-            payload.address || payload.cdek || '',
-            lines.join('\n'),
-            outSum,
-            payload.promo || '',
-            payload.ref || '',
-            'Оплачен'
-        ]
-        await appendToSheet(row)
+        try {
+            // Fetch username if client_id exists
+            let username = ''
+            if (payload.client && client) {
+                const { data: user } = await client.from('contest_participants').select('username').eq('user_id', payload.client).single()
+                if (user?.username) username = user.username
+            }
+
+            const totalQuantity = standardizedItems.reduce((acc, it) => acc + it.quantity, 0)
+            const shippingData = [
+                payload.address || payload.cdek,
+                payload.phone,
+                payload.email
+            ].filter(Boolean).join(', ')
+
+            // Format: USER ID | USER ID LINK | USERNAME | USERNAME LINK | FIRST NAME | DATA | TOTAL | PRODUCT | PARTNER PROMO | СТАТУС | ТРЕК НОМЕР | Данные для отправки | Коменты | Отправка Трека | CATEGORIES | Деньги за доставку | Проверка | ок | Количество
+            const row = [
+                payload.client || '', // USER ID
+                payload.client ? `tg://user?id=${payload.client}` : '', // USER ID LINK
+                username || '', // USERNAME
+                username ? `https://t.me/${username}` : '', // USERNAME LINK
+                payload.name || '', // FIRST NAME
+                new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' }), // DATA
+                outSum, // TOTAL
+                lines.join('\n'), // PRODUCT
+                payload.promo || '', // PARTNER PROMO
+                'Оплачен', // СТАТУС
+                '', // ТРЕК НОМЕР
+                shippingData, // Данные для отправки
+                '', // Коменты
+                '', // Отправка Трека
+                '', // CATEGORIES
+                '', // Деньги за доставку
+                '', // Проверка
+                '', // ок
+                totalQuantity // Количество
+            ]
+
+            const webhook = "https://script.google.com/macros/s/AKfycbyoWRwuYvKXNIdYTyUSJ2TMeGn28RkjCXPJB_1iZ8-xSuEy2HIITBAd4zlwlEf5FDv7/exec"
+            await fetch(webhook, { 
+                method: "POST", 
+                headers: { "Content-Type": "application/json" }, 
+                body: JSON.stringify({ values: row }) 
+            })
+        } catch (e) {
+            console.error('Failed to send to Google Sheet', e)
+        }
         try {
             // 1. Upsert order (Create or Update) via centralized logic
             await createOrder({
@@ -245,7 +291,6 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
              console.error('Failed to create order via lib/orders', e)
         }
             
-        const client = getServiceSupabaseClient() || getSupabaseClient()
         if (client) {
 
             // 2. Contest/Referral Logic (Only if client_id exists)
