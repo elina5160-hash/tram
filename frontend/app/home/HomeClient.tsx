@@ -152,12 +152,12 @@ export default function HomeClient() {
         <div className="mt-2 -mx-4 h-[34px] relative overflow-hidden bg-[#0E1C1D]/60">
           <div className="absolute inset-0 overflow-hidden flex items-center">
             <div className="marquee-track h-full flex items-center whitespace-nowrap" style={{ animationDuration: "12s" }}>
-              <span className="pl-4 pr-8 text-white text-[12px]">Добро пожаловать в магазин ETRA🤗</span>
-              <span className="pl-4 pr-8 text-white text-[12px]">Добро пожаловать в магазин ETRA🤗</span>
-              <span className="pl-4 pr-8 text-white text-[12px]">Добро пожаловать в магазин ETRA🤗</span>
-              <span className="pl-4 pr-8 text-white text-[12px]">Добро пожаловать в магазин ETRA🤗</span>
-              <span className="pl-4 pr-8 text-white text-[12px]">Добро пожаловать в магазин ETRA🤗</span>
-              <span className="pl-4 pr-8 text-white text-[12px]">Добро пожаловать в магазин ETRA🤗</span>
+              <span className="pl-4 pr-8 text-white text-[12px]">Добро пожаловать в магазин ЕТРА🤗</span>
+              <span className="pl-4 pr-8 text-white text-[12px]">Добро пожаловать в магазин ЕТРА🤗</span>
+              <span className="pl-4 pr-8 text-white text-[12px]">Добро пожаловать в магазин ЕТРА🤗</span>
+              <span className="pl-4 pr-8 text-white text-[12px]">Добро пожаловать в магазин ЕТРА🤗</span>
+              <span className="pl-4 pr-8 text-white text-[12px]">Добро пожаловать в магазин ЕТРА🤗</span>
+              <span className="pl-4 pr-8 text-white text-[12px]">Добро пожаловать в магазин ЕТРА🤗</span>
             </div>
           </div>
         </div>
