@@ -105,7 +105,7 @@ export default function UserOrdersPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
             </button>
-            <h1 className="font-bold text-lg">История покупок</h1>
+            <h1 className="font-bold text-lg">Мои заказы(история заказов)</h1>
             <div className="w-10" />
         </div>
         

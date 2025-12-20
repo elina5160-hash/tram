@@ -55,11 +55,19 @@ function Item({ href, renderIcon, label, onClick }: { href: string; renderIcon: 
 export default function BottomBanner() {
   const { items: bannerItems } = useBottomBanner()
   const [count, setCount] = useState(() => getCart().reduce((sum, it) => sum + (it.qty ?? 1), 0))
+  const [userPhoto, setUserPhoto] = useState<string | null>(null)
   
   useEffect(() => {
     const update = () => setCount(getCart().reduce((sum, it) => sum + (it.qty ?? 1), 0))
     window.addEventListener("cart:changed", update)
     window.addEventListener("storage", update)
+    
+    // Get user photo from Telegram WebApp
+    if (typeof window !== 'undefined' && (window as any).Telegram?.WebApp?.initDataUnsafe?.user) {
+        const user = (window as any).Telegram.WebApp.initDataUnsafe.user
+        if (user.photo_url) setUserPhoto(user.photo_url)
+    }
+
     return () => {
       window.removeEventListener("cart:changed", update)
       window.removeEventListener("storage", update)
@@ -75,7 +83,7 @@ export default function BottomBanner() {
 
   return (
     <div className="fixed inset-x-0 bottom-0 z-20 w-full flex items-center justify-center px-3 pb-[env(safe-area-inset-bottom)]">
-      <div className="relative w-full max-w-[420px] h-[52px] rounded-[20px] bg-[#F0F0F0] backdrop-blur-xl border border-gray-500/70 shadow-inner mb-[12px] px-4 flex items-center justify-between overflow-hidden">
+      <div className="relative w-full max-w-[420px] h-[52px] rounded-[20px] bg-[#F0F0F0]/70 backdrop-blur-xl border-none shadow-inner mb-[12px] px-4 flex items-center justify-between overflow-hidden">
         
         {homeItem?.enabled !== false && (
           <Item
@@ -141,6 +149,22 @@ export default function BottomBanner() {
             )}
           />
         )}
+
+        <Item
+            href="https://t.me/KonkursEtraBot"
+            label="Домой"
+            renderIcon={() => (
+                <div className="w-[24px] h-[24px] rounded-full overflow-hidden bg-gray-300 flex items-center justify-center">
+                    {userPhoto ? (
+                        <Image src={userPhoto} alt="User" width={24} height={24} className="w-full h-full object-cover" />
+                    ) : (
+                        <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                    )}
+                </div>
+            )}
+        />
       </div>
     </div>
   )

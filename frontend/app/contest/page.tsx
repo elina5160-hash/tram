@@ -135,7 +135,7 @@ function ContestContent() {
                                     🛍️
                                 </div>
                                 <div>
-                                    <h3 className="font-bold text-gray-900">История покупок</h3>
+                                    <h3 className="font-bold text-gray-900">Мои заказы(история заказов)</h3>
                                     <p className="text-xs text-gray-500">Ваши заказы и статусы</p>
                                 </div>
                             </div>
@@ -151,7 +151,7 @@ function ContestContent() {
                         animate={{ opacity: 1, y: 0 }}
                         className="bg-white rounded-[24px] p-6 shadow-sm border border-[#E5E5E5] text-center"
                     >
-                        <p className="text-[#232323]/60 text-sm uppercase tracking-wider mb-2">Ваши билеты</p>
+                        <p className="text-[#232323]/60 text-sm uppercase tracking-wider mb-2">Билеты</p>
                         <div className="text-6xl font-serif text-[#E14D2A] mb-2">{user.tickets}</div>
                         <p className="text-xs text-gray-400">Чем больше билетов, тем выше шанс!</p>
                     </motion.div>
@@ -174,7 +174,7 @@ function ContestContent() {
                             </button>
                         </div>
                         <p className="text-xs text-[#E14D2A]/80 mt-2">
-                            Друг получает -15%, а вы +2 билета за его покупку!
+                            Друг получает -15%, а вы +2 бонуса за его покупку!
                         </p>
                     </div>
 
@@ -196,33 +196,33 @@ function ContestContent() {
                             </button>
                         </div>
                         <p className="text-xs text-gray-400 mt-2">
-                            +1 билет за 3 друзей, +2 билета за 5 друзей
+                            +1 бонус за 3 друзей, +2 бонуса за 5 друзей
                         </p>
                     </div>
 
                     {/* Rules */}
                     <div className="bg-white rounded-[20px] p-5 border border-[#E5E5E5]">
-                        <h3 className="font-medium text-[#232323] mb-4">Как получить билеты?</h3>
+                        <h3 className="font-medium text-[#232323] mb-4">Как получить бонусы?</h3>
                         <div className="space-y-4">
                             <div className="flex gap-3">
                                 <div className="w-8 h-8 rounded-full bg-[#E14D2A]/10 flex items-center justify-center text-[#E14D2A] font-bold text-sm shrink-0">1</div>
                                 <div>
                                     <p className="text-sm font-medium text-[#232323]">Покупка в магазине</p>
-                                    <p className="text-xs text-gray-500">1 билет за каждые 1000₽ в чеке</p>
+                                    <p className="text-xs text-gray-500">1 бонус за каждые 1000₽ в чеке</p>
                                 </div>
                             </div>
                             <div className="flex gap-3">
                                 <div className="w-8 h-8 rounded-full bg-[#E14D2A]/10 flex items-center justify-center text-[#E14D2A] font-bold text-sm shrink-0">2</div>
                                 <div>
                                     <p className="text-sm font-medium text-[#232323]">Приглашение друзей</p>
-                                    <p className="text-xs text-gray-500">3 друга = +1 билет<br/>5 друзей = +2 билета<br/>10 друзей = +5 билетов</p>
+                                    <p className="text-xs text-gray-500">3 друга = +1 бонус<br/>5 друзей = +2 бонуса<br/>10 друзей = +5 бонусов</p>
                                 </div>
                             </div>
                             <div className="flex gap-3">
                                 <div className="w-8 h-8 rounded-full bg-[#E14D2A]/10 flex items-center justify-center text-[#E14D2A] font-bold text-sm shrink-0">3</div>
                                 <div>
                                     <p className="text-sm font-medium text-[#232323]">Друг купил с промокодом</p>
-                                    <p className="text-xs text-gray-500">Вы получаете +2 билета, а друг скидку 15%</p>
+                                    <p className="text-xs text-gray-500">Вы получаете +2 бонуса, а друг скидку 15%</p>
                                 </div>
                             </div>
                         </div>

@@ -685,13 +685,13 @@ export default function ItemPage() {
 
         <div className="mt-4 grid grid-cols-2 gap-2">
           <button
-            className="w-full rounded-[12px] bg-white border border-gray-300 px-3 py-3 text-[13px]"
+            className="w-full rounded-[12px] bg-[#EAEAEA] px-3 py-3 text-[13px] text-black"
             onClick={() => window.open("https://t.me/avatime_cosmetics_income", "_blank")}
           >
             Помощь менеджера
           </button>
           <HoverButton
-            className="w-full rounded-[12px] border px-3 py-3 text-[13px] active:scale-105 bg-[#6800E9] text-white"
+            className="w-full rounded-[12px] px-3 py-3 text-[13px] active:scale-105 bg-[#6800E9] text-white"
             onClick={() => {
               let finalId = item.id
               let finalTitle = item.title

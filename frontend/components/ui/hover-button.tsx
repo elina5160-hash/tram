@@ -111,7 +111,7 @@ const HoverButton = React.forwardRef<HTMLButtonElement, HoverButtonProps>(
             style={{ left: x, top: y, background: color }}
           />
         ))}
-        {children}
+        <span className="relative z-10">{children}</span>
       </button>
     )
   }

@@ -1,17 +1,12 @@
 "use client"
-import { useState, Suspense } from "react"
-import Image from "next/image"
-import Link from "next/link"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { addToCart, incrementQty } from "@/lib/cart"
-import { getPriceValue, splitPrice } from "@/lib/price"
+import { getPriceValue } from "@/lib/price"
 import { useProducts } from "@/hooks/useProducts"
 import { staticItems } from "@/data/staticItems"
 
 import BottomBanner from "@/components/ui/bottom-banner"
-import ContestBadge from "@/components/ui/contest-badge"
-
-import LazyVideo from "@/components/ui/lazy-video"
+import { ProductCard } from "@/components/ui/product-card"
 
 export default function Shop() {
   const router = useRouter()
@@ -19,29 +14,11 @@ export default function Shop() {
 
   const items = (fetchedProducts && fetchedProducts.length > 0 ? fetchedProducts : staticItems) as any[]
 
-  const promos = items.filter((it: any) => {
-    const priceVal = getPriceValue(it.price)
-    const isCheap = priceVal > 0 && priceVal < 1000
-    // Check for hardcoded discounted items (IDs 2 and 6 have old prices shown in JSX)
-    // Also check title for "акция" keyword
-    const isDiscounted = [2, 6].includes(it.id) || it.title.toLowerCase().includes("акция")
-    // Keep original manual IDs [6, 8] (8 is cheap, 6 is discounted)
-    return isCheap || isDiscounted || [6, 8].includes(it.id)
-  })
-  
-  const bests = items.filter((it: any) => [1, 7, 3, 4].includes(it.id))
-  const novelties = items.filter((it: any) => [1, 2, 3, 4, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22].includes(it.id))
-  
-  const [qty, setQty] = useState<Record<number, number>>(() => {
-    const initial: Record<number, number> = {}
-    items.forEach((it) => (initial[it.id] = 0))
-    return initial
-  })
-  const [pressedId, setPressedId] = useState<number | null>(null)
-  
-  
-  
-
+  const [catalogEntered, setCatalogEntered] = useState(false)
+  useEffect(() => {
+    const id = setTimeout(() => setCatalogEntered(true), 0)
+    return () => clearTimeout(id)
+  }, [])
   
   return (
     <div className="min-h-[100dvh] w-full bg-white flex flex-col items-center justify-start relative pb-56">
@@ -49,296 +26,23 @@ export default function Shop() {
       <div className="w-full max-w-[420px] mx-auto px-6 pt-[calc(1.5rem+env(safe-area-inset-top))]">
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-semibold">Каталог</h1>
-          <Suspense fallback={null}>
-            <ContestBadge />
-          </Suspense>
         </div>
+        
         <section className="mt-4">
-          <div className="mt-3 inline-grid grid-cols-2 gap-2 mx-auto">
-            {promos.map((it, idx) => (
-              <div
+          <div className="mt-3 grid grid-cols-2 gap-3 pb-2">
+            {items.map((it, idx) => (
+              <ProductCard
                 key={it.id}
-                className="bg-white rounded-[20px] border border-gray-300 p-2"
+                item={it}
+                index={idx}
+                isVisible={catalogEntered}
                 onClick={() => router.push(`/item/${it.id}`)}
-                aria-label="Открыть товар"
-              >
-                <div className="relative rounded-[16px] overflow-hidden">
-                  <Link href={`/item/${it.id}`} className="block" aria-label="Открыть товар">
-                    <div className="aspect-square bg-[#F1F1F1]">
-                      {it.id === 6 || it.image.endsWith(".mp4") ? (
-                        <LazyVideo 
-                          src={it.id === 6 ? "/видео%201.mp4" : it.image} 
-                          className="w-full h-full object-cover" 
-                        />
-                      ) : (
-                        (() => {
-                          const map: Record<string, string> = {
-                            "/night.png": "/day.png",
-                            "/Zakvaska.png": "/1.png",
-                            "/Rozling.png": "/розлинг1.jpg",
-                            "/Risling.png": "/рислинг1.png",
-                            "/Xmel.png": "/хмель1.png",
-                          }
-                          return (
-                            <Image
-                              src={it.image}
-                              alt={it.title}
-                              fill
-                              className="object-cover"
-                              sizes="(max-width: 420px) 50vw, 33vw"
-                              quality={60}
-                              priority={idx < 2}
-                              onError={(e) => {
-                                const el = e.currentTarget as any
-                                const next = map[it.image] || "/главная4.png"
-                                if (el && next) el.src = next
-                              }}
-                            />
-                          )
-                        })()
-                      )}
-                    </div>
-                  </Link>
-                </div>
-                <div className="mt-2">
-                  <Link href={`/item/${it.id}`} className="block">
-                    <span className="block text-[13px] font-bold leading-tight min-h-[28px]" style={{ color: "#000000" }}>{it.title}</span>
-                  </Link>
-                  <div className="mt-1 flex flex-col gap-2">
-                    <div className="flex flex-col">
-                      {it.id === 6 && (
-                        <span className="text-[12px] whitespace-nowrap font-bold" style={{ color: "#8A8A8A", textDecoration: "line-through" }}>6000 РУБ</span>
-                      )}
-                      {it.id === 2 && (
-                        <span className="text-[12px] whitespace-nowrap font-bold" style={{ color: "#8A8A8A", textDecoration: "line-through" }}>32 000 р.</span>
-                      )}
-                      {it.id !== 10 && (
-                        <span className="text-[12px] whitespace-nowrap font-bold" style={{ color: "#000000" }}>{it.id === 6 ? "4200руб" : it.id === 2 ? "24 000 р." : splitPrice(it.price).main}</span>
-                      )}
-                      {it.id !== 6 && it.id !== 2 && splitPrice(it.price).sub && (
-                        <span className="text-[12px] font-bold" style={{ color: "#8A8A8A" }}>{splitPrice(it.price).sub}</span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-1">
-                    <div
-                      aria-label="Уменьшить количество"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setQty((prev) => ({ ...prev, [it.id]: Math.max(0, (prev[it.id] || 0) - 1) }))
-                        incrementQty(it.id, -1)
-                      }}
-                      className="w-7 h-7 rounded-[10px] bg-white border border-gray-300 text-[#232323] text-[14px] flex items-center justify-center cursor-pointer shrink-0"
-                    >
-                      −
-                    </div>
-                    <span className="text-[13px]">{qty[it.id] || 0}</span>
-                    <div
-                      aria-label="Увеличить количество"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setQty((prev) => ({ ...prev, [it.id]: (prev[it.id] || 0) + 1 }))
-                        addToCart({ id: it.id, title: it.title, qty: 1 })
-                      }}
-                      className="w-7 h-7 rounded-[10px] bg-white border border-gray-300 text-[#232323] text-[14px] flex items-center justify-center cursor-pointer shrink-0"
-                    >
-                      +
-                    </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+                showCartButton={true}
+              />
             ))}
           </div>
         </section>
-        <section className="mt-6">
-          <div className="mt-3 inline-grid grid-cols-2 gap-2 mx-auto">
-            {bests.map((it, idx) => (
-              <div
-                key={it.id}
-                className="bg-white rounded-[20px] border border-gray-300 p-2"
-                onClick={() => router.push(`/item/${it.id}`)}
-                aria-label="Открыть товар"
-              >
-                <div className="relative rounded-[16px] overflow-hidden">
-                  <Link href={`/item/${it.id}`} className="block" aria-label="Открыть товар">
-                    <div className="aspect-square bg-[#F1F1F1]">
-                      {it.id === 6 || it.image.endsWith(".mp4") ? (
-                        <LazyVideo 
-                          src={it.id === 6 ? "/видео%201.mp4" : it.image} 
-                          className="w-full h-full object-cover" 
-                        />
-                      ) : (
-                        (() => {
-                          const map: Record<string, string> = {
-                            "/night.png": "/day.png",
-                            "/Zakvaska.png": "/1.png",
-                            "/Rozling.png": "/розлинг1.jpg",
-                            "/Risling.png": "/рислинг1.png",
-                            "/Xmel.png": "/хмель1.png",
-                          }
-                          return (
-                            <Image
-                              src={it.image}
-                              alt={it.title}
-                              fill
-                              className="object-cover"
-                              sizes="(max-width: 420px) 50vw, 33vw"
-                              quality={60}
-                              priority={idx < 2}
-                              onError={(e) => {
-                                const el = e.currentTarget as any
-                                const next = map[it.image] || "/главная4.png"
-                                if (el && next) el.src = next
-                              }}
-                            />
-                          )
-                        })()
-                      )}
-                    </div>
-                  </Link>
-                </div>
-                <div className="mt-2">
-                  <Link href={`/item/${it.id}`} className="block">
-                    <span className="block text-[13px] font-bold leading-tight min-h-[28px]" style={{ color: "#000000" }}>{it.title}</span>
-                  </Link>
-                  <div className="mt-1 flex flex-col gap-2">
-                    <div className="flex flex-col">
-                      {it.id === 6 && (
-                        <span className="text-[12px] whitespace-nowrap font-bold" style={{ color: "#8A8A8A", textDecoration: "line-through" }}>6000 РУБ</span>
-                      )}
-                      {it.id === 2 && (
-                        <span className="text-[12px] whitespace-nowrap font-bold" style={{ color: "#8A8A8A", textDecoration: "line-through" }}>32 000 р.</span>
-                      )}
-                      <span className="text-[12px] whitespace-nowrap font-bold" style={{ color: "#000000" }}>{it.id === 6 ? "4200руб" : it.id === 2 ? "24 000 р." : splitPrice(it.price).main}</span>
-                      {it.id !== 6 && it.id !== 2 && splitPrice(it.price).sub && (
-                        <span className="text-[12px] font-bold" style={{ color: "#8A8A8A" }}>{splitPrice(it.price).sub}</span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-1">
-                    <div
-                      aria-label="Уменьшить количество"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setQty((prev) => ({ ...prev, [it.id]: Math.max(0, (prev[it.id] || 0) - 1) }))
-                        incrementQty(it.id, -1)
-                      }}
-                      className="w-7 h-7 rounded-[10px] bg-white border border-gray-300 text-[#232323] text-[14px] flex items-center justify-center cursor-pointer shrink-0"
-                    >
-                      −
-                    </div>
-                    <span className="text-[13px]">{qty[it.id] || 0}</span>
-                    <div
-                      aria-label="Увеличить количество"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setQty((prev) => ({ ...prev, [it.id]: (prev[it.id] || 0) + 1 }))
-                        addToCart({ id: it.id, title: it.title, qty: 1 })
-                      }}
-                      className="w-7 h-7 rounded-[10px] bg-white border border-gray-300 text-[#232323] text-[14px] flex items-center justify-center cursor-pointer shrink-0"
-                    >
-                      +
-                    </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-        <section className="mt-6">
-          <div className="mt-3 inline-grid grid-cols-2 gap-2 mx-auto">
-            {novelties.map((it) => (
-              <div
-                key={it.id}
-                className="bg-white rounded-[20px] border border-gray-300 p-2"
-                onClick={() => router.push(`/item/${it.id}`)}
-                aria-label="Открыть товар"
-              >
-                <div className="relative rounded-[16px] overflow-hidden">
-                  <Link href={`/item/${it.id}`} className="block" aria-label="Открыть товар">
-                    <div className="aspect-square bg-[#F1F1F1]">
-                      {it.id === 6 || it.image.endsWith(".mp4") ? (
-                        <LazyVideo 
-                          src={it.id === 6 ? "/видео%201.mp4" : it.image} 
-                          className="w-full h-full object-cover" 
-                        />
-                      ) : (
-                        (() => {
-                          const map: Record<string, string> = {
-                            "/night.png": "/day.png",
-                            "/Zakvaska.png": "/1.png",
-                            "/Rozling.png": "/розлинг1.jpg",
-                            "/Risling.png": "/рислинг1.png",
-                            "/Xmel.png": "/хмель1.png",
-                          }
-                          return (
-                            <Image
-                              src={it.image}
-                              alt={it.title}
-                              fill
-                              className="object-cover"
-                              loading="lazy"
-                              sizes="(max-width: 420px) 50vw, 33vw"
-                              onError={(e) => {
-                                const el = e.currentTarget as any
-                                const next = map[it.image] || "/главная4.png"
-                                if (el && next) el.src = next
-                              }}
-                            />
-                          )
-                        })()
-                      )}
-                    </div>
-                  </Link>
-                </div>
-                <div className="mt-2">
-                  <Link href={`/item/${it.id}`} className="block">
-                    <span className="block text-[13px] font-bold leading-tight min-h-[28px]" style={{ color: "#000000" }}>{it.title}</span>
-                  </Link>
-                  <div className="mt-1 flex flex-col gap-2">
-                    <div className="flex flex-col">
-                      {it.id === 6 && (
-                        <span className="text-[12px] whitespace-nowrap font-bold" style={{ color: "#8A8A8A", textDecoration: "line-through" }}>6000 РУБ</span>
-                      )}
-                      {it.id === 2 && (
-                        <span className="text-[12px] whitespace-nowrap font-bold" style={{ color: "#8A8A8A", textDecoration: "line-through" }}>32 000 р.</span>
-                      )}
-                      <span className="text-[12px] whitespace-nowrap font-bold" style={{ color: "#000000" }}>{it.id === 6 ? "4200руб" : it.id === 2 ? "24 000 р." : splitPrice(it.price).main}</span>
-                      {it.id !== 6 && it.id !== 2 && splitPrice(it.price).sub && (
-                        <span className="text-[12px] font-bold" style={{ color: "#8A8A8A" }}>{splitPrice(it.price).sub}</span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-1">
-                    <div
-                      aria-label="Уменьшить количество"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setQty((prev) => ({ ...prev, [it.id]: Math.max(0, (prev[it.id] || 0) - 1) }))
-                        incrementQty(it.id, -1)
-                      }}
-                      className="w-7 h-7 rounded-[10px] bg-white border border-gray-300 text-[#232323] text-[14px] flex items-center justify-center cursor-pointer shrink-0"
-                    >
-                      −
-                    </div>
-                    <span className="text-[13px]">{qty[it.id] || 0}</span>
-                    <div
-                      aria-label="Увеличить количество"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setQty((prev) => ({ ...prev, [it.id]: (prev[it.id] || 0) + 1 }))
-                        addToCart({ id: it.id, title: it.title, qty: 1 })
-                      }}
-                      className="w-7 h-7 rounded-[10px] bg-white border border-gray-300 text-[#232323] text-[14px] flex items-center justify-center cursor-pointer shrink-0"
-                    >
-                      +
-                    </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
+        
         <div className="h-24 w-full" />
       </div>
       <BottomBanner />
