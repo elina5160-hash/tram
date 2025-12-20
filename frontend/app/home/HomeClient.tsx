@@ -149,12 +149,12 @@ export default function HomeClient() {
         <div className="mt-2 -mx-4 h-[34px] relative overflow-hidden bg-[#F6F6F6]">
           <div className="absolute inset-0 overflow-hidden flex items-center">
             <div className="marquee-track h-full flex items-center whitespace-nowrap" style={{ animationDuration: "12s" }}>
-              <span className="pl-4 pr-8 text-[#353535] text-[12px]">Добро пожаловать в магазин ЕТРА🤗</span>
-              <span className="pl-4 pr-8 text-[#353535] text-[12px]">Добро пожаловать в магазин ЕТРА🤗</span>
-              <span className="pl-4 pr-8 text-[#353535] text-[12px]">Добро пожаловать в магазин ЕТРА🤗</span>
-              <span className="pl-4 pr-8 text-[#353535] text-[12px]">Добро пожаловать в магазин ЕТРА🤗</span>
-              <span className="pl-4 pr-8 text-[#353535] text-[12px]">Добро пожаловать в магазин ЕТРА🤗</span>
-              <span className="pl-4 pr-8 text-[#353535] text-[12px]">Добро пожаловать в магазин ЕТРА🤗</span>
+              <span className="pl-4 pr-8 text-[#353535] text-[12px]">Добро пожаловать в магазин ЭТРА🤗</span>
+              <span className="pl-4 pr-8 text-[#353535] text-[12px]">Добро пожаловать в магазин ЭТРА🤗</span>
+              <span className="pl-4 pr-8 text-[#353535] text-[12px]">Добро пожаловать в магазин ЭТРА🤗</span>
+              <span className="pl-4 pr-8 text-[#353535] text-[12px]">Добро пожаловать в магазин ЭТРА🤗</span>
+              <span className="pl-4 pr-8 text-[#353535] text-[12px]">Добро пожаловать в магазин ЭТРА🤗</span>
+              <span className="pl-4 pr-8 text-[#353535] text-[12px]">Добро пожаловать в магазин ЭТРА🤗</span>
             </div>
           </div>
         </div>
