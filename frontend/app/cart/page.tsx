@@ -41,6 +41,8 @@ function CartContent() {
   const [isCheckingPromo, setIsCheckingPromo] = useState<boolean>(false)
   const [clientId, setClientId] = useState<number | string>("")
   const [username, setUsername] = useState<string>("")
+  const [isOfferAccepted, setIsOfferAccepted] = useState(false)
+  const [isDataConsentAccepted, setIsDataConsentAccepted] = useState(false)
   
   // Validation State
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -231,6 +233,16 @@ function CartContent() {
 
     if (!cdek.trim() && !address.trim()) {
       newErrors.delivery = "Укажите адрес доставки или пункт СДЭК"
+      isValid = false
+    }
+
+    if (!isOfferAccepted) {
+      newErrors.offer = "Необходимо принять условия оферты и политики"
+      isValid = false
+    }
+
+    if (!isDataConsentAccepted) {
+      newErrors.consent = "Необходимо дать согласие на обработку данных"
       isValid = false
     }
 
@@ -434,9 +446,44 @@ function CartContent() {
                 {/* Error Banner */}
                 {Object.keys(errors).length > 0 && (
                    <div className="rounded-[10px] bg-red-50 border border-red-200 p-2 text-red-600 text-[12px] text-center">
-                     Пожалуйста, заполните все обязательные поля корректно
+                     {errors.offer || errors.consent || "Пожалуйста, заполните все обязательные поля корректно"}
                    </div>
                 )}
+
+                {/* Agreements */}
+                <div className="flex flex-col gap-3 my-2">
+                  <div className="flex items-start gap-2">
+                    <input 
+                      type="checkbox" 
+                      id="offer-check"
+                      checked={isOfferAccepted}
+                      onChange={(e) => {
+                        setIsOfferAccepted(e.target.checked)
+                        if (errors.offer) setErrors({...errors, offer: ""})
+                      }}
+                      className={`mt-1 w-4 h-4 rounded border ${errors.offer ? 'border-red-500' : 'border-gray-300'} text-[#6800E9] focus:ring-[#6800E9]`}
+                    />
+                    <label htmlFor="offer-check" className="text-[11px] leading-tight text-gray-600">
+                      Нажимая кнопку "К оформлению", вы подтверждаете, что ознакомились и соглашаетесь с условиями <a href="#" target="_blank" className="text-[#6800E9] underline">публичной оферты</a> и <a href="#" target="_blank" className="text-[#6800E9] underline">Политикой обработки персональных данных</a>
+                    </label>
+                  </div>
+
+                  <div className="flex items-start gap-2">
+                    <input 
+                      type="checkbox" 
+                      id="consent-check"
+                      checked={isDataConsentAccepted}
+                      onChange={(e) => {
+                        setIsDataConsentAccepted(e.target.checked)
+                        if (errors.consent) setErrors({...errors, consent: ""})
+                      }}
+                      className={`mt-1 w-4 h-4 rounded border ${errors.consent ? 'border-red-500' : 'border-gray-300'} text-[#6800E9] focus:ring-[#6800E9]`}
+                    />
+                    <label htmlFor="consent-check" className="text-[11px] leading-tight text-gray-600">
+                      Я даю согласие на обработку моих персональных данных в целях оформления и доставки заказа
+                    </label>
+                  </div>
+                </div>
 
                 <HoverButton
                   className={`w-full rounded-[12px] border px-3 py-3 text-[13px] active:scale-105 bg-[#6800E9] text-white ${isProcessing ? 'opacity-70 pointer-events-none' : ''}`}
