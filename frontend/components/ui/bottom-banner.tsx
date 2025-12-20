@@ -12,7 +12,7 @@ function Item({ href, renderIcon, label, onClick }: { href: string; renderIcon: 
   const pathname = usePathname()
   const [pressed, setPressed] = useState(false)
   const isActive = href.startsWith("/") && pathname === href
-  const color = pressed || isActive ? "#387246" : "#FFFFFF"
+  const color = pressed || isActive ? "#387246" : "#353535"
   
   if (!href) {
     return (
@@ -75,7 +75,7 @@ export default function BottomBanner() {
 
   return (
     <div className="fixed inset-x-0 bottom-0 z-20 w-full flex items-center justify-center px-3 pb-[env(safe-area-inset-bottom)]">
-      <div className="relative w-full max-w-[420px] h-[52px] rounded-[20px] bg-[#232323]/60 backdrop-blur-xl border border-gray-500/70 shadow-inner mb-[12px] px-4 flex items-center justify-between overflow-hidden">
+      <div className="relative w-full max-w-[420px] h-[52px] rounded-[20px] bg-[#F0F0F0] backdrop-blur-xl border border-gray-500/70 shadow-inner mb-[12px] px-4 flex items-center justify-between overflow-hidden">
         
         {homeItem?.enabled !== false && (
           <Item
@@ -116,7 +116,7 @@ export default function BottomBanner() {
                   alt="Корзина"
                   width={20}
                   height={20}
-                  className={`block ${!pressed && !isActive ? "invert brightness-100" : ""}`}
+                  className="block"
                   style={pressed || isActive ? { filter: "invert(36%) sepia(19%) saturate(923%) hue-rotate(76deg) brightness(92%) contrast(92%)" } : undefined}
                 />
                 {count > 0 && (
