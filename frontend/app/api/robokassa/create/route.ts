@@ -130,15 +130,8 @@ export async function POST(req: Request) {
       const receiptJson = JSON.stringify({ items: receiptItems })
       receiptEncodedOnce = encodeURIComponent(receiptJson)
       receiptEncodedTwice = encodeURIComponent(receiptEncodedOnce)
-      try {
-        const itemsSimple = JSON.stringify(receiptItems.map((x, index) => ({ 
-            n: x.name, 
-            q: x.quantity, 
-            s: x.sum,
-            i: body.items?.[index]?.id // Pass ID for restoration
-        })))
-        shp.Shp_items = encodeURIComponent(itemsSimple)
-      } catch {}
+      // Note: Shp_items removed to avoid signature issues. 
+      // Items are restored from Supabase in result/route.ts
     } catch {}
   }
 

@@ -101,7 +101,7 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
         } catch {}
         
         // Transform items to standard format for database and display
-        const standardizedItems = Array.isArray(items) ? items.map((it) => {
+        let standardizedItems = Array.isArray(items) ? items.map((it) => {
              const quantity = Number(it?.q ?? it?.quantity ?? 1)
              const sum = Number(it?.s ?? it?.sum ?? 0)
              return {
@@ -112,6 +112,33 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
                  sum: sum
              }
         }) : []
+
+        // Fallback: If no items from payload, try to fetch from Supabase order
+        if (standardizedItems.length === 0 && client) {
+            try {
+                const { data: orderData } = await client
+                    .from('orders')
+                    .select('customer_info')
+                    .eq('id', invId)
+                    .single()
+                
+                if (orderData?.customer_info?.items_backup) {
+                    const backup = orderData.customer_info.items_backup
+                    if (Array.isArray(backup)) {
+                        standardizedItems = backup.map((it: any) => ({
+                            id: it.id,
+                            name: it.name,
+                            quantity: it.quantity,
+                            price: it.price,
+                            sum: it.sum
+                        }))
+                        await logDebug("Restored items from Supabase backup", { count: standardizedItems.length })
+                    }
+                }
+            } catch (e) {
+                console.error("Failed to restore items from Supabase", e)
+            }
+        }
 
         // Prepare items for display
         const lines = standardizedItems.map((it) => {
