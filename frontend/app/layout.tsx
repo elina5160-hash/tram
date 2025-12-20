@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { SnowfallBackground } from "@/components/ui/snow-flakes";
 import Garland from "@/components/ui/garland";
+import { OrderStatusChecker } from "@/components/OrderStatusChecker";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -36,6 +37,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <OrderStatusChecker />
         <Garland />
         {children}
         <div className="fixed inset-0 pointer-events-none z-50">

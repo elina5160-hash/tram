@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react"
 import Image from "next/image"
 import { HoverButton } from "@/components/ui/hover-button"
 import { useRouter, useSearchParams } from "next/navigation"
-import { addToCart, clearCart, getCart, incrementQty, removeFromCart } from "@/lib/cart"
+import { addToCart, clearCart, getCart, incrementQty, removeFromCart, savePendingOrder } from "@/lib/cart"
 import { getPriceValue } from "@/lib/price"
 import { useProducts } from "@/hooks/useProducts"
 import { staticItems } from "@/data/staticItems"
@@ -526,6 +526,7 @@ function CartContent() {
                           const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' })
                           navigator.sendBeacon('/api/log', blob)
                         } catch {}
+                        savePendingOrder(Number(dc.invId || invId))
                         const url = `/pay/confirm?url=${encodeURIComponent(dc.url)}&invId=${encodeURIComponent(String(dc.invId || invId))}`
                         router.push(url)
                         return
@@ -568,6 +569,7 @@ function CartContent() {
                           const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' })
                           navigator.sendBeacon('/api/log', blob)
                         } catch {}
+                        savePendingOrder(Number(di.invId || invId))
                         const url = `/pay/confirm?url=${encodeURIComponent(di.url)}&invId=${encodeURIComponent(String(di.invId || invId))}`
                         router.push(url)
                         return
@@ -576,6 +578,7 @@ function CartContent() {
                         const di2 = dataInvoice as { raw?: string; invId?: number | string }
                         const m = (di2.raw as string).match(/https?:\/\/\S+/)
                         if (m) {
+                          savePendingOrder(Number(di2.invId || invId))
                           const url = `/pay/confirm?url=${encodeURIComponent(m[0])}&invId=${encodeURIComponent(String(di2.invId || invId))}`
                           router.push(url)
                           return

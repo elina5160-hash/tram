@@ -5,6 +5,7 @@ export type CartItem = {
 }
 
 const KEY = "cart"
+const PENDING_ORDER_KEY = "pending_order_id"
 
 function normalize(items: unknown[]): CartItem[] {
   return items.map((it) => {
@@ -86,4 +87,28 @@ export function incrementQty(id: number, delta = 1) {
     items.push({ id, title: `Товар ${id}`, qty: delta })
     setCart(items)
   }
+}
+
+export function savePendingOrder(id: number) {
+  if (typeof window === "undefined") return
+  try {
+    window.localStorage.setItem(PENDING_ORDER_KEY, String(id))
+  } catch {}
+}
+
+export function getPendingOrder(): number | null {
+  if (typeof window === "undefined") return null
+  try {
+    const raw = window.localStorage.getItem(PENDING_ORDER_KEY)
+    return raw ? Number(raw) : null
+  } catch {
+    return null
+  }
+}
+
+export function clearPendingOrder() {
+  if (typeof window === "undefined") return
+  try {
+    window.localStorage.removeItem(PENDING_ORDER_KEY)
+  } catch {}
 }

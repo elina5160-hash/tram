@@ -57,8 +57,14 @@ export function OrdersTable() {
   }
 
   return (
-    <div className="space-y-4 h-full flex flex-col">
-      <div className="flex items-center justify-between gap-4 flex-shrink-0">
+    <div className="space-y-4 h-full flex flex-col pt-5">
+      <div className="flex items-center gap-4 flex-shrink-0">
+        <button
+            onClick={() => window.history.back()}
+            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium"
+        >
+            ← Назад
+        </button>
         <input
           type="text"
           placeholder="Поиск по ID, имени, телефону, email"

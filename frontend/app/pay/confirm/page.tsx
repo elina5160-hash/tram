@@ -88,7 +88,16 @@ function ConfirmContent() {
     if (!hasSuccessParams) return
     const run = async () => {
       try {
+        const searchParams = new URLSearchParams(window.location.search)
         const qs = new URLSearchParams({ OutSum: outSumSuccess, InvId: invIdSuccess, SignatureValue: signatureSuccess })
+        
+        // Add all Shp_ parameters
+        searchParams.forEach((value, key) => {
+          if (key.startsWith('Shp_')) {
+            qs.append(key, value)
+          }
+        })
+
         const res = await fetch(`/api/robokassa/result?${qs.toString()}`, { method: "GET" })
         if (res.ok) {
           clearCart()

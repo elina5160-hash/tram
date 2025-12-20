@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import crypto from "node:crypto"
 import { getSupabaseClient, getServiceSupabaseClient } from "@/lib/supabase"
+import { sendTelegramMessage } from "@/lib/telegram"
 
 function sanitizeText(input: string) {
   return Array.from(input).filter((ch) => !/\p{Extended_Pictographic}/u.test(ch) && ch !== "\u200D" && ch !== "\uFE0F").join("")
@@ -113,9 +114,46 @@ export async function POST(req: Request) {
     }
   }
 
+  // Send Telegram notification about order attempt
+  try {
+      const itemsList = body.items && Array.isArray(body.items) 
+          ? body.items.map(it => `- ${it.name} x${it.quantity} (${(it.cost || 0) * (it.quantity || 1)} руб.)`).join('\n')
+          : "Товары не указаны";
+
+      const msg = [
+          `🆕 НОВЫЙ ЗАКАЗ (Ожидает оплаты)`,
+          `📦 Заказ #${invId}`,
+          `💰 Сумма: ${outSum} руб.`,
+          ``,
+          `👤 Клиент: ${body.customerInfo?.name || 'Не указано'}`,
+          `📞 Телефон: ${body.customerInfo?.phone || 'Не указано'}`,
+          `📧 Email: ${email || 'Не указано'}`,
+          `📍 Адрес: ${body.customerInfo?.address || body.customerInfo?.cdek || 'Не указано'}`,
+          `🎟 Промокод: ${body.promoCode || 'Нет'}`,
+          ``,
+          `🛒 Товары:`,
+          itemsList
+      ].join('\n');
+
+      await sendTelegramMessage(msg);
+  } catch (e) {
+      console.error("Failed to send Telegram notification:", e);
+  }
+
   let receiptEncodedOnce = ""
   let receiptEncodedTwice = ""
-  const shp: Record<string, string> = {}
+  
+  // Prepare Shp_ parameters for callback
+  const shp: Record<string, string> = {
+    Shp_name: sanitizeText(body.customerInfo?.name || ''),
+    Shp_phone: sanitizeText(body.customerInfo?.phone || ''),
+    Shp_email: sanitizeText(email || ''),
+    Shp_address: sanitizeText(body.customerInfo?.address || ''),
+    Shp_cdek: sanitizeText(body.customerInfo?.cdek || ''),
+    Shp_promo: sanitizeText(body.promoCode || ''),
+    Shp_ref: sanitizeText(body.refCode || ''),
+    Shp_client: sanitizeText(body.customerInfo?.client_id || '')
+  }
 
   if (body.items && body.items.length > 0) {
     try {
