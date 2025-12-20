@@ -223,19 +223,30 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
         try {
             console.log('Starting Google Sheets integration for order:', invId)
             
-            // Fetch username if client_id exists and not in payload
+            // Fetch username and first_name if client_id exists
             let username = payload.username || ''
-            if (!username && payload.client && client) {
-                const { data: user } = await client.from('contest_participants').select('username').eq('user_id', payload.client).single()
-                if (user?.username) username = user.username
+            let telegramFirstName = ''
+            
+            if (payload.client && client) {
+                const { data: user } = await client.from('contest_participants').select('username, first_name').eq('user_id', payload.client).single()
+                if (user?.username && !username) username = user.username
+                if (user?.first_name) telegramFirstName = user.first_name
             }
 
             const totalQuantity = standardizedItems.reduce((acc, it) => acc + it.quantity, 0)
+            
+            const deliveryInfo = payload.address 
+                ? `${payload.address} ( курьер )`
+                : payload.cdek 
+                    ? `${payload.cdek} ( СДЭК )` 
+                    : 'Не указано'
+
             const shippingData = [
-                payload.address || payload.cdek,
-                payload.phone,
-                payload.email
-            ].filter(Boolean).join(', ')
+                `1. ${payload.name || 'Не указано'}`,
+                `2. ${payload.phone || 'Не указано'}`,
+                `3. ${deliveryInfo}`,
+                `4. ${payload.email || 'Не указано'}`
+            ].join('\n')
 
             // Format: USER ID | USER ID LINK | USERNAME | USERNAME LINK | FIRST NAME | DATA | TOTAL | PRODUCT | PARTNER PROMO | СТАТУС | ТРЕК НОМЕР | Данные для отправки | Коменты | Отправка Трека | CATEGORIES | Деньги за доставку | Проверка | ок | Количество
             const row = [
@@ -243,7 +254,7 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
                 'https://tram-navy.vercel.app/', // USER ID LINK
                 username || '', // USERNAME
                 username ? `https://t.me/${username}` : '', // USERNAME LINK
-                payload.name || '', // FIRST NAME
+                telegramFirstName || payload.name || '', // FIRST NAME (Telegram Name or Form Name)
                 new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' }), // DATA
                 Number(outSum).toLocaleString('ru-RU'), // TOTAL
                 lines.join('\n'), // PRODUCT
