@@ -78,7 +78,7 @@ function CartContent() {
   useEffect(() => {
     // Try to get Telegram user ID from URL (priority) or WebApp initData
     const idFromUrl = searchParams.get('client_id')
-    if (idFromUrl) {
+    if (idFromUrl && idFromUrl !== "null") {
       setClientId(idFromUrl)
       if (typeof window !== "undefined") localStorage.setItem("user_id", idFromUrl)
     } else if (typeof window !== "undefined") {
@@ -89,7 +89,8 @@ function CartContent() {
         localStorage.setItem("user_id", String(user.id))
       } else {
         const stored = localStorage.getItem("user_id")
-        if (stored) setClientId(stored)
+        if (stored && stored !== "null") setClientId(stored)
+        else if (stored === "null") localStorage.removeItem("user_id")
       }
     }
   }, [searchParams])

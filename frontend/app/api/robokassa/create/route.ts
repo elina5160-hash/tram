@@ -3,8 +3,8 @@ import crypto from "node:crypto"
 import { getSupabaseClient, getServiceSupabaseClient } from "@/lib/supabase"
 import { sendTelegramMessage } from "@/lib/telegram"
 
-function sanitizeText(input: string) {
-  return Array.from(input).filter((ch) => !/\p{Extended_Pictographic}/u.test(ch) && ch !== "\u200D" && ch !== "\uFE0F").join("")
+function sanitizeText(input: string | number) {
+  return Array.from(String(input)).filter((ch) => !/\p{Extended_Pictographic}/u.test(ch) && ch !== "\u200D" && ch !== "\uFE0F").join("")
 }
 
 export async function POST(req: Request) {
