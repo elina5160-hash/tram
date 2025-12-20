@@ -219,9 +219,9 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
         await sendTelegramMessage(text, chatId, replyMarkup)
         
         // Google Sheets integration
-
-        // Google Sheets integration
         try {
+            console.log('Starting Google Sheets integration for order:', invId)
+            
             // Fetch username if client_id exists
             let username = ''
             if (payload.client && client) {
@@ -260,13 +260,18 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
             ]
 
             const webhook = "https://script.google.com/macros/s/AKfycbyoWRwuYvKXNIdYTyUSJ2TMeGn28RkjCXPJB_1iZ8-xSuEy2HIITBAd4zlwlEf5FDv7/exec"
-            await fetch(webhook, { 
+            console.log('Sending to Google Sheet webhook:', webhook)
+            const response = await fetch(webhook, { 
                 method: "POST", 
                 headers: { "Content-Type": "application/json" }, 
                 body: JSON.stringify({ values: row }) 
             })
+            const responseText = await response.text()
+            console.log('Google Sheet response:', response.status, responseText)
+            await logDebug("Google Sheet response", { status: response.status, text: responseText })
         } catch (e) {
             console.error('Failed to send to Google Sheet', e)
+            await logDebug("Google Sheet error", { error: String(e) })
         }
         try {
             // 1. Upsert order (Create or Update) via centralized logic
