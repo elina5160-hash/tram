@@ -258,7 +258,7 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
                 Number(outSum).toLocaleString('ru-RU'), // TOTAL
                 lines.join('\n'), // PRODUCT
                 payload.promo || '', // PARTNER PROMO
-                'Оплачен', // СТАТУС
+                '', // СТАТУС (пусто по запросу)
                 '', // ТРЕК НОМЕР
                 shippingData, // Данные для отправки
                 '', // Коменты
