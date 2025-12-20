@@ -249,7 +249,7 @@ function CartContent() {
   const suggestions = catalog.filter((c) => !inCartIds.has(c.id))
 
   return (
-    <div className="min-h-[100dvh] w-full bg-white flex flex-col justify-start relative pb-56">
+    <div className="min-h-[100dvh] w-full bg-white flex flex-col justify-start relative pb-[500px]">
       <BackButton />
       <div className="w-full max-w-[420px] mx-auto px-4 pt-[calc(4rem+env(safe-area-inset-top))]">
         <div className="flex items-center justify-between mb-4">
@@ -631,6 +631,9 @@ function CartContent() {
             </div>
           </div>
         )}
+        
+        {/* Extra spacing at the bottom to ensure content is not hidden behind fixed elements */}
+        <div className="w-full h-[200px] bg-white shrink-0" />
       </div>
       <BottomBanner />
     </div>
