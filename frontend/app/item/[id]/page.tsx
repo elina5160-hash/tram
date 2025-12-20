@@ -692,7 +692,31 @@ export default function ItemPage() {
           </button>
           <HoverButton
             className="w-full rounded-[12px] border px-3 py-3 text-[13px] active:scale-105 bg-[#6800E9] text-white"
-            onClick={() => addToCart({ id: item.id === 13 && volume === "0.5l" ? 1013 : item.id === 14 && volume === "0.5l" ? 1014 : item.id === 15 && volume === "0.5l" ? 1015 : item.id, title: item.id === 7 ? `${item.title} — ${tariff === "self" ? "КТО ГОТОВИТ САМ" : tariff === "basic" ? "ОСНОВНОЙ" : "VIP"}` : item.id === 13 ? `Энзимный напиток Хмель ${volume === "1l" ? "1л" : "0.5л"}` : item.id === 14 ? `Энзимный напиток Розлинг ${volume === "1l" ? "1л" : "0.5л"}` : item.id === 15 ? `Полезный энергетик ${volume === "1l" ? "1л" : "0.5л"}` : item.title, qty: 1 })}
+            onClick={() => {
+              let finalId = item.id
+              let finalTitle = item.title
+              
+              // Handle Volume/Tariff variants
+              if (item.id === 7) {
+                 if (tariff === "self") { finalId = 7001; finalTitle = `${item.title} — КТО ГОТОВИТ САМ` }
+                 else if (tariff === "basic") { finalId = 7002; finalTitle = `${item.title} — ОСНОВНОЙ` }
+                 else if (tariff === "vip") { finalId = 7003; finalTitle = `${item.title} — VIP` }
+              } else if (item.id === 19 && volume === "2kg") {
+                 finalId = 1901
+                 finalTitle = `${item.title} 2 кг`
+              } else if (item.id === 13) {
+                 if (volume === "0.5l") { finalId = 1013; finalTitle = `Энзимный напиток Хмель 0.5л` }
+                 else finalTitle = `Энзимный напиток Хмель 1л`
+              } else if (item.id === 14) {
+                 if (volume === "0.5l") { finalId = 1014; finalTitle = `Энзимный напиток Розлинг 0.5л` }
+                 else finalTitle = `Энзимный напиток Розлинг 1л`
+              } else if (item.id === 15) {
+                 if (volume === "0.5l") { finalId = 1015; finalTitle = `Полезный энергетик 0.5л` }
+                 else finalTitle = `Полезный энергетик 1л`
+              }
+
+              addToCart({ id: finalId, title: finalTitle, qty: 1 })
+            }}
           >
             В корзину
           </HoverButton>

@@ -20,5 +20,12 @@ export const staticItems = [
   { id: 20, title: "НАБОР СЕМЕЙНЫЙ", price: "4 200 руб.", image: "/Набор семейный.png" },
   { id: 21, title: "Набор для бани", price: "4 200 руб.", image: "/баня.PNG" },
   { id: 22, title: "Супер Квас", price: "750 руб.", image: "/1500x2000 3-4 SK.mp4" },
-  { id: 999, title: "ТЕСТОВЫЙ ТОВАР", price: "5 руб.", image: "/1.jpg" },
+  // Hidden variants for cart calculation
+  { id: 7001, title: "Бак для приготовления энзимных напитков — КТО ГОТОВИТ САМ", price: "42 000 руб", image: "/2.png" },
+  { id: 7002, title: "Бак для приготовления энзимных напитков — ОСНОВНОЙ", price: "55 000 руб", image: "/2.png" },
+  { id: 7003, title: "Бак для приготовления энзимных напитков — VIP", price: "60 000 руб", image: "/2.png" },
+  { id: 1901, title: "Каша ЭТРАсУТРА 2 кг", price: "6 300 руб", image: "/KASHA PROMO Demo.mp4" },
+  { id: 1013, title: "Энзимный напиток Хмель 0.5л", price: "490 руб", image: "/хмель1.png" },
+  { id: 1014, title: "Энзимный напиток Розлинг 0.5л", price: "490 руб", image: "/розлинг1.jpg" },
+  { id: 1015, title: "Полезный энергетик 0.5л", price: "490 руб", image: "/нг.png" },
 ];

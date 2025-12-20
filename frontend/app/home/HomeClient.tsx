@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect, Suspense } from "react"
+import { useState, useEffect, Suspense, useMemo } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -20,7 +20,14 @@ export default function HomeClient() {
   const { products: fetchedProducts } = useProducts()
   const [adminOpen, setAdminOpen] = useState(false)
 
-  const items = (fetchedProducts && fetchedProducts.length > 0 ? fetchedProducts : staticItems) as any[]
+  const items = useMemo(() => {
+    if (fetchedProducts && fetchedProducts.length > 0) {
+       const fetchedIds = new Set(fetchedProducts.map((p: any) => p.id))
+       const missingStatic = staticItems.filter((s) => !fetchedIds.has(s.id))
+       return [...fetchedProducts, ...missingStatic]
+    }
+    return staticItems
+  }, [fetchedProducts])
   const promos = items.filter((it: any) => {
     const priceVal = getPriceValue(it.price)
     const isCheap = priceVal > 0 && priceVal < 1000
@@ -31,11 +38,11 @@ export default function HomeClient() {
     return isCheap || isDiscounted || [6, 8].includes(it.id)
   })
   const bests = items.filter((it: any) => [1, 7, 3, 4].includes(it.id))
-  const novelties = items.filter((it: any) => [1, 2, 3, 4, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 999].includes(it.id))
+  const novelties = items.filter((it: any) => [1, 2, 3, 4, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22].includes(it.id))
   
   const [qty, setQty] = useState<Record<number, number>>(() => {
     const initial: Record<number, number> = {}
-    items.forEach((it) => (initial[it.id] = 0))
+    items.forEach((it: any) => (initial[it.id] = 0))
     return initial
   })
   const [pressedId, setPressedId] = useState<number | null>(null)
@@ -163,7 +170,7 @@ export default function HomeClient() {
             <Link href="/catalog" className="text-[13px]" style={{ color: "#267A2D" }}>Смотреть все</Link>
           </div>
           <div className="mt-3 overflow-x-auto flex gap-3 snap-x snap-mandatory pb-2">
-            {promos.map((it, idx) => (
+            {promos.map((it: any, idx: number) => (
               <div
                 key={it.id}
                 className={`bg-white rounded-[20px] border border-gray-300 p-2 transition-all duration-500 ease-out transform-gpu ${catalogEntered ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-3"} min-w-[180px] snap-start`}

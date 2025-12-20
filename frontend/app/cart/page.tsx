@@ -106,7 +106,12 @@ function CartContent() {
 
   const catalog = useMemo<Product[]>(() => {
     if (fetchedProducts && fetchedProducts.length > 0) {
-      return fetchedProducts
+      // Merge fetched with static to ensure code-defined variants (like 7001, 1013) are available
+      // even if they are not in the database.
+      // Fetched products take precedence for same IDs.
+      const fetchedIds = new Set(fetchedProducts.map((p: any) => p.id))
+      const missingStatic = staticItems.filter((s) => !fetchedIds.has(s.id))
+      return [...fetchedProducts, ...missingStatic]
     }
     // Only fallback to static items if we are NOT loading and have no products
     // This prevents flashing old prices during load
