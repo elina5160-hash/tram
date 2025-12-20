@@ -259,7 +259,7 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
                 totalQuantity // Количество
             ]
 
-            const webhook = "https://script.google.com/macros/s/AKfycbyoWRwuYvKXNIdYTyUSJ2TMeGn28RkjCXPJB_1iZ8-xSuEy2HIITBAd4zlwlEf5FDv7/exec"
+            const webhook = process.env.GOOGLE_SHEETS_WEBHOOK_URL || "https://script.google.com/macros/s/AKfycbyoWRwuYvKXNIdYTyUSJ2TMeGn28RkjCXPJB_1iZ8-xSuEy2HIITBAd4zlwlEf5FDv7/exec"
             console.log('Sending to Google Sheet webhook:', webhook)
             const response = await fetch(webhook, { 
                 method: "POST", 
@@ -435,9 +435,9 @@ export async function GET(req: Request) {
   const isTest = process.env.ROBO_IS_TEST === "1"
   const password1Test = process.env.ROBO_PASSWORD1_TEST || ""
   
-  const ok2 = password2 ? verifySignature(outSum, invId, signature, password2) : false
-  const ok1 = password1 ? verifySignature(outSum, invId, signature, password1) : false
-  const ok1Test = isTest && password1Test ? verifySignature(outSum, invId, signature, password1Test) : false
+  const ok2 = password2 ? verifySignature(outSum, invId, signature, password2, params) : false
+  const ok1 = password1 ? verifySignature(outSum, invId, signature, password1, params) : false
+  const ok1Test = isTest && password1Test ? verifySignature(outSum, invId, signature, password1Test, params) : false
   
   if (!ok2 && !ok1 && !ok1Test) {
       await logDebug("GET: Signature verification failed", { 
@@ -491,9 +491,9 @@ export async function POST(req: Request) {
     const isTest = process.env.ROBO_IS_TEST === "1"
     const password1Test = process.env.ROBO_PASSWORD1_TEST || ""
     
-    const ok2 = password2 ? verifySignature(outSum, invId, signature, password2) : false
-    const ok1 = password1 ? verifySignature(outSum, invId, signature, password1) : false
-    const ok1Test = isTest && password1Test ? verifySignature(outSum, invId, signature, password1Test) : false
+    const ok2 = password2 ? verifySignature(outSum, invId, signature, password2, params) : false
+    const ok1 = password1 ? verifySignature(outSum, invId, signature, password1, params) : false
+    const ok1Test = isTest && password1Test ? verifySignature(outSum, invId, signature, password1Test, params) : false
 
     if (!ok2 && !ok1 && !ok1Test) {
       await logDebug("POST: Signature verification failed", { 
