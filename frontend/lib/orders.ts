@@ -25,7 +25,8 @@ const CreateOrderSchema = z.object({
   customer_info: CustomerInfoSchema,
   promo_code: z.string().optional(),
   ref_code: z.string().optional(),
-  status: z.string().default("created")
+  status: z.string().default("created"),
+  tickets_earned: z.number().optional()
 })
 
 // Types inferred from Zod
@@ -65,30 +66,45 @@ export async function createOrder(data: CreateOrderDTO) {
   // 1. Validation
   const validationResult = CreateOrderSchema.safeParse(data)
   if (!validationResult.success) {
-    const errors = validationResult.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')
+    const errors = validationResult.error.errors.map((e: any) => `${e.path.join('.')}: ${e.message}`).join(', ')
     await logOrderOperation('create_validation', data.id || 'unknown', 'error', { errors, data })
     throw new Error(`Validation failed: ${errors}`)
   }
   
   const validData = validationResult.data
 
-  // 2. Prepare flat fields for easy searching
-  const itemsText = validData.items.map(it => 
-    `• ${it.name} × ${it.quantity} — ${it.sum} руб.`
+  // 2. Generate Full Text Representation
+  const itemsList = validData.items.map(it => 
+    `- ${it.name} x${it.quantity} (${it.sum} руб.)`
   ).join('\n')
+
+  const fullText = [
+    `📦 ЗАКАЗ #${validData.id}`,
+    `💰 Сумма: ${validData.total_amount} руб.`,
+    `👤 Клиент: ${validData.customer_info.name || 'Не указано'}`,
+    `🆔 ID клиента: ${validData.customer_info.client_id || 'Не указано'}`,
+    `📧 Email: ${validData.customer_info.email || 'Не указано'}`,
+    `📍 Адрес: ${validData.customer_info.address || validData.customer_info.cdek || 'Не указано'}`,
+    ``,
+    `🛒 Товары:`,
+    itemsList,
+    ``,
+    `🎁 Конкурс:`,
+    `Начислено билетов: ${validData.tickets_earned ?? 0}`
+  ].join('\n')
 
   const dbPayload = {
     id: validData.id,
     total_amount: validData.total_amount,
-    items: validData.items,
-    customer_info: validData.customer_info,
+    items: fullText, // Storing text instead of JSON array
+    customer_info: validData.customer_info, // Keep structured for admin search
     
-    // Flat columns
+    // Flat columns (optional, kept for compatibility if they exist)
     customer_name: validData.customer_info.name || '',
     customer_phone: validData.customer_info.phone || '',
     customer_email: validData.customer_info.email || '',
     delivery_address: validData.customer_info.address || validData.customer_info.cdek || '',
-    order_items_text: itemsText,
+    order_items_text: itemsList, // Short text summary
     
     promo_code: validData.promo_code || null,
     ref_code: validData.ref_code || null,

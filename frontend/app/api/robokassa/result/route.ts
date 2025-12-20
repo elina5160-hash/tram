@@ -156,6 +156,12 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
         ]
         await appendToSheet(row)
 
+        // Calculate tickets
+        let ticketsEarned = 0
+        if (payload.client) {
+             ticketsEarned = Math.floor(Number(outSum) / 1000)
+        }
+
         // DB Operations
         try {
             // 1. Upsert order (Create or Update) via centralized logic
@@ -173,7 +179,8 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
                 },
                 promo_code: payload.promo,
                 ref_code: payload.ref,
-                status: 'Оплачен'
+                status: 'Оплачен',
+                tickets_earned: ticketsEarned
             })
         } catch (e) {
              console.error('Failed to create order via lib/orders', e)
@@ -187,7 +194,8 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
                 const refereeId = Number(payload.client)
                 
                 // Award tickets for purchase (1 per 1000 rub)
-                const tickets = Math.floor(Number(outSum) / 1000)
+                // ticketsEarned already calculated above
+                const tickets = ticketsEarned
                 let newTotalTickets = 0
                 
                 if (tickets > 0) {

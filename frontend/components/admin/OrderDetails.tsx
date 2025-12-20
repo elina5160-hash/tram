@@ -99,7 +99,15 @@ export function OrderDetails({ order, onBack }: OrderDetailsProps) {
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {items.length === 0 ? (
+                {typeof items === 'string' ? (
+                     <tr>
+                        <td colSpan={4} className="px-4 py-4">
+                            <pre className="whitespace-pre-wrap font-mono text-sm bg-gray-50 p-4 rounded-lg border">
+                                {items}
+                            </pre>
+                        </td>
+                     </tr>
+                ) : items.length === 0 ? (
                     <tr>
                         <td colSpan={4} className="px-4 py-8 text-center text-gray-500">Список товаров пуст (возможно старый формат заказа)</td>
                     </tr>
