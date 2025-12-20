@@ -31,7 +31,7 @@ export default function HomeClient() {
     return isCheap || isDiscounted || [6, 8].includes(it.id)
   })
   const bests = items.filter((it: any) => [1, 7, 3, 4].includes(it.id))
-  const novelties = items.filter((it: any) => [1, 2, 3, 4, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22].includes(it.id))
+  const novelties = items.filter((it: any) => [1, 2, 3, 4, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 999].includes(it.id))
   
   const [qty, setQty] = useState<Record<number, number>>(() => {
     const initial: Record<number, number> = {}

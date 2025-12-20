@@ -20,4 +20,5 @@ export const staticItems = [
   { id: 20, title: "НАБОР СЕМЕЙНЫЙ", price: "4 200 руб.", image: "/Набор семейный.png" },
   { id: 21, title: "Набор для бани", price: "4 200 руб.", image: "/баня.PNG" },
   { id: 22, title: "Супер Квас", price: "750 руб.", image: "/1500x2000 3-4 SK.mp4" },
+  { id: 999, title: "ТЕСТОВЫЙ ТОВАР", price: "5 руб.", image: "/1.jpg" },
 ];
