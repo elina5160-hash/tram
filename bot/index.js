@@ -1,6 +1,6 @@
 const telegrafModule = require('telegraf')
 const { Telegraf, Markup } = telegrafModule
-
+try { console.log('telegraf module keys:', Object.keys(telegrafModule)) } catch {}
 const { createClient } = require('@supabase/supabase-js')
 const path = require('path')
 require('dotenv').config({ path: path.join(__dirname, '../frontend/.env.local') })
@@ -29,7 +29,13 @@ if (!supabaseUrl || !supabaseKey) {
 }
 
 const bot = new Telegraf(token)
-
+try {
+  console.log('Telegraf ctor typeof:', typeof Telegraf)
+  console.log('Bot instance keys:', Object.keys(bot || {}))
+  console.log('Composer.on typeof:', typeof telegrafModule.Composer?.prototype?.on)
+  console.log('bot constructor:', bot && bot.constructor && bot.constructor.name)
+  console.log('bot has on:', 'on' in (bot || {}), 'typeof', typeof bot.on)
+} catch {}
 let supabase = null
 if (supabaseUrl && supabaseKey) {
   supabase = createClient(supabaseUrl, supabaseKey)
@@ -284,14 +290,11 @@ bot.hears(/^\/konkurs(?:@\w+)?\b/i, handleStartOrKonkurs)
 bot.hears(/^\/конкурс\b/i, handleStartOrKonkurs)
 
 
-/*
 (async () => {
   try { await bot.telegram.deleteWebhook({ drop_pending_updates: false }) } catch (e) {}
   await bot.launch()
   console.log('Bot started (polling)')
 })()
-*/
-
 
 process.once('SIGINT', () => bot.stop('SIGINT'))
 process.once('SIGTERM', () => bot.stop('SIGTERM'))

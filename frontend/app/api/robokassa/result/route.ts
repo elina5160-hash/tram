@@ -3,6 +3,7 @@ import crypto from "node:crypto"
 import { getServiceSupabaseClient, getSupabaseClient } from "@/lib/supabase"
 import { addTickets } from "@/lib/contest"
 import { sendTelegramMessage } from "@/lib/telegram"
+import { createOrder } from "@/lib/orders"
 
 // Helper for logging
 const logDebug = async (msg: string, data?: any) => {
@@ -156,9 +157,9 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
         await appendToSheet(row)
 
         // DB Operations
-        if (client) {
-            // 1. Upsert order (Create or Update)
-            const orderData = {
+        try {
+            // 1. Upsert order (Create or Update) via centralized logic
+            await createOrder({
                 id: Number(invId),
                 total_amount: Number(outSum),
                 items: items, 
@@ -170,23 +171,16 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
                     cdek: payload.cdek,
                     client_id: payload.client 
                 },
-                // Flat columns for integration
-                customer_name: payload.name,
-                customer_phone: payload.phone,
-                customer_email: payload.email,
-                delivery_address: payload.address || payload.cdek,
-                order_items_text: lines.join('\n'),
-
                 promo_code: payload.promo,
                 ref_code: payload.ref,
-                status: 'Оплачен',
-                updated_at: new Date().toISOString()
-            }
+                status: 'Оплачен'
+            })
+        } catch (e) {
+             console.error('Failed to create order via lib/orders', e)
+        }
             
-            const { error: upsertError } = await client.from('orders').upsert(orderData)
-            if (upsertError) {
-                console.error('Error upserting order:', upsertError)
-            }
+        const client = getServiceSupabaseClient() || getSupabaseClient()
+        if (client) {
 
             // 2. Contest/Referral Logic (Only if client_id exists)
             if (payload.client) {

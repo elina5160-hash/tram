@@ -40,8 +40,6 @@ export async function POST(req: Request) {
   try {
     body = await req.json()
   } catch {}
-  
-  const outSum = typeof body.outSum === "number" ? body.outSum : 0
   if (!outSum || outSum <= 0) {
     return NextResponse.json({ error: "Invalid amount" }, { status: 400 })
   }
@@ -53,6 +51,8 @@ export async function POST(req: Request) {
   
   // Сохраняем заказ в Supabase (если настроены переменные окружения)
   // Пытаемся использовать Service Client, если нет - обычный
+  // Сохраняем заказ в Supabase (если настроены переменные окружения)
+  // Пытаемся использовать Service Client, если нет - обычный
   let client = getServiceSupabaseClient()
   if (!client) {
     client = getSupabaseClient()
@@ -60,31 +60,19 @@ export async function POST(req: Request) {
 
   if (client) {
     const currentTime = new Date().toISOString();
-    
-    // Prepare flat data for integration
-    const ci = body.customerInfo as any || {}
-    const itemsText = body.items ? body.items.map((it: any) => {
-        const n = String(it.name || 'Товар')
-        const q = Number(it.quantity || 1)
-        const s = Number((it.cost || 0) * q)
-        return `• ${n} × ${q} — ${s.toLocaleString('ru-RU')} руб.`
-    }).join('\n') : ''
-
-    const flatData = {
-        customer_name: ci.name,
-        customer_phone: ci.phone,
-        customer_email: ci.email || body.email,
-        delivery_address: ci.address || ci.cdek,
-        order_items_text: itemsText
+    const { error } = await client.from("orders").insert({
+      id: invId,
+      total_amount: outSum,
+      items: body.items || [],
+      customer_info: body.customerInfo || { email },
+      promo_code: body.promoCode,
+      ref_code: body.refCode,
+      status: 'pending',
+      updated_at: currentTime
+    })
+    if (error) {
+      console.error("Error creating pending order in Supabase:", error)
     }
-    
-    // Attempt to insert WITHOUT ID first (let DB generate it)
-    let insertSuccess = false;
-    try {
-        const { data, error } = await client.from("orders").insert({
-          total_amount: outSum,
-          items: body.items || [],
-          customer_info: body.customerInfo || { email },
           ...flatData,
           promo_code: body.promoCode,
           ref_code: body.refCode,
@@ -109,45 +97,55 @@ export async function POST(req: Request) {
           customer_info: body.customerInfo || { email },
           ...flatData,
           promo_code: body.promoCode,
-          ref_code: body.refCode,
-          status: 'pending',
-          updated_at: currentTime
-        })
-        
-        if (error) {
-          console.error("Error creating pending order in Supabase (manual ID):", error)
-        }
-    }
-  }
-
-  const out = outSum.toFixed(2)
-
-  const shp: Record<string, string> = {}
-  if (body.promoCode) shp.Shp_promo = body.promoCode.trim()
-  if (body.refCode) shp.Shp_ref = body.refCode.trim()
-  try {
-    const ci = body.customerInfo as any
-    const name = typeof ci?.name === "string" ? ci.name.trim() : ""
-    const phone = typeof ci?.phone === "string" ? ci.phone.trim() : ""
-    const address = typeof ci?.address === "string" ? ci.address.trim() : ""
-    const cdek = typeof ci?.cdek === "string" ? ci.cdek.trim() : ""
-    const clientId = ci?.client_id ? String(ci.client_id) : ""
-    if (name) shp.Shp_name = sanitizeText(name)
-    if (phone) shp.Shp_phone = phone
-    if (address) shp.Shp_address = sanitizeText(address)
-    if (!address && cdek) shp.Shp_cdek = sanitizeText(cdek)
-    if (email) shp.Shp_email = email
-    if (clientId) shp.Shp_client = clientId
-  } catch {}
-
-  const sortedKeys = Object.keys(shp).sort()
-  const shpString = sortedKeys.map((k) => `${k}=${shp[k]}`).join(":")
 
   let receiptEncodedOnce = ""
   let receiptEncodedTwice = ""
   if (body.items && body.items.length > 0) {
     try {
       const receiptItems = body.items.map((it: ReceiptItemInput) => ({
+        name: sanitizeText(it.name || "Товар"),
+        quantity: it.quantity || 1,
+        sum: (it.cost || 0) * (it.quantity || 1),
+        tax: it.tax || "none",
+        payment_method: it.paymentMethod || "full_prepayment",
+        payment_object: it.paymentObject || "commodity"
+      }))
+      const receiptJson = JSON.stringify({ items: receiptItems })
+      receiptEncodedOnce = encodeURIComponent(receiptJson)
+      receiptEncodedTwice = encodeURIComponent(receiptEncodedOnce)
+      try {
+        const itemsSimple = JSON.stringify(receiptItems.map((x) => ({ n: x.name, q: x.quantity, s: x.sum })))
+        shp.Shp_items = encodeURIComponent(itemsSimple)
+      } catch {}
+    } catch {}
+  }
+
+  const baseParts = [merchant, out, String(invId)]
+  if (receiptEncodedOnce) baseParts.push(receiptEncodedOnce)
+  baseParts.push(password1ToUse as string)
+  let signatureBase = baseParts.join(":")
+  if (shpString) signatureBase = `${signatureBase}:${shpString}`
+  const signature = crypto.createHash("md5").update(signatureBase, "utf8").digest("hex")
+  
+  console.log(`[Robokassa] Base: ${signatureBase}`)
+  console.log(`[Robokassa] Signature: ${signature}`)
+
+  const params = new URLSearchParams()
+  params.set("MerchantLogin", merchant)
+  params.set("OutSum", out)
+  params.set("InvId", String(invId))
+  params.set("Description", description)
+  params.set("SignatureValue", signature)
+  if (receiptEncodedTwice) params.set("Receipt", receiptEncodedTwice)
+  
+  if (email) params.set("Email", email)
+  sortedKeys.forEach((k) => params.set(k, shp[k]))
+  if (isTest) params.set("IsTest", "1")
+  
+  params.set("Culture", "ru")
+  
+  const url = `https://auth.robokassa.ru/Merchant/Index.aspx?${params.toString()}`
+  return NextResponse.json({ url, invId })
         name: sanitizeText(it.name || "Товар"),
         quantity: it.quantity || 1,
         sum: (it.cost || 0) * (it.quantity || 1),
