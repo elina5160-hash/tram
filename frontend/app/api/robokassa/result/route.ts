@@ -195,7 +195,7 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
         // Send formatted notification to specific channel
         const productNames = standardizedItems.map(it => it.name).join(', ')
         const notificationText = [
-            `📦 ${productNames} ТЕСТОВЫЙ ЗАКАЗ #${invId}`,
+            `📦 ${productNames} #${invId}`,
             `💰 Сумма: ${Number(outSum).toLocaleString('ru-RU')} руб.`,
             `👤 Клиент: ${payload.name || 'Не указано'}`,
             `🆔 ID клиента: ${payload.client || 'Не указано'}`,
