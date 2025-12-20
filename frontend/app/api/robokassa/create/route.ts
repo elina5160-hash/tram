@@ -137,7 +137,7 @@ export async function POST(req: Request) {
             s: x.sum,
             i: body.items?.[index]?.id // Pass ID for restoration
         })))
-        shp.Shp_items = encodeURIComponent(itemsSimple)
+        shp.Shp_items = itemsSimple
       } catch {}
     } catch {}
   }
