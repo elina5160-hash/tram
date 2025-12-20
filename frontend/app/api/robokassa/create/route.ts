@@ -144,8 +144,9 @@ export async function POST(req: Request) {
 
   const out = outSum.toString()
   const baseParts = [merchant, out, String(invId)]
-  // Receipt should NOT be included in the signature for Merchant/Index.aspx
-  // if (receiptEncodedOnce) baseParts.push(receiptEncodedOnce)
+  // Receipt must be included in the signature for Merchant/Index.aspx
+  // and it must be the double-encoded version (as per user instruction)
+  if (receiptEncodedTwice) baseParts.push(receiptEncodedTwice)
   baseParts.push(password1ToUse as string)
   let signatureBase = baseParts.join(":")
   
