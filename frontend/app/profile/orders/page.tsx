@@ -158,9 +158,17 @@ export default function UserOrdersPage() {
       {/* Header */}
       <header className="bg-white/80 backdrop-blur-md sticky top-0 z-10 border-b border-gray-100">
         <div className="max-w-md mx-auto px-4 h-14 flex items-center justify-between">
-            <BackButton />
+            <button 
+                onClick={() => router.push("/home")}
+                className="flex items-center gap-1 pl-0 pr-2 py-2 -ml-2 text-gray-600 hover:text-gray-900 transition-colors"
+            >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <span className="text-sm font-medium">Назад</span>
+            </button>
             <h1 className="font-bold text-lg">История заказов</h1>
-            <div className="w-10" />
+            <div className="w-14" /> {/* Spacer to balance the header */}
         </div>
         
         {/* Search */}
