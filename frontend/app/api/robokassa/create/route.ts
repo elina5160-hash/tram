@@ -127,20 +127,22 @@ export async function POST(req: Request) {
           ticketsText += ` (ожидает оплаты)`;
       }
 
+      // Format product name for title (take first product or default)
+      let productTitle = "Заказ";
+      if (body.items && body.items.length > 0) {
+        productTitle = body.items[0].name || "Заказ";
+        if (body.items.length > 1) {
+            productTitle += " и др.";
+        }
+      }
+
       const msg = [
-          `🆕 НОВЫЙ ЗАКАЗ (Ожидает оплаты)`,
-          `📦 Заказ #${invId}`,
+          `📦 ТЕСТОВЫЙ ЗАКАЗ (${productTitle}) #${invId}`,
           `💰 Сумма: ${outSum} руб.`,
-          ``,
           `👤 Клиент: ${body.customerInfo?.name || 'Не указано'}`,
           `🆔 ID клиента: ${body.customerInfo?.client_id || 'Не указано'}`,
-          `📞 Телефон: ${body.customerInfo?.phone || 'Не указано'}`,
           `📧 Email: ${email || 'Не указано'}`,
           `📍 Адрес: ${body.customerInfo?.address || body.customerInfo?.cdek || 'Не указано'}`,
-          `🎟 Промокод: ${body.promoCode || 'Нет'}`,
-          ``,
-          `🛒 Товары:`,
-          itemsText,
           ``,
           `🎁 Конкурс:`,
           ticketsText
