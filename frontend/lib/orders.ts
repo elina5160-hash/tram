@@ -251,17 +251,25 @@ export async function submitOrderReview(id: number, rating: number, text: string
 }
 
 // 7. List Orders (Admin & User)
-export async function listOrders(options: { limit?: number; status?: string | string[]; client_id?: string } = {}) {
+export async function listOrders(options: { 
+  limit?: number; 
+  offset?: number;
+  status?: string | string[]; 
+  client_id?: string;
+  search?: string;
+} = {}) {
   const client = getServiceSupabaseClient() || getSupabaseClient()
   if (!client) throw new Error('Database connection failed')
 
   let query = client
     .from(ORDERS_TABLE)
-    .select('*')
+    .select('*', { count: 'exact' })
     .order('created_at', { ascending: false })
     
   if (options.limit) {
-    query = query.limit(options.limit)
+    const from = options.offset || 0
+    const to = from + options.limit - 1
+    query = query.range(from, to)
   }
   
   if (options.status) {
@@ -278,13 +286,23 @@ export async function listOrders(options: { limit?: number; status?: string | st
     query = query.eq('customer_info->>client_id', options.client_id)
   }
 
-  const { data, error } = await query
+  if (options.search) {
+      const term = options.search
+      if (/^\d+$/.test(term)) {
+          // If numeric, search ID or items
+          query = query.or(`id.eq.${term},items.ilike.%${term}%`)
+      } else {
+          query = query.ilike('items', `%${term}%`)
+      }
+  }
+
+  const { data, error, count } = await query
 
   if (error) {
     await logOrderOperation('list', 'all', 'error', { error, options })
     throw new Error(`Failed to list orders: ${error.message}`)
   }
 
-  return data || []
+  return { data: data || [], count }
 }
 

@@ -49,7 +49,7 @@ async function testOrdersModule() {
 
   // 3.1 Test List Orders
   console.log('\n3.1 Testing List Orders (Admin)...')
-  const list = await listOrders({ limit: 5 })
+  const { data: list } = await listOrders({ limit: 5 })
   if (list && list.length > 0) {
      console.log(`✅ List Fetched: ${list.length} items`)
      const found = list.find((o: any) => o.id === testId)

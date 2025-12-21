@@ -4,11 +4,11 @@ import { listOrders } from "@/lib/orders"
 export async function GET() {
   try {
     // Fetch paid and pending orders via centralized logic
-    const paidOrders = await listOrders({ status: ["Оплачен", "paid"], limit: 200 })
-    const pendingOrders = await listOrders({ status: ["created", "pending", "processing"], limit: 200 })
+    const { data: paidOrders } = await listOrders({ status: ["Оплачен", "paid"], limit: 200 })
+    const { data: pendingOrders } = await listOrders({ status: ["created", "pending", "processing"], limit: 200 })
 
     // Combine and sort
-    const combined = [...paidOrders, ...pendingOrders].sort((a: any, b: any) => {
+    const combined = [...(paidOrders || []), ...(pendingOrders || [])].sort((a: any, b: any) => {
       const ta = new Date(a.created_at || 0).getTime()
       const tb = new Date(b.created_at || 0).getTime()
       return tb - ta

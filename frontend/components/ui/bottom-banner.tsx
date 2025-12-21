@@ -151,7 +151,7 @@ export default function BottomBanner() {
         )}
 
         <Item
-            href="https://t.me/KonkursEtraBot"
+            href="/profile/orders"
             label="Домой"
             renderIcon={() => (
                 <div className="w-[24px] h-[24px] rounded-full overflow-hidden bg-gray-300 flex items-center justify-center">
