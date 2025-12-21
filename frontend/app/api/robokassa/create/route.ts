@@ -3,6 +3,8 @@ import crypto from "node:crypto"
 import { getSupabaseClient, getServiceSupabaseClient } from "@/lib/supabase"
 import { sendTelegramMessage } from "@/lib/telegram"
 
+import { sendToGoogleSheet } from "@/lib/google-sheets"
+
 function sanitizeText(input: string | number) {
   return Array.from(String(input)).filter((ch) => !/\p{Extended_Pictographic}/u.test(ch) && ch !== "\u200D" && ch !== "\uFE0F").join("")
 }
@@ -53,6 +55,25 @@ export async function POST(req: Request) {
   // Use provided invId if valid number, else generate new one
   let invId = body.invId && typeof body.invId === "number" ? body.invId : Math.floor(Date.now() / 1000)
   
+  // Generate text format for items to match standard order format
+  let itemsText = "Товары не указаны";
+  let itemsBackup: { id?: number; name: string; quantity: number; price: number; sum: number }[] = [];
+  
+  if (body.items && Array.isArray(body.items)) {
+      itemsText = body.items.map(it => 
+          `- ${it.name || 'Товар'} x${it.quantity || 1} (${(it.cost || 0) * (it.quantity || 1)} руб.)`
+      ).join('\n');
+      
+      // Prepare backup with IDs for repeat functionality
+      itemsBackup = body.items.map(it => ({
+          id: it.id,
+          name: it.name || "Товар",
+          quantity: it.quantity || 1,
+          price: it.cost || 0,
+          sum: (it.cost || 0) * (it.quantity || 1)
+      }));
+  }
+
   // Сохраняем заказ в Supabase (если настроены переменные окружения)
   let client = getServiceSupabaseClient()
   if (!client) {
@@ -61,25 +82,6 @@ export async function POST(req: Request) {
 
   if (client) {
     const currentTime = new Date().toISOString();
-    
-    // Generate text format for items to match standard order format
-    let itemsText = "Товары не указаны";
-    let itemsBackup: { id?: number; name: string; quantity: number; price: number; sum: number }[] = [];
-    
-    if (body.items && Array.isArray(body.items)) {
-        itemsText = body.items.map(it => 
-            `- ${it.name || 'Товар'} x${it.quantity || 1} (${(it.cost || 0) * (it.quantity || 1)} руб.)`
-        ).join('\n');
-        
-        // Prepare backup with IDs for repeat functionality
-        itemsBackup = body.items.map(it => ({
-            id: it.id,
-            name: it.name || "Товар",
-            quantity: it.quantity || 1,
-            price: it.cost || 0,
-            sum: (it.cost || 0) * (it.quantity || 1)
-        }));
-    }
 
     const fullText = [
         `📦 ЗАКАЗ #${invId}`,
@@ -116,10 +118,6 @@ export async function POST(req: Request) {
 
   // Send Telegram notification about order attempt
   try {
-      const itemsList = body.items && Array.isArray(body.items) 
-          ? body.items.map(it => `- ${it.name} x${it.quantity} (${(it.cost || 0) * (it.quantity || 1)} руб.)`).join('\n')
-          : "Товары не указаны";
-
       const msg = [
           `🆕 НОВЫЙ ЗАКАЗ (Ожидает оплаты)`,
           `📦 Заказ #${invId}`,
@@ -132,12 +130,27 @@ export async function POST(req: Request) {
           `🎟 Промокод: ${body.promoCode || 'Нет'}`,
           ``,
           `🛒 Товары:`,
-          itemsList
+          itemsText
       ].join('\n');
 
       await sendTelegramMessage(msg);
+
+      // Send to Google Sheets (fire and forget to not block payment)
+      sendToGoogleSheet({
+        id: invId,
+        total_amount: outSum,
+        items: itemsText, // Text format
+        customer_info: { 
+            ...(body.customerInfo || { email }),
+            items_backup: itemsBackup // Structured format if needed by script
+        },
+        promo_code: body.promoCode,
+        ref_code: body.refCode,
+        status: 'pending'
+      }).catch(e => console.error("Background Google Sheet send failed:", e))
+
   } catch (e) {
-      console.error("Failed to send Telegram notification:", e);
+      console.error("Failed to send notification:", e);
   }
 
   let receiptEncodedOnce = ""

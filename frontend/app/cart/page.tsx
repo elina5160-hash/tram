@@ -284,13 +284,14 @@ function CartContent() {
             }}
             className="w-10 h-10 rounded-[12px] bg-white border border-gray-300 flex items-center justify-center"
           >
-            <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M6 7H18" stroke="#E53935" strokeWidth="2" strokeLinecap="round" />
-              <path d="M9 7V5C9 4.448 9.448 4 10 4H14C14.552 4 15 4.448 15 5V7" stroke="#E53935" strokeWidth="2" strokeLinecap="round" />
-              <path d="M7 7L8 20C8 21.105 8.895 22 10 22H14C15.105 22 16 21.105 16 20L17 7" stroke="#E53935" strokeWidth="2" strokeLinecap="round" />
-              <path d="M10 11V17" stroke="#E53935" strokeWidth="2" strokeLinecap="round" />
-              <path d="M14 11V17" stroke="#E53935" strokeWidth="2" strokeLinecap="round" />
-            </svg>
+            <Image 
+              src="/корзина.png" 
+              alt="Очистить" 
+              width={24} 
+              height={24} 
+              className="object-contain"
+              style={{ filter: "invert(28%) sepia(93%) saturate(1909%) hue-rotate(338deg) brightness(91%) contrast(96%)" }}
+            />
           </button>
         </div>
         {items.length === 0 ? (
