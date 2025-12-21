@@ -5,7 +5,7 @@ export const staticItems = [
   { id: 4, title: "БифидумФаната", price: "1 200 руб / 1л", image: "/fanata.png" },
   { id: 6, title: "Набор СЕЗОННЫЙ", price: "4 200 руб / 6л", image: "/сезонный.jpg" },
   { id: 8, title: "Супер пробка", price: "950 руб.", image: "/пробка.jpg" },
-  { id: 9, title: "Курс Чистка Микробиома", price: "16 000 руб", image: "/афиша.png" },
+  { id: 9, title: "Курс Чистка Микробиома", price: "16 000 руб", image: "/чистка16.jpg" },
   { id: 11, title: "Энзимный напиток Еловый", price: "750 руб.", image: "/Eloviy PROMO strz 2.mp4" },
   { id: 12, title: "Энзимный напиток Детский", price: "750 руб.", image: "/Etra PROMO strz Detskii.mp4" },
   { id: 13, title: "Энзимный напиток Хмель", price: "900 руб / 1л", image: "/хмель1.png" },
