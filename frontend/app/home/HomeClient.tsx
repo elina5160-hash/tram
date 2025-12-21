@@ -129,22 +129,11 @@ export default function HomeClient() {
         </div>
         <div
           aria-label="Баннер"
-          className="mt-3 h-[220px] relative rounded-[20px] overflow-hidden cursor-pointer"
-          onClick={() => {
-              // Secret tap zone for admin (top right corner, 20% width/height)
-              // But now the main action is redirect to bot
-              // We'll keep admin access via long press or specific zone later if needed
-              // For now, let's just check if the click was in the top right corner for admin
-              // Or just add a hidden button elsewhere.
-              // Given the request "img при нажатии на главную плашку давай будет переадрессация сюда @KonkursEtraBot",
-              // we will prioritize the link.
-              // To preserve admin access, we can add a small invisible button or just use a specific area.
-              // Let's make the whole image a link, but keep a small invisible div for admin.
-          }}
+          className="mt-3 h-[220px] relative rounded-[20px] overflow-hidden"
         >
-          <a href="https://t.me/KonkursEtraBot" target="_blank" rel="noopener noreferrer" className="block w-full h-full relative">
+          <div className="block w-full h-full relative">
             <Image src="/главная.png" alt="Афиша" fill className="object-contain rounded-[20px]" priority />
-          </a>
+          </div>
         </div>
 
         <div className="mt-2 -mx-4 h-[34px] relative overflow-hidden bg-[#6C7476]">
