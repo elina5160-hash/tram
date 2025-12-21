@@ -206,7 +206,8 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
             `Начислено билетов: ${ticketsEarned}`,
             `1000р -1 билет`,
             `2000р - 2 билета`,
-            `3000р -3 билета`
+            `3000р -3 билета`,
+            `4000р - 4 билета`
         ].join('\n')
 
         await sendTelegramMessage(notificationText, '-1003590157576', undefined)
