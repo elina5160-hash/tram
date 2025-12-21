@@ -142,3 +142,18 @@ html, body { overflow-x: hidden; }
   50% { opacity: 1; transform: scale(1.1); }
   100% { opacity: 0.2; transform: scale(0.7); }
 }
+
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.marquee-track {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  width: max-content;
+  animation-name: marquee;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
