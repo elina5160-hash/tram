@@ -80,66 +80,7 @@ export default function ItemPage() {
         <div className="mt-4 bg-white rounded-[20px] border border-gray-300 p-3">
           <div className="relative rounded-[16px] overflow-hidden">
             <div className="aspect-square bg-[#F1F1F1]">
-              {item.id === 12 ? (
-                <div className="w-full h-full overflow-x-auto flex snap-x snap-mandatory scrollbar-hide">
-                  <div className="flex-none w-full h-full snap-center relative">
-                    <LazyVideo src="/Etra PROMO strz Detskii.mp4" className="w-full h-full object-cover" />
-                  </div>
-                  <div className="flex-none w-full h-full snap-center relative">
-                    <Image src="/детский.png" alt={item.title} fill className="object-cover" />
-                  </div>
-                </div>
-              ) : item.id === 13 ? (
-                <div className="w-full h-full overflow-x-auto flex snap-x snap-mandatory scrollbar-hide">
-                  <div className="flex-none w-full h-full snap-center relative">
-                    <Image src="/хмель1.png" alt={item.title} fill className="object-cover" />
-                  </div>
-                  <div className="flex-none w-full h-full snap-center relative">
-                    <Image src="/хмель2.png" alt={item.title} fill className="object-cover" />
-                  </div>
-                </div>
-              ) : item.id === 14 ? (
-                <div className="w-full h-full overflow-x-auto flex snap-x snap-mandatory scrollbar-hide">
-                  <div className="flex-none w-full h-full snap-center relative">
-                    <Image src="/розлинг1.jpg" alt={item.title} fill className="object-cover" />
-                  </div>
-                  <div className="flex-none w-full h-full snap-center relative">
-                    <Image src="/розлинг2.jpg" alt={item.title} fill className="object-cover" />
-                  </div>
-                </div>
-              ) : item.id === 16 ? (
-                <div className="w-full h-full overflow-x-auto flex snap-x snap-mandatory scrollbar-hide">
-                  <div className="flex-none w-full h-full snap-center relative">
-                    <LazyVideo src="/Etra PROMO RISLING -3.mp4" className="w-full h-full object-cover" />
-                  </div>
-                  <div className="flex-none w-full h-full snap-center relative">
-                    <Image src="/рислинг1.png" alt={item.title} fill className="object-cover" />
-                  </div>
-                  <div className="flex-none w-full h-full snap-center relative">
-                    <Image src="/рислинг2.png" alt={item.title} fill className="object-cover" />
-                  </div>
-                </div>
-              ) : item.id === 17 ? (
-                <div className="w-full h-full overflow-x-auto flex snap-x snap-mandatory scrollbar-hide">
-                  <div className="flex-none w-full h-full snap-center relative">
-                    <LazyVideo src="/Etra PROMO ORANGE-2.mp4" className="w-full h-full object-cover" />
-                  </div>
-                  <div className="flex-none w-full h-full snap-center relative">
-                    <Image src="/апельсин1.png" alt={item.title} fill className="object-cover" />
-                  </div>
-                  <div className="flex-none w-full h-full snap-center relative">
-                    <Image src="/апельсин2.png" alt={item.title} fill className="object-cover" />
-                  </div>
-                </div>
-              ) : item.id === 18 ? (
-                <LazyVideo src="/PARAZITOFF 1500x2667 9-16 PROMO-4_1.mp4" className="w-full h-full object-cover" />
-              ) : item.id === 19 ? (
-                <LazyVideo src="/KASHA PROMO Demo.mp4" className="w-full h-full object-cover" />
-              ) : item.id === 20 ? (
-                <Image src="/Набор семейный.png" alt={item.title} fill className="object-cover" />
-              ) : item.id === 21 ? (
-                <Image src="/баня.PNG" alt={item.title} fill className="object-cover" />
-              ) : item.image.endsWith(".mp4") ? (
+              {item.image.endsWith(".mp4") ? (
                 <LazyVideo 
                   src={item.image} 
                   className="w-full h-full object-cover" 
