@@ -16,7 +16,7 @@ export const staticItems = [
   { id: 18, title: "Антипаразитарные пребиотики ПАРАЗИТОФФ", price: "750 руб.", image: "/параз.jpg" },
   { id: 19, title: "Каша ЭТРАсУТРА", price: "750 руб / 200гр", image: "/каша.jpg" },
   { id: 20, title: "НАБОР СЕМЕЙНЫЙ", price: "4 200 руб.", image: "/семейный.jpg" },
-  { id: 21, title: "Набор для бани", price: "4 200 руб.", image: "/баня.PNG" },
+  { id: 21, title: "Набор для бани", price: "4 200 руб.", image: "/баня.jpg" },
   { id: 22, title: "Супер Квас", price: "750 руб.", image: "/1500x2000 3-4 SK.mp4" },
   // Hidden variants for cart calculation
   { id: 7001, title: "Бак для приготовления энзимных напитков — КТО ГОТОВИТ САМ", price: "42 000 руб", image: "/2.png" },
