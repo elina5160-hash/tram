@@ -137,7 +137,7 @@ export async function POST(req: Request) {
       }
 
       const msg = [
-          `📦 ТЕСТОВЫЙ ЗАКАЗ (${productTitle}) #${invId}`,
+          `📦 ${productTitle} #${invId}`,
           `💰 Сумма: ${outSum} руб.`,
           `👤 Клиент: ${body.customerInfo?.name || 'Не указано'}`,
           `🆔 ID клиента: ${body.customerInfo?.client_id || 'Не указано'}`,
