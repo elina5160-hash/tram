@@ -67,7 +67,15 @@ export function ProductCard({ item, index, isVisible, onClick, showBadge, showCa
   
   const handleIncrement = (e: React.MouseEvent) => {
     e.stopPropagation()
-    incrementQty(item.id, 1)
+    if (qty === 0) {
+      addToCart({
+        id: item.id,
+        title: item.title,
+        qty: 1
+      })
+    } else {
+      incrementQty(item.id, 1)
+    }
   }
 
   const handleDecrement = (e: React.MouseEvent) => {
@@ -124,8 +132,31 @@ export function ProductCard({ item, index, isVisible, onClick, showBadge, showCa
         </div>
 
         {/* Price/Volume & Cart Button */}
-        <div className={`w-full mt-auto pl-[2px] pr-[4px] pb-3 flex items-end gap-2 font-[family-name:var(--font-family)] ${showCartButton ? "justify-between" : "justify-end"}`}>
-           <div className={showCartButton ? "text-left" : "text-right"}>
+        <div className={`w-full mt-auto pl-[2px] pr-[4px] pb-3 flex items-end justify-between gap-2 font-[family-name:var(--font-family)]`}>
+           {/* Controls (Left) */}
+           {showCartButton && (
+               <div className="flex items-center gap-1 bg-[#F5F5F5] rounded-full p-[2px]">
+                 <button 
+                   onClick={handleDecrement}
+                   disabled={qty === 0}
+                   className={`w-[22px] h-[22px] rounded-full bg-white shadow-sm flex items-center justify-center active:scale-90 transition-transform text-[#222222] font-medium ${qty === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                   aria-label="Уменьшить"
+                 >
+                   -
+                 </button>
+                 <span className="text-[12px] font-bold min-w-[14px] text-center">{qty}</span>
+                 <button 
+                   onClick={handleIncrement}
+                   className="w-[22px] h-[22px] rounded-full bg-[#267A2D] flex items-center justify-center active:scale-90 transition-transform text-white font-medium"
+                   aria-label="Увеличить"
+                 >
+                   +
+                 </button>
+               </div>
+           )}
+
+           {/* Price (Right) */}
+           <div className={`text-right ${!showCartButton ? "ml-auto" : ""}`}>
                <span className={`${showCartButton ? "text-[13px]" : "text-[10px]"} font-extrabold text-[#222222]`}>
                  {isDiscounted ? (item.id === 6 ? "4200руб" : item.id === 2 ? "24 000 р." : priceParts.main) : priceParts.main}
                </span>
@@ -133,40 +164,6 @@ export function ProductCard({ item, index, isVisible, onClick, showBadge, showCa
                  <span className={`${showCartButton ? "text-[13px]" : "text-[10px]"} font-extrabold text-[#7b7b7b]`}>/{priceParts.sub}</span>
                )}
            </div>
-           
-           {showCartButton && (
-             qty > 0 ? (
-               <div className="flex items-center gap-2 bg-[#F5F5F5] rounded-full p-1">
-                 <button 
-                   onClick={handleDecrement}
-                   className="w-[24px] h-[24px] rounded-full bg-white shadow-sm flex items-center justify-center active:scale-90 transition-transform text-[#222222] font-medium"
-                   aria-label="Уменьшить"
-                 >
-                   -
-                 </button>
-                 <span className="text-[13px] font-bold min-w-[16px] text-center">{qty}</span>
-                 <button 
-                   onClick={handleIncrement}
-                   className="w-[24px] h-[24px] rounded-full bg-[#267A2D] flex items-center justify-center active:scale-90 transition-transform text-white font-medium"
-                   aria-label="Увеличить"
-                 >
-                   +
-                 </button>
-               </div>
-             ) : (
-               <button 
-                 onClick={handleAddToCart}
-                 className="w-[24px] h-[24px] rounded-full bg-[#267A2D] flex items-center justify-center active:scale-90 transition-transform"
-                 aria-label="Добавить в корзину"
-               >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="9" cy="21" r="1"></circle>
-                    <circle cx="20" cy="21" r="1"></circle>
-                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-                  </svg>
-               </button>
-             )
-           )}
         </div>
       </div>
     </div>
