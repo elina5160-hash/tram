@@ -1,7 +1,8 @@
+import { useEffect, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { splitPrice } from "@/lib/price"
-import { addToCart } from "@/lib/cart"
+import { addToCart, getCart, incrementQty, removeFromCart } from "@/lib/cart"
 import LazyVideo from "@/components/ui/lazy-video"
 
 interface ProductCardProps {
@@ -16,6 +17,22 @@ interface ProductCardProps {
 export function ProductCard({ item, index, isVisible, onClick, showBadge, showCartButton = false }: ProductCardProps) {
   const priceParts = splitPrice(item.price)
   const isDiscounted = [2, 6].includes(item.id)
+  
+  // Local state to track quantity in cart for this item
+  const [qty, setQty] = useState(0)
+
+  // Update quantity when cart changes
+  const updateQty = () => {
+    const cart = getCart()
+    const cartItem = cart.find((i) => i.id === item.id)
+    setQty(cartItem ? cartItem.qty : 0)
+  }
+
+  useEffect(() => {
+    updateQty()
+    window.addEventListener("cart:changed", updateQty)
+    return () => window.removeEventListener("cart:changed", updateQty)
+  }, [item.id])
 
   const handleImageLoad = () => {
     try {
@@ -46,6 +63,16 @@ export function ProductCard({ item, index, isVisible, onClick, showBadge, showCa
         title: item.title,
         qty: 1
     })
+  }
+  
+  const handleIncrement = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    incrementQty(item.id, 1)
+  }
+
+  const handleDecrement = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    incrementQty(item.id, -1)
   }
 
   return (
@@ -108,17 +135,37 @@ export function ProductCard({ item, index, isVisible, onClick, showBadge, showCa
            </div>
            
            {showCartButton && (
-             <button 
-               onClick={handleAddToCart}
-               className="w-[24px] h-[24px] rounded-full bg-[#267A2D] flex items-center justify-center active:scale-90 transition-transform"
-               aria-label="Добавить в корзину"
-             >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="9" cy="21" r="1"></circle>
-                  <circle cx="20" cy="21" r="1"></circle>
-                  <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-                </svg>
-             </button>
+             qty > 0 ? (
+               <div className="flex items-center gap-2 bg-[#F5F5F5] rounded-full p-1">
+                 <button 
+                   onClick={handleDecrement}
+                   className="w-[24px] h-[24px] rounded-full bg-white shadow-sm flex items-center justify-center active:scale-90 transition-transform text-[#222222] font-medium"
+                   aria-label="Уменьшить"
+                 >
+                   -
+                 </button>
+                 <span className="text-[13px] font-bold min-w-[16px] text-center">{qty}</span>
+                 <button 
+                   onClick={handleIncrement}
+                   className="w-[24px] h-[24px] rounded-full bg-[#267A2D] flex items-center justify-center active:scale-90 transition-transform text-white font-medium"
+                   aria-label="Увеличить"
+                 >
+                   +
+                 </button>
+               </div>
+             ) : (
+               <button 
+                 onClick={handleAddToCart}
+                 className="w-[24px] h-[24px] rounded-full bg-[#267A2D] flex items-center justify-center active:scale-90 transition-transform"
+                 aria-label="Добавить в корзину"
+               >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="9" cy="21" r="1"></circle>
+                    <circle cx="20" cy="21" r="1"></circle>
+                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                  </svg>
+               </button>
+             )
            )}
         </div>
       </div>

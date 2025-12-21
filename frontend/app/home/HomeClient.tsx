@@ -174,6 +174,7 @@ export default function HomeClient() {
                   index={idx}
                   isVisible={catalogEntered}
                   onClick={() => router.push(`/item/${it.id}`)}
+                  showCartButton
                 />
               </div>
             ))}
@@ -191,6 +192,7 @@ export default function HomeClient() {
                   index={idx}
                   isVisible={catalogEntered}
                   onClick={() => router.push(`/item/${it.id}`)}
+                  showCartButton
                 />
               </div>
             ))}
@@ -207,6 +209,7 @@ export default function HomeClient() {
                   isVisible={catalogEntered}
                   onClick={() => router.push(`/item/${it.id}`)}
                   showBadge
+                  showCartButton
                 />
               </div>
             ))}
