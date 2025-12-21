@@ -36,13 +36,6 @@
     "category": "sets"
   },
   {
-    "id": 7,
-    "title": "Бак для приготовления энзимных напитков",
-    "price": "53 000 руб / 19л",
-    "image": "/2.png",
-    "category": "equipment"
-  },
-  {
     "id": 8,
     "title": "Супер пробка",
     "price": "950 руб.",
@@ -55,13 +48,6 @@
     "price": "16 000 руб",
     "image": "/афиша.png",
     "category": "courses"
-  },
-  {
-    "id": 10,
-    "title": "Сыродавленные масла",
-    "price": "",
-    "image": "/9.png",
-    "category": "oils"
   },
   {
     "id": 11,
