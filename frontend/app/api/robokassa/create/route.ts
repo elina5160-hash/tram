@@ -136,11 +136,15 @@ export async function POST(req: Request) {
         }
       }
 
+      const username = body.customerInfo?.username ? `@${body.customerInfo.username.replace('@', '')}` : 'Не указано';
+      const clientId = body.customerInfo?.client_id || 'Не указано';
+      
       const msg = [
           `📦 ${productTitle} #${invId}`,
           `💰 Сумма: ${outSum} руб.`,
           `👤 Клиент: ${body.customerInfo?.name || 'Не указано'}`,
-          `🆔 ID клиента: ${body.customerInfo?.client_id || 'Не указано'}`,
+          `🆔 ID клиента: ${clientId} (${username})`,
+          `📞 Телефон: ${body.customerInfo?.phone || 'Не указано'}`,
           `📧 Email: ${email || 'Не указано'}`,
           `📍 Адрес: ${body.customerInfo?.address || body.customerInfo?.cdek || 'Не указано'}`,
           ``,
