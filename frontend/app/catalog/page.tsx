@@ -36,7 +36,7 @@ export default function Catalog() {
 
   return (
     <div className="min-h-[100dvh] w-full bg-white flex flex-col justify-start relative pb-56">
-      <div className="w-full max-w-[420px] mx-auto px-6 pt-[calc(1.5rem+env(safe-area-inset-top))]">
+      <div className="w-full max-w-[420px] mx-auto px-6 pt-[calc(5.5rem+env(safe-area-inset-top))]">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-semibold">Товары</h1>

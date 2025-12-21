@@ -109,13 +109,13 @@ export default function HomeClient() {
   
   return (
     <div className="min-h-[100dvh] w-full bg-[#FAFAFA] flex flex-col justify-start relative pb-56">
-      <div className="w-full max-w-[420px] mx-auto px-4 pt-[calc(1rem+env(safe-area-inset-top))]">
+      <div className="w-full max-w-[420px] mx-auto px-4 pt-[calc(5rem+env(safe-area-inset-top))]">
         <div className="flex items-center justify-between relative z-50">
           <div 
-            className="relative h-8 w-24 cursor-pointer active:opacity-70 select-none"
+            className="relative h-8 w-24 cursor-pointer active:opacity-70 select-none mt-2"
             onClick={() => setAdminOpen(true)}
           >
-            <Image src="/етра.png" alt="ЭТРА" fill className="object-contain object-left" priority />
+            <Image src="/етра.png" alt="ЭТРА" fill className="object-contain object-left brightness-0" priority />
           </div>
           <div className="flex items-center gap-2">
             <button

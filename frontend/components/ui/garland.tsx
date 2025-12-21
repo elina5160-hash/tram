@@ -12,95 +12,134 @@ export default function Garland() {
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
-    // Setup canvas size
     const updateSize = () => {
       canvas.width = window.innerWidth
-      // Height increased to 130 to allow full glow and wave without cutting off
-      canvas.height = 130 
+      canvas.height = 160 
     }
     updateSize()
     window.addEventListener('resize', updateSize)
 
-    // Light class ported from provided file
     class Light {
       x: number
       y: number
-      radius: number
+      width: number
+      height: number
       color: string
       originalColor: string
       speed: number
       time: number
-      currentRadius: number
       brightness: number
 
-      constructor(x: number, y: number, radius: number, color: string, speed: number) {
+      constructor(x: number, y: number, color: string, speed: number) {
         this.x = x
         this.y = y
-        this.radius = radius
+        this.width = 12 // Ширина лампочки
+        this.height = 24 // Высота лампочки (удлиненная)
         this.color = color
         this.originalColor = color
         this.speed = speed
         this.time = Math.random() * Math.PI * 2
-        this.currentRadius = radius
         this.brightness = 1
       }
 
       update() {
         this.time += this.speed
-        // Pulsation logic from file
-        const pulse = Math.sin(this.time) * 0.3 + 0.7
-        this.currentRadius = this.radius * pulse
+        // Более заметное мигание: диапазон яркости от 0.3 до 1.0
+        const pulse = Math.sin(this.time) * 0.35 + 0.65
         this.brightness = pulse
       }
 
       draw(ctx: CanvasRenderingContext2D) {
-        ctx.beginPath()
-        ctx.arc(this.x, this.y, this.currentRadius, 0, Math.PI * 2)
+        // Смещение и масштабирование для уменьшения размера
+        ctx.save()
+        ctx.translate(this.x, this.y + 6) // +6 чтобы провод подходил к верхушке уменьшенной лампы
+        ctx.scale(0.7, 0.7) // Уменьшаем размер до 70%
 
-        // Gradient for 3D effect
-        const gradient = ctx.createRadialGradient(
-            this.x - this.currentRadius/3,
-            this.y - this.currentRadius/3,
-            0,
-            this.x,
-            this.y,
-            this.currentRadius
+        // Координаты теперь локальные (0,0 - центр цоколя)
+        const centerX = 0
+        const centerY = 0
+
+        // 1. Свечение (Glow)
+        ctx.save()
+        ctx.globalAlpha = 0.5 * this.brightness
+        const glowRadius = 40 // Чуть больше радиус относительно масштаба
+        const glowGradient = ctx.createRadialGradient(
+            centerX, centerY + 15, 5,
+            centerX, centerY + 15, glowRadius
         )
+        glowGradient.addColorStop(0, this.color)
+        glowGradient.addColorStop(1, 'rgba(0,0,0,0)')
+        ctx.fillStyle = glowGradient
+        ctx.beginPath()
+        ctx.arc(centerX, centerY + 15, glowRadius, 0, Math.PI * 2)
+        ctx.fill()
+        ctx.restore()
 
-        gradient.addColorStop(0, 'white')
-        gradient.addColorStop(0.3, this.color)
-        // Modified last stop to be transparent for overlay usage, 
-        // avoiding dark artifacts on light background while keeping some depth
-        gradient.addColorStop(1, 'rgba(0,0,0,0)') 
+        // 2. Цоколь (Socket)
+        ctx.save()
+        ctx.fillStyle = '#222'
+        ctx.fillRect(centerX - 5, centerY - 6, 10, 8)
+        ctx.fillStyle = '#333'
+        ctx.fillRect(centerX - 6, centerY + 2, 12, 3)
+        ctx.restore()
 
-        ctx.fillStyle = gradient
+        // 3. Лампочка (Bulb)
+        ctx.save()
+        ctx.beginPath()
+        ctx.moveTo(centerX - 5, centerY + 5)
+        ctx.bezierCurveTo(
+            centerX - 8, centerY + 15, 
+            centerX - 6, centerY + 28, 
+            centerX, centerY + 32
+        )
+        ctx.bezierCurveTo(
+            centerX + 6, centerY + 28, 
+            centerX + 8, centerY + 15, 
+            centerX + 5, centerY + 5
+        )
+        ctx.closePath()
+
+        const bulbGradient = ctx.createRadialGradient(
+            centerX - 2, centerY + 12, 0,
+            centerX, centerY + 15, 15
+        )
+        bulbGradient.addColorStop(0, '#fff')
+        bulbGradient.addColorStop(0.5, this.color)
+        bulbGradient.addColorStop(1, this.color)
+        
+        ctx.fillStyle = bulbGradient
         ctx.fill()
 
-        // Glow effect
-        ctx.shadowColor = this.color
-        ctx.shadowBlur = 15 * this.brightness
+        // Блик
+        ctx.beginPath()
+        ctx.ellipse(centerX - 3, centerY + 12, 1.5, 4, Math.PI / 8, 0, Math.PI * 2)
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)'
         ctx.fill()
-        ctx.shadowBlur = 0
+        
+        ctx.restore()
+        
+        // Восстанавливаем контекст (отменяем scale и translate)
+        ctx.restore()
       }
     }
 
     const lights: Light[] = []
-    const colors = ['#FF4757', '#2ED573', '#1E90FF', '#FFD700', '#9B59B6']
+    const colors = ['#FF0000', '#FFD700', '#00FF00', '#00BFFF', '#9932CC']
     
-    // Initialize lights
     const initLights = () => {
         lights.length = 0
-        // Adjust count based on width
-        const lightCount = Math.floor(canvas.width / 50) 
-        const spacing = canvas.width / (lightCount + 1)
+        const spacing = 35 // Уменьшили расстояние (было 45)
+        const lightCount = Math.ceil(canvas.width / spacing) + 4
         
         for(let i = 0; i < lightCount; i++) {
-            const x = spacing * (i + 1)
-            // Sine wave position - restored amplitude to 20 for better look, base at 30 to stay high
-            const y = 30 + Math.sin(i * 0.5) * 20
+            const x = (i * spacing) - (spacing * 1.5)
+            // Амплитуда волны чуть меньше
+            const y = 8 + Math.cos(i * 0.5) * 6 
+            
             const color = colors[i % colors.length]
-            const speed = 0.05 + Math.random() * 0.03
-            lights.push(new Light(x, y, 12, color, speed))
+            // Скорость мигания выше
+            const speed = 0.05 + Math.random() * 0.05 
+            lights.push(new Light(x, y, color, speed))
         }
     }
     initLights()
@@ -109,22 +148,48 @@ export default function Garland() {
     let animationFrameId: number
 
     const animate = () => {
-        // Use clearRect instead of fillRect for transparent overlay
         ctx.clearRect(0, 0, canvas.width, canvas.height)
 
-        // Draw wire
+        // Рисуем провод (Wire)
         if (lights.length > 0) {
             ctx.beginPath()
-            ctx.moveTo(lights[0].x, lights[0].y)
-            for(let i = 1; i < lights.length; i++) {
-                ctx.lineTo(lights[i].x, lights[i].y)
+            // Начинаем чуть левее первой лампы
+            ctx.moveTo(lights[0].x - 20, lights[0].y - 5)
+            
+            for(let i = 0; i < lights.length; i++) {
+                const targetX = lights[i].x
+                const targetY = lights[i].y // Верх цоколя
+                
+                const prevX = i > 0 ? lights[i-1].x : lights[0].x - 45
+                const prevY = i > 0 ? lights[i-1].y : lights[0].y
+                
+                // Провисание провода
+                const cpX = (prevX + targetX) / 2
+                const cpY = (prevY + targetY) / 2 + 5 
+
+                if (i === 0) {
+                     ctx.lineTo(targetX, targetY)
+                } else {
+                     ctx.quadraticCurveTo(cpX, cpY, targetX, targetY)
+                }
+                
+                // Петля провода вокруг цоколя (маленький завиток)
+                // ctx.arc(targetX, targetY - 2, 2, 0, Math.PI * 2)
             }
-            ctx.strokeStyle = '#FFD700'
-            ctx.lineWidth = 2
+            
+            // Хвост провода
+            const last = lights[lights.length - 1]
+            ctx.quadraticCurveTo(last.x + 20, last.y + 5, last.x + 40, last.y)
+
+            ctx.shadowColor = 'rgba(0,0,0,0.5)'
+            ctx.shadowBlur = 2
+            ctx.strokeStyle = '#222' // Почти черный провод
+            ctx.lineWidth = 2.5
             ctx.stroke()
+            ctx.shadowBlur = 0
         }
 
-        // Update and draw lights
+        // Рисуем лампочки
         lights.forEach(light => {
             light.update()
             light.draw(ctx)
@@ -134,16 +199,14 @@ export default function Garland() {
     }
     animate()
 
-    // Click interaction
     const handleClick = (e: MouseEvent) => {
         const rect = canvas.getBoundingClientRect()
         const x = e.clientX - rect.left
         const y = e.clientY - rect.top
 
         lights.forEach(light => {
-            const distance = Math.sqrt((x - light.x) ** 2 + (y - light.y) ** 2)
-            // Increased click radius for easier interaction
-            if(distance < light.radius * 3) {
+            // Упрощенная проверка клика
+            if(Math.abs(x - light.x) < 15 && Math.abs(y - (light.y + 15)) < 20) {
                 const newColor = colors[Math.floor(Math.random() * colors.length)]
                 light.color = newColor
             }
@@ -160,7 +223,7 @@ export default function Garland() {
   }, [])
 
   return (
-    <div className="fixed top-0 left-0 w-full pointer-events-none z-40" style={{ height: '130px' }}>
+    <div className="absolute top-0 left-0 w-full pointer-events-none z-40" style={{ height: '160px' }}>
       <canvas 
         ref={canvasRef} 
         className="w-full h-full pointer-events-auto"

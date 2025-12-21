@@ -75,7 +75,7 @@ export default function ItemPage() {
   return (
     <div className="min-h-[100dvh] w-full bg-white flex flex-col justify-start relative pb-56">
       <BackButton />
-      <div className="w-full max-w-[420px] mx-auto px-4 pt-[calc(5rem+env(safe-area-inset-top))]">
+      <div className="w-full max-w-[420px] mx-auto px-4 pt-[calc(7.5rem+env(safe-area-inset-top))]">
 
         <div className="mt-4 bg-white rounded-[20px] border border-gray-300 p-3">
           <div className="relative rounded-[16px] overflow-hidden">

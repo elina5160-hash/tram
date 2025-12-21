@@ -3,10 +3,10 @@ import BottomBanner from "@/components/ui/bottom-banner"
 
 export default function Support() {
   return (
-    <div className="min-h-screen w-full bg-white flex flex-col justify-start relative pb-56 pt-[calc(5rem+env(safe-area-inset-top))]">
+    <div className="min-h-[100dvh] w-full bg-white flex flex-col justify-start relative pb-24">
       <BackButton />
-      <div className="flex-1 w-full flex items-center justify-center">
-        <h1 className="text-xl">Поддержка</h1>
+      <div className="w-full max-w-[420px] mx-auto px-4 pt-[calc(7.5rem+env(safe-area-inset-top))]">
+        <h1 className="text-xl font-bold mb-4">Поддержка</h1>
       </div>
       <BottomBanner />
     </div>
