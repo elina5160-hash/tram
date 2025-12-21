@@ -115,7 +115,23 @@ export default function HomeClient() {
             className="relative h-8 w-24 cursor-pointer active:opacity-70 select-none mt-2"
             onClick={() => setAdminOpen(true)}
           >
-            <Image src="/етра.png" alt="ЭТРА" fill className="object-contain object-left brightness-0" priority />
+            <div 
+              className="absolute inset-0 w-full h-full"
+              style={{
+                  background: "linear-gradient(160deg, #FFFEF5 0%, #DBCBB0 100%)",
+                  maskImage: "url(/етра.png)",
+                 WebkitMaskImage: "url(/етра.png)",
+                 maskSize: "contain",
+                 WebkitMaskSize: "contain",
+                 maskRepeat: "no-repeat",
+                 WebkitMaskRepeat: "no-repeat",
+                 maskPosition: "left",
+                  WebkitMaskPosition: "left",
+                  // Градиент от белого/кремового к бежевому (как на фото)
+                   // Четкая темная обводка + яркая тень для объема
+                   filter: "drop-shadow(1px 0 0 #2A2A2A) drop-shadow(-1px 0 0 #2A2A2A) drop-shadow(0 1px 0 #2A2A2A) drop-shadow(0 -1px 0 #2A2A2A) drop-shadow(3px 6px 8px rgba(0,0,0,0.6))"
+                 }}
+            />
           </div>
           <div className="flex items-center gap-2">
             <button
