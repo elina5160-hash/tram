@@ -332,9 +332,9 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
 Всего билетов: ${newTotalTickets}
 
 Чем больше покупаешь — тем больше шансов! 🔥
-Проверить билеты можешь в @PRAEnzyme_bot`
+Проверить билеты можешь в @KonkursEtraBot`
                     
-                    const kb6 = { inline_keyboard: [ [{ text: '🛒 Купить ещё', url: 'https://t.me/PRAEnzyme_bot' }] ] }
+                    const kb6 = { inline_keyboard: [ [{ text: '🛒 Купить ещё', url: 'https://t.me/KonkursEtraBot/app' }] ] }
                     await sendTelegramMessage(msg6, String(refereeId), kb6)
                 } else {
                     // Scenario 11: Purchase < 1000
@@ -347,7 +347,7 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
 
 Билеты начисляются за каждые 1000 руб в чеке.`
                     
-                    const kb11 = { inline_keyboard: [ [{ text: '🛒 Купить ещё', url: 'https://t.me/PRAEnzyme_bot' }] ] }
+                    const kb11 = { inline_keyboard: [ [{ text: '🛒 Купить ещё', url: 'https://t.me/KonkursEtraBot/app' }] ] }
                     await sendTelegramMessage(msg11, String(refereeId), kb11)
                 }
 
