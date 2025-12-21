@@ -8,6 +8,7 @@ import { addToCart, clearCart, getCart, incrementQty, removeFromCart, savePendin
 import { getPriceValue } from "@/lib/price"
 import { useProducts } from "@/hooks/useProducts"
 import { staticItems } from "@/data/staticItems"
+import { ProductCard } from "@/components/ui/product-card"
 import BackButton from "@/components/ui/back-button"
 import BottomBanner from "@/components/ui/bottom-banner"
 
@@ -464,7 +465,7 @@ function CartContent() {
                       className={`mt-1 w-4 h-4 rounded border ${errors.offer ? 'border-red-500' : 'border-gray-300'} text-[#6800E9] focus:ring-[#6800E9]`}
                     />
                     <label htmlFor="offer-check" className="text-[11px] leading-tight text-gray-600">
-                      Нажимая кнопку "К оформлению", вы подтверждаете, что ознакомились и соглашаетесь с условиями <a href="#" target="_blank" className="text-[#6800E9] underline">публичной оферты</a> и <a href="#" target="_blank" className="text-[#6800E9] underline">Политикой обработки персональных данных</a>
+                      Нажимая кнопку "К оформлению", вы подтверждаете, что ознакомились и соглашаетесь с условиями <a href="https://docs.yandex.ru/docs/view?url=ya-disk-public%3A%2F%2FluM1tqjNn2PIPZgFr9sidWNaEWRIlGnqDAubiIY0iHbH5%2ByFd1ugHDc%2Bn6kv0O5rq%2FJ6bpmRyOJonT3VoXnDag%3D%3D%3A%2FОферта_ИП_Серебрянский.pdf&name=Оферта_ИП_Серебрянский.pdf" target="_blank" className="text-[#6800E9] underline">публичной оферты</a> и <a href="https://docs.yandex.ru/docs/view?url=ya-disk-public%3A%2F%2FluM1tqjNn2PIPZgFr9sidWNaEWRIlGnqDAubiIY0iHbH5%2ByFd1ugHDc%2Bn6kv0O5rq%2FJ6bpmRyOJonT3VoXnDag%3D%3D%3A%2FПолитика%20ОПД_28.05.2025%20фин.docx&name=Политика%20ОПД_28.05.2025%20фин.docx" target="_blank" className="text-[#6800E9] underline">Политикой обработки персональных данных</a>
                     </label>
                   </div>
 
@@ -662,24 +663,16 @@ function CartContent() {
                 </svg>
               </div>
               <div className="mt-2 overflow-x-auto">
-                <div className="flex items-stretch gap-3 min-w-full">
-                  {suggestions.map((s) => (
-                    <div key={s.id} className="min-w-[220px] rounded-[16px] border border-gray-200 p-3 bg-white flex flex-col">
-                      <div className="relative w-full h-[120px] rounded-[12px] overflow-hidden bg-[#F1F1F1]">
-                        {s.image.endsWith(".mp4") ? (
-                          <LazyVideo src={s.image} className="w-full h-full object-cover" />
-                        ) : (
-                          <Image src={s.image} alt={s.title} fill className="object-cover" sizes="220px" />
-                        )}
-                      </div>
-                      <div className="mt-2 text-[13px] font-semibold" style={{ color: "#000000" }}>{s.title}</div>
-                      <div className="text-[12px] font-semibold" style={{ color: "#000000" }}>{formatRub(priceMap[s.id] || 0)}</div>
-                      <button
-                        className="mt-2 rounded-[12px] bg-white border border-gray-300 px-3 py-2 text-[13px] active:scale-105"
-                        onClick={() => addToCart({ id: s.id, title: s.title, qty: 1 })}
-                      >
-                        Добавить
-                      </button>
+                <div className="flex items-stretch gap-3 min-w-full pb-4">
+                  {suggestions.map((s, idx) => (
+                    <div key={s.id} className="w-[151px] shrink-0">
+                      <ProductCard
+                        item={s}
+                        index={idx}
+                        isVisible={true}
+                        onClick={() => router.push(`/item/${s.id}`)}
+                        showCartButton={true}
+                      />
                     </div>
                   ))}
                 </div>

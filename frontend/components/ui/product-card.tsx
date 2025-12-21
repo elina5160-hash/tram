@@ -97,7 +97,7 @@ export function ProductCard({ item, index, isVisible, onClick, showBadge, showCa
         </div>
 
         {/* Price/Volume & Cart Button */}
-        <div className={`w-full mt-auto pl-[8px] pr-[4px] pb-3 flex items-end gap-2 font-[family-name:var(--font-family)] ${showCartButton ? "justify-between" : "justify-end"}`}>
+        <div className={`w-full mt-auto pl-[2px] pr-[4px] pb-3 flex items-end gap-2 font-[family-name:var(--font-family)] ${showCartButton ? "justify-between" : "justify-end"}`}>
            <div className={showCartButton ? "text-left" : "text-right"}>
                <span className={`${showCartButton ? "text-[13px]" : "text-[10px]"} font-extrabold text-[#222222]`}>
                  {isDiscounted ? (item.id === 6 ? "4200руб" : item.id === 2 ? "24 000 р." : priceParts.main) : priceParts.main}

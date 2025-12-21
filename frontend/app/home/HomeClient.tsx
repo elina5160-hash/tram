@@ -114,7 +114,7 @@ export default function HomeClient() {
             className="text-xl font-semibold cursor-pointer active:opacity-70 select-none"
             onClick={() => setAdminOpen(true)}
           >
-            Главная
+            ЭТРА
           </h1>
           <div className="flex items-center gap-2">
             <button
