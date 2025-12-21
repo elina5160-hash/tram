@@ -111,12 +111,12 @@ export default function HomeClient() {
     <div className="min-h-[100dvh] w-full bg-[#FAFAFA] flex flex-col justify-start relative pb-56">
       <div className="w-full max-w-[420px] mx-auto px-4 pt-[calc(1rem+env(safe-area-inset-top))]">
         <div className="flex items-center justify-between relative z-50">
-          <h1 
-            className="text-xl font-semibold cursor-pointer active:opacity-70 select-none"
+          <div 
+            className="relative h-8 w-24 cursor-pointer active:opacity-70 select-none"
             onClick={() => setAdminOpen(true)}
           >
-            ЭТРА
-          </h1>
+            <Image src="/етра.png" alt="ЭТРА" fill className="object-contain object-left" priority />
+          </div>
           <div className="flex items-center gap-2">
             <button
               aria-label="Меню"

@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
 import Image from "next/image"
 
 type MenuView = "grid" | "delivery" | "payment" | "contacts" | "reviews" | "returns" | "about" | "offer" | "help" | "stores"
@@ -12,7 +11,6 @@ interface MenuDrawerProps {
 }
 
 export function MenuDrawer({ isOpen, onClose }: MenuDrawerProps) {
-  const router = useRouter()
   const [menuView, setMenuView] = useState<MenuView>("grid")
 
   // Reset view when menu opens
@@ -47,11 +45,8 @@ export function MenuDrawer({ isOpen, onClose }: MenuDrawerProps) {
             <div className="flex items-center justify-between mb-3">
               <button
                 aria-label="Назад"
-                onClick={() => {
-                  onClose()
-                  router.push("/home")
-                }}
-                className="px-3 py-2 rounded-[12px] bg-white border border-gray-300 text-[13px]"
+                onClick={onClose}
+                className="px-3 py-2 rounded-[12px] bg-white border border-gray-300 text-[13px] active:scale-95 transition-all hover:bg-gray-50"
               >
                 Назад
               </button>
@@ -115,7 +110,7 @@ export function MenuDrawer({ isOpen, onClose }: MenuDrawerProps) {
               <button
                 aria-label="Назад"
                 onClick={() => setMenuView("grid")}
-                className="px-3 py-2 rounded-[12px] bg-white border border-gray-300 text-[13px]"
+                className="px-3 py-2 rounded-[12px] bg-white border border-gray-300 text-[13px] active:scale-95 transition-all hover:bg-gray-50"
               >
                 Назад
               </button>
