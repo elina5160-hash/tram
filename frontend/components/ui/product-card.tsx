@@ -70,7 +70,7 @@ export function ProductCard({ item, index, isVisible, onClick, showBadge, showCa
   
   return (
     <div
-      className={`relative w-full h-[280px] rounded-[20px] p-2 flex flex-col transition-all duration-500 ease-out transform-gpu ${
+      className={`relative w-full h-full min-h-[280px] rounded-[20px] p-2 flex flex-col transition-all duration-500 ease-out transform-gpu ${
         isVisible ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-3"
       } snap-start cursor-pointer bg-white shadow-sm border border-gray-100`}
       onClick={onClick}
