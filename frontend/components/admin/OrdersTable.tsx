@@ -58,53 +58,56 @@ export function OrdersTable() {
 
   return (
     <div className="space-y-4 h-full flex flex-col pt-5">
-      <div className="flex items-center gap-4 flex-shrink-0">
-        <button
-            onClick={() => window.history.back()}
-            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium"
-        >
-            ← Назад
-        </button>
+      <div className="flex flex-col md:flex-row items-stretch md:items-center gap-4 flex-shrink-0">
+        <div className="flex items-center gap-2">
+            <button
+                onClick={() => window.history.back()}
+                className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium"
+            >
+                ← Назад
+            </button>
+            <button
+            onClick={() => {
+                const headers = ["ID", "Статус", "Сумма", "Имя", "Телефон", "Email", "Адрес", "Промокод", "Реферал", "Дата"]
+                const rows = filtered.map((o) => [
+                o.id,
+                o.status,
+                o.total_amount,
+                String(o?.customer_info?.name || ""),
+                String(o?.customer_info?.phone || ""),
+                String(o?.customer_info?.email || ""),
+                String(o?.customer_info?.address || o?.customer_info?.cdek || ""),
+                String(o.promo_code || ""),
+                String(o.ref_code || ""),
+                new Date(o.paid_at || o.created_at).toLocaleString("ru-RU"),
+                ])
+                const csv = [headers.join(","), ...rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '"')}` + `"`).join(","))].join("\n")
+                const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" })
+                const url = URL.createObjectURL(blob)
+                const a = document.createElement("a")
+                a.href = url
+                a.setAttribute("download", "orders.csv")
+                document.body.appendChild(a)
+                a.click()
+                document.body.removeChild(a)
+            }}
+            className="rounded-lg bg-green-600 px-4 py-2 text-white text-sm hover:bg-green-700 flex-1 md:flex-none justify-center"
+            >
+            Экспорт CSV
+            </button>
+        </div>
         <input
           type="text"
           placeholder="Поиск по ID, имени, телефону, email"
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
-          className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm"
+          className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-base md:text-sm"
         />
-        <button
-          onClick={() => {
-            const headers = ["ID", "Статус", "Сумма", "Имя", "Телефон", "Email", "Адрес", "Промокод", "Реферал", "Дата"]
-            const rows = filtered.map((o) => [
-              o.id,
-              o.status,
-              o.total_amount,
-              String(o?.customer_info?.name || ""),
-              String(o?.customer_info?.phone || ""),
-              String(o?.customer_info?.email || ""),
-              String(o?.customer_info?.address || o?.customer_info?.cdek || ""),
-              String(o.promo_code || ""),
-              String(o.ref_code || ""),
-              new Date(o.paid_at || o.created_at).toLocaleString("ru-RU"),
-            ])
-            const csv = [headers.join(","), ...rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '"')}` + `"`).join(","))].join("\n")
-            const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" })
-            const url = URL.createObjectURL(blob)
-            const a = document.createElement("a")
-            a.href = url
-            a.setAttribute("download", "orders.csv")
-            document.body.appendChild(a)
-            a.click()
-            document.body.removeChild(a)
-          }}
-          className="rounded-lg bg-green-600 px-4 py-2 text-white text-sm hover:bg-green-700"
-        >
-          Экспорт CSV
-        </button>
       </div>
 
-      <div className="rounded-lg border border-gray-200 overflow-hidden flex-1 overflow-y-auto">
-        <table className="w-full text-sm text-left">
+      <div className="rounded-lg border border-gray-200 overflow-hidden flex-1 overflow-y-auto bg-gray-50 md:bg-white">
+        {/* Desktop Table View */}
+        <table className="w-full text-sm text-left hidden md:table">
           <thead className="bg-gray-50 text-gray-700 font-medium border-b border-gray-200 sticky top-0">
             <tr>
               <th className="px-4 py-3">ID</th>
@@ -116,7 +119,7 @@ export function OrdersTable() {
               <th className="px-4 py-3">Дата</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody className="divide-y divide-gray-100 bg-white">
             {filtered.map((o) => (
               <tr 
                 key={o.id} 
@@ -158,6 +161,58 @@ export function OrdersTable() {
             ))}
           </tbody>
         </table>
+
+        {/* Mobile Card View */}
+        <div className="md:hidden space-y-3 p-3">
+          {filtered.map((o) => (
+            <div 
+                key={o.id}
+                onClick={() => setSelectedOrder(o)}
+                className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 active:bg-gray-50 transition-colors"
+            >
+                <div className="flex justify-between items-start mb-3">
+                    <div className="flex flex-col">
+                        <span className="font-bold text-lg text-gray-900">#{o.id}</span>
+                        <span className="text-xs text-gray-500">
+                            {new Date(o.paid_at || o.created_at).toLocaleString("ru-RU", {
+                                day: '2-digit', month: '2-digit', year: 'numeric',
+                                hour: '2-digit', minute: '2-digit'
+                            })}
+                        </span>
+                    </div>
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        o.status === 'Оплачен' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
+                    }`}>
+                        {o.status}
+                    </span>
+                </div>
+                
+                <div className="space-y-2 mb-3">
+                    <div className="flex justify-between items-center">
+                        <span className="text-gray-500 text-sm">Сумма:</span>
+                        <span className="font-bold text-gray-900">{Number(o.total_amount).toLocaleString()} руб.</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                        <span className="text-gray-500 text-sm">Клиент:</span>
+                        <span className="font-medium text-gray-900 text-right">{o.customer_info?.name || "—"}</span>
+                    </div>
+                    {o.customer_info?.phone && (
+                        <div className="flex justify-between items-center">
+                            <span className="text-gray-500 text-sm">Телефон:</span>
+                            <span className="text-gray-900 text-right">{o.customer_info.phone}</span>
+                        </div>
+                    )}
+                </div>
+
+                {(o.promo_code || o.ref_code) && (
+                    <div className="pt-3 border-t border-gray-100 flex gap-2 text-xs text-gray-600">
+                        {o.promo_code && <span className="bg-blue-50 px-2 py-1 rounded">Promo: {o.promo_code}</span>}
+                        {o.ref_code && <span className="bg-purple-50 px-2 py-1 rounded">Ref: {o.ref_code}</span>}
+                    </div>
+                )}
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   )

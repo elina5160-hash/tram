@@ -64,45 +64,54 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 md:p-10">
-      <div className="relative bg-white rounded-2xl w-full max-w-4xl shadow-2xl flex flex-col max-h-[85vh] overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm md:p-10">
+      <div className="relative bg-white md:rounded-2xl w-full max-w-4xl shadow-2xl flex flex-col h-full md:h-auto md:max-h-[85vh] overflow-hidden">
         {/* Header Section */}
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between p-6 border-b shrink-0 gap-4">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between p-4 md:p-6 border-b shrink-0 gap-4">
           <div className="flex flex-col gap-4 w-full">
             <div className="flex items-center justify-between w-full">
-              <h2 className="text-2xl font-bold">Админ-панель</h2>
-              {/* Close button for mobile (visible on small screens if absolute is hidden or awkward, but we will use absolute for all) */}
+              <h2 className="text-xl md:text-2xl font-bold">Админ-панель</h2>
+              {/* Close Button - Visible here on mobile */}
+              <button 
+                onClick={onClose}
+                className="md:hidden p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors -mr-2"
+                title="Закрыть"
+              >
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
             </div>
             
-            <div className="flex flex-wrap gap-2 bg-gray-100 p-1 rounded-lg w-full md:w-auto self-start">
+            <div className="flex overflow-x-auto pb-2 md:pb-0 -mx-4 px-4 md:mx-0 md:px-0 gap-2 no-scrollbar">
                 <button
                     onClick={() => handleTabChange('products')}
-                    className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                        activeTab === 'products' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'
+                    className={`whitespace-nowrap px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                        activeTab === 'products' ? 'bg-gray-900 text-white shadow' : 'bg-gray-100 text-gray-500 hover:text-gray-700'
                     }`}
                 >
                     Товары
                 </button>
                 <button
                     onClick={() => handleTabChange('bottom-banner')}
-                    className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                        activeTab === 'bottom-banner' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'
+                    className={`whitespace-nowrap px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                        activeTab === 'bottom-banner' ? 'bg-gray-900 text-white shadow' : 'bg-gray-100 text-gray-500 hover:text-gray-700'
                     }`}
                 >
                     Баннер
                 </button>
                 <button
                     onClick={() => handleTabChange('contest')}
-                    className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                        activeTab === 'contest' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'
+                    className={`whitespace-nowrap px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                        activeTab === 'contest' ? 'bg-gray-900 text-white shadow' : 'bg-gray-100 text-gray-500 hover:text-gray-700'
                     }`}
                 >
                     Конкурс
                 </button>
                 <button
                     onClick={() => handleTabChange('orders')}
-                    className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                        activeTab === 'orders' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'
+                    className={`whitespace-nowrap px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                        activeTab === 'orders' ? 'bg-gray-900 text-white shadow' : 'bg-gray-100 text-gray-500 hover:text-gray-700'
                     }`}
                 >
                     Заказы
@@ -110,10 +119,10 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
             </div>
           </div>
           
-          {/* Close Button - Absolute Position for consistent access */}
+          {/* Close Button - Desktop */}
           <button 
             onClick={onClose}
-            className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+            className="hidden md:block absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
             title="Закрыть"
           >
             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -122,14 +131,14 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-4 md:p-6">
 
         {activeTab === 'products' ? (
             mode === 'initial' ? (
-              <div className="flex-1 flex flex-col items-center justify-center gap-6">
+              <div className="flex-1 flex flex-col items-center justify-center gap-4 md:gap-6 h-full">
                 <button
                   onClick={() => setMode('list')}
-                  className="w-64 py-4 text-xl font-medium bg-white border-2 border-blue-600 text-blue-600 rounded-xl hover:bg-blue-50 transition-colors shadow-sm"
+                  className="w-full max-w-xs py-4 text-lg md:text-xl font-medium bg-white border-2 border-blue-600 text-blue-600 rounded-xl hover:bg-blue-50 transition-colors shadow-sm"
                 >
                   Изменить товар
                 </button>
@@ -139,7 +148,7 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
                     setIsCreating(true)
                     setMode('form')
                   }}
-                  className="w-64 py-4 text-xl font-medium bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors shadow-md"
+                  className="w-full max-w-xs py-4 text-lg md:text-xl font-medium bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors shadow-md"
                 >
                   Добавить товар
                 </button>

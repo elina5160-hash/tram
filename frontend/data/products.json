@@ -11,14 +11,14 @@
     "id": 2,
     "title": "АКЦИЯ ДВА КУРСА смены микробиома",
     "price": "24 000 руб",
-    "image": "/курс.jpg",
+    "image": "/microbiome-course.jpg",
     "category": "courses"
   },
   {
     "id": 3,
     "title": "Чистое утро",
     "price": "2400 руб / 2 л + 100гр",
-    "image": "/чистоеутро.jpg",
+    "image": "/pure-morning.jpg",
     "category": "sets"
   },
   {
@@ -32,21 +32,21 @@
     "id": 6,
     "title": "Набор СЕЗОННЫЙ",
     "price": "4 200 руб / 6л",
-    "image": "/сезонный.jpg",
+    "image": "/seasonal-set.jpg",
     "category": "sets"
   },
   {
     "id": 8,
     "title": "Супер пробка",
     "price": "950 руб.",
-    "image": "/пробка.jpg",
+    "image": "/cork.jpg",
     "category": "equipment"
   },
   {
     "id": 9,
     "title": "Курс Чистка Микробиома",
     "price": "16 000 руб",
-    "image": "/чистка16.jpg",
+    "image": "/microbiome-clean.jpg",
     "category": "courses"
   },
   {
@@ -60,7 +60,7 @@
     "id": 12,
     "title": "Энзимный напиток Детский",
     "price": "750 руб.",
-    "image": "/детский.png",
+    "image": "/Detskii.png",
     "category": "drinks"
   },
   {
