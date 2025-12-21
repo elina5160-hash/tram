@@ -3,7 +3,7 @@ export const staticItems = [
   { id: 2, title: "АКЦИЯ ДВА КУРСА смены микробиома", price: "24 000 руб", image: "/1.jpg" },
   { id: 3, title: "Чистое утро", price: "2400 руб / 2 л + 100гр", image: "/4.png" },
   { id: 4, title: "БифидумФаната", price: "1 200 руб / 1л", image: "/fanata.png" },
-  { id: 6, title: "Набор СЕЗОННЫЙ", price: "4 200 руб / 6л", image: "/2.jpg" },
+  { id: 6, title: "Набор СЕЗОННЫЙ", price: "4 200 руб / 6л", image: "/сезонный.jpg" },
   { id: 8, title: "Супер пробка", price: "950 руб.", image: "/пробка.jpg" },
   { id: 9, title: "Курс Чистка Микробиома", price: "16 000 руб", image: "/афиша.png" },
   { id: 11, title: "Энзимный напиток Еловый", price: "750 руб.", image: "/Eloviy PROMO strz 2.mp4" },
