@@ -132,12 +132,5 @@
     "price": "750 руб.",
     "image": "/квас.jpg",
     "category": "drinks"
-  },
-  {
-    "id": 999,
-    "title": "Тестовый товар",
-    "price": "2 руб.",
-    "image": "/главная4.png",
-    "category": "sets"
   }
 ]
