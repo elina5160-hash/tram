@@ -249,7 +249,7 @@ ${friendName} пригласил тебя в конкурс ЭТРА!
 Конкурс до 7 января. Удачи! 🍀`
           
           const kb3 = { inline_keyboard: [
-              [{ text: '🛒 Перейти в магазин', url: 'https://t.me/KonkursEtraBot/app' }],
+              [{ text: '🛒 Перейти в магазин', url: 'https://tram-navy.vercel.app/home' }],
               [{ text: '📤 Переслать ссылку', url: `https://t.me/share/url?url=${encodeURIComponent(getRefLink(userId))}&text=${encodeURIComponent('🎁 Участвуй в конкурсе ЭТРА!\n101 победитель\nГлавный приз ЭТРАГЕНЕЗ\nРозыгрыш 7 января\n\nРегистрируйся по моей ссылке и получи приветственный бонус:')}` }]
           ] }
           // Actually "Copy link" button usually sends the link in a separate message or alert.
@@ -290,7 +290,7 @@ ${friendName} пригласил тебя в конкурс ЭТРА!
 Продолжай покупать и приглашать! 💪`
 
         const kb4 = { inline_keyboard: [
-            [{ text: '🛒 Перейти в магазин', url: 'https://t.me/KonkursEtraBot/app' }],
+            [{ text: '🛒 Перейти в магазин', url: 'https://tram-navy.vercel.app/home' }],
             [{ text: '👥 Пригласить друзей', url: `https://t.me/share/url?url=${encodeURIComponent(getRefLink(userId))}&text=${encodeURIComponent('Участвуй в конкурсе ЭТРА!')}` }]
         ] }
         await sendTelegramMessage(msg4, chatId, kb4)
@@ -320,7 +320,7 @@ ${friendName} пригласил тебя в конкурс ЭТРА!
 
 Удачи! 🍀`
         const kb9 = { inline_keyboard: [
-            [{ text: '🛒 Перейти в магазин', url: 'https://t.me/KonkursEtraBot/app' }],
+            [{ text: '🛒 Перейти в магазин', url: 'https://tram-navy.vercel.app/home' }],
             [{ text: '📢 Канал ЭТРА', url: 'https://t.me/etraproject_official' }]
         ] }
         await sendTelegramMessage(msg9, chatId, kb9)

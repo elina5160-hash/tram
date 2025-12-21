@@ -334,7 +334,7 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
 Чем больше покупаешь — тем больше шансов! 🔥
 Проверить билеты можешь в @KonkursEtraBot`
                     
-                    const kb6 = { inline_keyboard: [ [{ text: '🛒 Купить ещё', url: 'https://t.me/KonkursEtraBot/app' }] ] }
+                    const kb6 = { inline_keyboard: [ [{ text: '🛒 Купить ещё', url: 'https://tram-navy.vercel.app/home' }] ] }
                     await sendTelegramMessage(msg6, String(refereeId), kb6)
                 } else {
                     // Scenario 11: Purchase < 1000
@@ -347,7 +347,7 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
 
 Билеты начисляются за каждые 1000 руб в чеке.`
                     
-                    const kb11 = { inline_keyboard: [ [{ text: '🛒 Купить ещё', url: 'https://t.me/KonkursEtraBot/app' }] ] }
+                    const kb11 = { inline_keyboard: [ [{ text: '🛒 Купить ещё', url: 'https://tram-navy.vercel.app/home' }] ] }
                     await sendTelegramMessage(msg11, String(refereeId), kb11)
                 }
 
