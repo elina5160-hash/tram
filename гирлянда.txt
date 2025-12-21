@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>3D Новогодняя Гирлянда</title>
+    <style>
+        body {
+            margin: 0;
+            background: linear-gradient(180deg, #001122, #003344);
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        canvas {
+            display: block;
+            border-radius: 10px;
+            box-shadow: 0 0 50px rgba(255, 215, 0, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <canvas id="garlandCanvas"></canvas>
+    
+    <script>
+        const canvas = document.getElementById('garlandCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Настройка размера canvas
+        canvas.width = 800;
+        canvas.height = 200;
+        
+        // Класс для лампочки
+        class Light {
+            constructor(x, y, radius, color, speed) {
+                this.x = x;
+                this.y = y;
+                this.radius = radius;
+                this.color = color;
+                this.speed = speed;
+                this.time = Math.random() * Math.PI * 2;
+                this.originalColor = color;
+            }
+            
+            update() {
+                this.time += this.speed;
+                // Пульсация размера и яркости
+                const pulse = Math.sin(this.time) * 0.3 + 0.7;
+                this.currentRadius = this.radius * pulse;
+                this.brightness = pulse;
+            }
+            
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.currentRadius, 0, Math.PI * 2);
+                
+                // Градиент для 3D эффекта
+                const gradient = ctx.createRadialGradient(
+                    this.x - this.currentRadius/3, 
+                    this.y - this.currentRadius/3,
+                    0,
+                    this.x, 
+                    this.y,
+                    this.currentRadius
+                );
+                
+                gradient.addColorStop(0, 'white');
+                gradient.addColorStop(0.3, this.color);
+                gradient.addColorStop(1, 'rgba(0,0,0,0.3)');
+                
+                ctx.fillStyle = gradient;
+                ctx.fill();
+                
+                // Свечение
+                ctx.shadowColor = this.color;
+                ctx.shadowBlur = 15 * this.brightness;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            }
+        }
+        
+        // Создаем гирлянду
+        const lights = [];
+        const colors = ['#FF4757', '#2ED573', '#1E90FF', '#FFD700', '#9B59B6'];
+        const lightCount = 15;
+        const spacing = canvas.width / (lightCount + 1);
+        
+        for(let i = 0; i < lightCount; i++) {
+            const x = spacing * (i + 1);
+            const y = canvas.height / 2 + Math.sin(i * 0.5) * 30;
+            const color = colors[i % colors.length];
+            const speed = 0.05 + Math.random() * 0.03;
+            
+            lights.push(new Light(x, y, 15, color, speed));
+        }
+        
+        // Анимация
+        function animate() {
+            // Очистка с полупрозрачным фоном для следа
+            ctx.fillStyle = 'rgba(0, 20, 30, 0.1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Рисуем провод
+            ctx.beginPath();
+            ctx.moveTo(lights[0].x, lights[0].y);
+            for(let i = 1; i < lights.length; i++) {
+                ctx.lineTo(lights[i].x, lights[i].y);
+            }
+            ctx.strokeStyle = '#FFD700';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // Обновляем и рисуем лампочки
+            lights.forEach(light => {
+                light.update();
+                light.draw();
+            });
+            
+            requestAnimationFrame(animate);
+        }
+        
+        // Запуск анимации
+        animate();
+        
+        // Добавляем интерактивность
+        canvas.addEventListener('click', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            // Меняем цвет ближайшей лампочки
+            lights.forEach(light => {
+                const distance = Math.sqrt((x - light.x) ** 2 + (y - light.y) ** 2);
+                if(distance < light.radius * 2) {
+                    const newColor = colors[Math.floor(Math.random() * colors.length)];
+                    light.color = newColor;
+                    light.originalColor = newColor;
+                }
+            });
+        });
+    </script>
+</body>
+</html>

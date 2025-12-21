@@ -271,7 +271,7 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
                 totalQuantity // Количество
             ]
 
-            const webhook = process.env.GOOGLE_SHEETS_WEBHOOK_URL || "https://script.google.com/macros/s/AKfycbzYmxru4QlnuzCvaz_SekwQdRzid5Ki6e_YTyJ4VgKqTR3wloqZuRuEdTU0WpRk4Uvg/exec"
+            const webhook = process.env.GOOGLE_SHEETS_WEBHOOK_URL || "https://script.google.com/macros/s/AKfycbwGwgJALfqu38YOSClGsr-2XyRoNSi_vlTxpjKHUvbTmMaxkkRpo4EEyPWYkW4MQFgVdQ/exec"
             console.log('Sending to Google Sheet webhook:', webhook)
             const response = await fetch(webhook, { 
                 method: "POST", 

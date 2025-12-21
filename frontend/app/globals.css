@@ -72,6 +72,7 @@ html, body { overflow-x: hidden; }
   to { transform: rotate(360deg); }
 }
 
+/* Old Garland Styles (Preserved but overridden/unused by new component) */
 @keyframes sway {
   0% { transform: translateY(0) rotate(0deg); }
   50% { transform: translateY(1.6px) rotate(0.6deg); }
@@ -98,48 +99,46 @@ html, body { overflow-x: hidden; }
 .blink-4 { animation-delay: 6s; }
 .blink-5 { animation-delay: 2.5s; }
 .blink-6 { animation-delay: .3s; }
-.blink-7 { animation-delay: 2s; }
-.blink-8 { animation-delay: .2s; }
-.blink-9 { animation-delay: 0.95s; }
-.blink-10 { animation-delay: 1.2s; }
 
-@keyframes marqueeLeft {
-  0% { transform: translateX(100%); }
-  100% { transform: translateX(-120%); }
-}
-.marquee-left {
-  animation: marqueeLeft 14s linear infinite;
-  will-change: transform;
+/* New Garland Styles */
+.new-garland {
+  display: flex;
+  justify-content: space-around;
+  padding: 15px 5px;
+  /* Removed background to match overlay style */
+  pointer-events: none;
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: var(--app-max-width);
+  z-index: 1000;
+  overflow: visible;
 }
 
-@keyframes marqueeScroll {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
+.new-light {
+  width: 16px; 
+  height: 16px;
+  border-radius: 50%;
+  animation: blink 1.5s infinite;
+  box-shadow: 0 0 10px currentColor;
+  flex-shrink: 0;
+  margin: 0 2px;
 }
-.marquee-track { animation: marqueeScroll 14s linear infinite; will-change: transform; }
 
-/* Icon utilities for PNG to appear white on dark backgrounds */
-.icon-white { filter: brightness(0) invert(1); }
-.icon-dim { filter: brightness(0.9) contrast(1.05); }
+.new-light.red { background-color: #ff4757; color: #ff4757; }
+.new-light.green { background-color: #2ed573; color: #2ed573; }
+.new-light.blue { background-color: #1e90ff; color: #1e90ff; }
+.new-light.yellow { background-color: #ffd700; color: #ffd700; }
+.new-light.purple { background-color: #9b59b6; color: #9b59b6; }
 
-/* Gradient animation background helpers (from фон бегущей.txt) */
-@keyframes moveHorizontal {
-  0% { transform: translateX(-50%) translateY(-10%); }
-  50% { transform: translateX(50%) translateY(10%); }
-  100% { transform: translateX(-50%) translateY(-10%); }
+@keyframes blink {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.3; transform: scale(0.8); }
 }
-@keyframes moveInCircle {
-  0% { transform: rotate(0deg); }
-  50% { transform: rotate(180deg); }
-  100% { transform: rotate(360deg); }
+
+@keyframes chase {
+  0% { opacity: 0.2; transform: scale(0.7); }
+  50% { opacity: 1; transform: scale(1.1); }
+  100% { opacity: 0.2; transform: scale(0.7); }
 }
-@keyframes moveVertical {
-  0% { transform: translateY(-50%); }
-  50% { transform: translateY(50%); }
-  100% { transform: translateY(-50%); }
-}
-.animate-first { animation: moveVertical 30s ease infinite; }
-.animate-second { animation: moveInCircle 20s reverse infinite; }
-.animate-third { animation: moveInCircle 40s linear infinite; }
-.animate-fourth { animation: moveHorizontal 40s ease infinite; }
-.animate-fifth { animation: moveInCircle 20s ease infinite; }

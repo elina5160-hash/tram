@@ -1,89 +1,170 @@
 "use client"
 
+import { useEffect, useRef } from "react"
+
 export default function Garland() {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    // Setup canvas size
+    const updateSize = () => {
+      canvas.width = window.innerWidth
+      // Height can be adjusted. Original was 200, we use 150 to be less intrusive
+      canvas.height = 160 
+    }
+    updateSize()
+    window.addEventListener('resize', updateSize)
+
+    // Light class ported from provided file
+    class Light {
+      x: number
+      y: number
+      radius: number
+      color: string
+      originalColor: string
+      speed: number
+      time: number
+      currentRadius: number
+      brightness: number
+
+      constructor(x: number, y: number, radius: number, color: string, speed: number) {
+        this.x = x
+        this.y = y
+        this.radius = radius
+        this.color = color
+        this.originalColor = color
+        this.speed = speed
+        this.time = Math.random() * Math.PI * 2
+        this.currentRadius = radius
+        this.brightness = 1
+      }
+
+      update() {
+        this.time += this.speed
+        // Pulsation logic from file
+        const pulse = Math.sin(this.time) * 0.3 + 0.7
+        this.currentRadius = this.radius * pulse
+        this.brightness = pulse
+      }
+
+      draw(ctx: CanvasRenderingContext2D) {
+        ctx.beginPath()
+        ctx.arc(this.x, this.y, this.currentRadius, 0, Math.PI * 2)
+
+        // Gradient for 3D effect
+        const gradient = ctx.createRadialGradient(
+            this.x - this.currentRadius/3,
+            this.y - this.currentRadius/3,
+            0,
+            this.x,
+            this.y,
+            this.currentRadius
+        )
+
+        gradient.addColorStop(0, 'white')
+        gradient.addColorStop(0.3, this.color)
+        // Modified last stop to be transparent for overlay usage, 
+        // avoiding dark artifacts on light background while keeping some depth
+        gradient.addColorStop(1, 'rgba(0,0,0,0)') 
+
+        ctx.fillStyle = gradient
+        ctx.fill()
+
+        // Glow effect
+        ctx.shadowColor = this.color
+        ctx.shadowBlur = 15 * this.brightness
+        ctx.fill()
+        ctx.shadowBlur = 0
+      }
+    }
+
+    const lights: Light[] = []
+    const colors = ['#FF4757', '#2ED573', '#1E90FF', '#FFD700', '#9B59B6']
+    
+    // Initialize lights
+    const initLights = () => {
+        lights.length = 0
+        // Adjust count based on width
+        const lightCount = Math.floor(canvas.width / 50) 
+        const spacing = canvas.width / (lightCount + 1)
+        
+        for(let i = 0; i < lightCount; i++) {
+            const x = spacing * (i + 1)
+            // Sine wave position
+            const y = canvas.height / 3 + Math.sin(i * 0.5) * 20
+            const color = colors[i % colors.length]
+            const speed = 0.05 + Math.random() * 0.03
+            lights.push(new Light(x, y, 12, color, speed))
+        }
+    }
+    initLights()
+    window.addEventListener('resize', initLights)
+
+    let animationFrameId: number
+
+    const animate = () => {
+        // Use clearRect instead of fillRect for transparent overlay
+        ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+        // Draw wire
+        if (lights.length > 0) {
+            ctx.beginPath()
+            ctx.moveTo(lights[0].x, lights[0].y)
+            for(let i = 1; i < lights.length; i++) {
+                ctx.lineTo(lights[i].x, lights[i].y)
+            }
+            ctx.strokeStyle = '#FFD700'
+            ctx.lineWidth = 2
+            ctx.stroke()
+        }
+
+        // Update and draw lights
+        lights.forEach(light => {
+            light.update()
+            light.draw(ctx)
+        })
+
+        animationFrameId = requestAnimationFrame(animate)
+    }
+    animate()
+
+    // Click interaction
+    const handleClick = (e: MouseEvent) => {
+        const rect = canvas.getBoundingClientRect()
+        const x = e.clientX - rect.left
+        const y = e.clientY - rect.top
+
+        lights.forEach(light => {
+            const distance = Math.sqrt((x - light.x) ** 2 + (y - light.y) ** 2)
+            // Increased click radius for easier interaction
+            if(distance < light.radius * 3) {
+                const newColor = colors[Math.floor(Math.random() * colors.length)]
+                light.color = newColor
+            }
+        })
+    }
+    canvas.addEventListener('click', handleClick)
+
+    return () => {
+        window.removeEventListener('resize', updateSize)
+        window.removeEventListener('resize', initLights)
+        canvas.removeEventListener('click', handleClick)
+        cancelAnimationFrame(animationFrameId)
+    }
+  }, [])
+
   return (
-    <div id="Christmas_Lights" className="fixed left-0 right-0 pointer-events-none h-[120px]" style={{ zIndex: 1000, top: -16 }}>
-      <svg width="100%" height="100%" viewBox="0 0 1200 150" preserveAspectRatio="xMidYMin meet">
-        <path d="M0,30 C300,110 900,10 1200,90" className="light_cord" strokeWidth="3" fill="none" />
-        <g>
-          <g className="garland-sway" style={{ transformOrigin: '60px 25px', animationDelay: '0s' }}>
-            <rect x="56" y="26" width="8" height="8" rx="2" className="light_fixture" />
-            <ellipse cx="60" cy="38" rx="10" ry="14" className="bulb red_bulb blink-1" />
-          </g>
-          <g className="garland-sway" style={{ transformOrigin: '120px 40px', animationDelay: '0.1s' }}>
-            <rect x="116" y="41" width="8" height="8" rx="2" className="light_fixture" />
-            <ellipse cx="120" cy="54" rx="10" ry="14" className="bulb blue_bulb blink-2" />
-          </g>
-          <g className="garland-sway" style={{ transformOrigin: '180px 58px', animationDelay: '0.2s' }}>
-            <rect x="176" y="59" width="8" height="8" rx="2" className="light_fixture" />
-            <ellipse cx="180" cy="72" rx="10" ry="14" className="bulb white_bulb blink-3" />
-          </g>
-          <g className="garland-sway" style={{ transformOrigin: '240px 76px', animationDelay: '0.3s' }}>
-            <rect x="236" y="77" width="8" height="8" rx="2" className="light_fixture" />
-            <ellipse cx="240" cy="90" rx="10" ry="14" className="bulb green_bulb blink-4" />
-          </g>
-          <g className="garland-sway" style={{ transformOrigin: '300px 92px', animationDelay: '0.4s' }}>
-            <rect x="296" y="93" width="8" height="8" rx="2" className="light_fixture" />
-            <ellipse cx="300" cy="106" rx="10" ry="14" className="bulb gold_bulb blink-5" />
-          </g>
-          <g className="garland-sway" style={{ transformOrigin: '360px 98px', animationDelay: '0.5s' }}>
-            <rect x="356" y="99" width="8" height="8" rx="2" className="light_fixture" />
-            <ellipse cx="360" cy="112" rx="10" ry="14" className="bulb green_bulb blink-6" />
-          </g>
-          <g className="garland-sway" style={{ transformOrigin: '420px 92px', animationDelay: '0.6s' }}>
-            <rect x="416" y="93" width="8" height="8" rx="2" className="light_fixture" />
-            <ellipse cx="420" cy="106" rx="10" ry="14" className="bulb red_bulb blink-7" />
-          </g>
-          <g className="garland-sway" style={{ transformOrigin: '480px 80px', animationDelay: '0.7s' }}>
-            <rect x="476" y="81" width="8" height="8" rx="2" className="light_fixture" />
-            <ellipse cx="480" cy="94" rx="10" ry="14" className="bulb blue_bulb blink-8" />
-          </g>
-          <g className="garland-sway" style={{ transformOrigin: '540px 66px', animationDelay: '0.8s' }}>
-            <rect x="536" y="67" width="8" height="8" rx="2" className="light_fixture" />
-            <ellipse cx="540" cy="80" rx="10" ry="14" className="bulb white_bulb blink-9" />
-          </g>
-          <g className="garland-sway" style={{ transformOrigin: '600px 54px', animationDelay: '0.9s' }}>
-            <rect x="596" y="55" width="8" height="8" rx="2" className="light_fixture" />
-            <ellipse cx="600" cy="68" rx="10" ry="14" className="bulb green_bulb blink-10" />
-          </g>
-          <g className="garland-sway" style={{ transformOrigin: '660px 46px', animationDelay: '1s' }}>
-            <rect x="656" y="47" width="8" height="8" rx="2" className="light_fixture" />
-            <ellipse cx="660" cy="60" rx="10" ry="14" className="bulb gold_bulb blink-1" />
-          </g>
-          <g className="garland-sway" style={{ transformOrigin: '720px 46px', animationDelay: '1.1s' }}>
-            <rect x="716" y="47" width="8" height="8" rx="2" className="light_fixture" />
-            <ellipse cx="720" cy="60" rx="10" ry="14" className="bulb green_bulb blink-2" />
-          </g>
-          <g className="garland-sway" style={{ transformOrigin: '780px 54px', animationDelay: '1.2s' }}>
-            <rect x="776" y="55" width="8" height="8" rx="2" className="light_fixture" />
-            <ellipse cx="780" cy="68" rx="10" ry="14" className="bulb red_bulb blink-3" />
-          </g>
-          <g className="garland-sway" style={{ transformOrigin: '840px 68px', animationDelay: '1.3s' }}>
-            <rect x="836" y="69" width="8" height="8" rx="2" className="light_fixture" />
-            <ellipse cx="840" cy="82" rx="10" ry="14" className="bulb blue_bulb blink-4" />
-          </g>
-          <g className="garland-sway" style={{ transformOrigin: '900px 82px', animationDelay: '1.4s' }}>
-            <rect x="896" y="83" width="8" height="8" rx="2" className="light_fixture" />
-            <ellipse cx="900" cy="96" rx="10" ry="14" className="bulb white_bulb blink-5" />
-          </g>
-          <g className="garland-sway" style={{ transformOrigin: '960px 95px', animationDelay: '1.5s' }}>
-            <rect x="956" y="96" width="8" height="8" rx="2" className="light_fixture" />
-            <ellipse cx="960" cy="109" rx="10" ry="14" className="bulb green_bulb blink-6" />
-          </g>
-          <g className="garland-sway" style={{ transformOrigin: '1020px 102px', animationDelay: '1.6s' }}>
-            <rect x="1016" y="103" width="8" height="8" rx="2" className="light_fixture" />
-            <ellipse cx="1020" cy="116" rx="10" ry="14" className="bulb gold_bulb blink-7" />
-          </g>
-          <g className="garland-sway" style={{ transformOrigin: '1080px 106px', animationDelay: '1.7s' }}>
-            <rect x="1076" y="107" width="8" height="8" rx="2" className="light_fixture" />
-            <ellipse cx="1080" cy="120" rx="10" ry="14" className="bulb green_bulb blink-8" />
-          </g>
-          <g className="garland-sway" style={{ transformOrigin: '1140px 107px', animationDelay: '1.8s' }}>
-            <rect x="1136" y="108" width="8" height="8" rx="2" className="light_fixture" />
-            <ellipse cx="1140" cy="121" rx="10" ry="14" className="bulb red_bulb blink-9" />
-          </g>
-        </g>
-      </svg>
+    <div className="fixed top-0 left-0 w-full pointer-events-none z-40" style={{ height: '160px' }}>
+      <canvas 
+        ref={canvasRef} 
+        className="w-full h-full pointer-events-auto"
+      />
     </div>
   )
 }
