@@ -143,7 +143,7 @@ export default function HomeClient() {
           }}
         >
           <a href="https://t.me/KonkursEtraBot" target="_blank" rel="noopener noreferrer" className="block w-full h-full relative">
-            <Image src="/нг.png" alt="Афиша" fill className="object-contain rounded-[20px]" priority />
+            <Image src="/главная.png" alt="Афиша" fill className="object-contain rounded-[20px]" priority />
           </a>
         </div>
 
