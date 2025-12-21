@@ -17,23 +17,21 @@ interface ProductCardProps {
 export function ProductCard({ item, index, isVisible, onClick, showBadge, showCartButton = false }: ProductCardProps) {
   const priceParts = splitPrice(item.price)
   const isDiscounted = [2, 6].includes(item.id)
-  
-  // Local state to track quantity in cart for this item
-  const [qty, setQty] = useState(0)
-
-  // Update quantity when cart changes
-  const updateQty = () => {
-    const cart = getCart()
-    const cartItem = cart.find((i) => i.id === item.id)
-    setQty(cartItem ? cartItem.qty : 0)
-  }
+  const [quantity, setQuantity] = useState(0)
 
   useEffect(() => {
-    updateQty()
-    window.addEventListener("cart:changed", updateQty)
-    return () => window.removeEventListener("cart:changed", updateQty)
+    const sync = () => {
+      const cart = getCart()
+      const found = cart.find((c: any) => c.id === item.id)
+      setQuantity(found ? found.qty : 0)
+    }
+    sync()
+    
+    const handler = () => sync()
+    window.addEventListener("cart:changed", handler)
+    return () => window.removeEventListener("cart:changed", handler)
   }, [item.id])
-
+  
   const handleImageLoad = () => {
     try {
       const payload = { type: "IMAGE_LOAD", message: "product card image loaded", data: { id: item.id, ts: Date.now() } }
@@ -56,7 +54,7 @@ export function ProductCard({ item, index, isVisible, onClick, showBadge, showCa
     if (el && next) el.src = next
   }
 
-  const handleAddToCart = (e: React.MouseEvent) => {
+  const handlePlus = (e: React.MouseEvent) => {
     e.stopPropagation()
     addToCart({
         id: item.id,
@@ -64,38 +62,21 @@ export function ProductCard({ item, index, isVisible, onClick, showBadge, showCa
         qty: 1
     })
   }
-  
-  const handleIncrement = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    if (qty === 0) {
-      addToCart({
-        id: item.id,
-        title: item.title,
-        qty: 1
-      })
-    } else {
-      incrementQty(item.id, 1)
-    }
-  }
 
-  const handleDecrement = (e: React.MouseEvent) => {
+  const handleMinus = (e: React.MouseEvent) => {
     e.stopPropagation()
     incrementQty(item.id, -1)
   }
-
+  
   return (
     <div
-      className={`relative w-full aspect-[151/244] rounded-[15px] p-1 flex flex-col transition-all duration-500 ease-out transform-gpu ${
+      className={`relative w-full h-[280px] rounded-[20px] p-2 flex flex-col transition-all duration-500 ease-out transform-gpu ${
         isVisible ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-3"
-      } snap-start cursor-pointer`}
-      style={{
-        background: "linear-gradient(150deg, #f3f3f3 0%, #eee 100%)",
-        transitionDelay: `${index * 60}ms`,
-      }}
+      } snap-start cursor-pointer bg-white shadow-sm border border-gray-100`}
       onClick={onClick}
     >
       {/* Image Container */}
-      <div className="relative w-full aspect-square rounded-[15px] overflow-hidden bg-white mx-auto mt-[1px] shrink-0">
+      <div className="relative w-full aspect-square rounded-[15px] overflow-hidden bg-gray-50 mx-auto shrink-0">
         <Link href={`/item/${item.id}`} className="block w-full h-full" aria-label="Открыть товар">
           {item.image.endsWith(".mp4") ? (
             <LazyVideo src={item.image} className="w-full h-full object-cover" />
@@ -120,50 +101,45 @@ export function ProductCard({ item, index, isVisible, onClick, showBadge, showCa
       </div>
 
       {/* Content */}
-      <div className="flex flex-col px-1 w-full grow">
-        {/* Status */}
-        <div className="w-full text-right text-[9px] font-semibold text-[#8A8A8A] mt-[12px] font-[family-name:var(--font-family)]">
-          В наличии
-        </div>
-
+      <div className="flex flex-col w-full grow pt-2">
         {/* Title */}
-        <div className="w-full text-left text-[10px] font-semibold text-[#222222] mt-[6px] pl-[2px] font-[family-name:var(--font-family)] leading-tight line-clamp-2">
+        <div className="w-full text-left text-[11px] font-bold text-[#222222] font-[family-name:var(--font-family)] leading-tight line-clamp-2 min-h-[28px]">
           {item.title}
         </div>
 
-        {/* Price/Volume & Cart Button */}
-        <div className={`w-full mt-auto pl-[2px] pr-[4px] pb-3 flex items-end justify-between gap-2 font-[family-name:var(--font-family)]`}>
-           {/* Controls (Left) */}
-           {showCartButton && (
-               <div className="flex items-center gap-1 bg-[#F5F5F5] rounded-full p-[2px]">
-                 <button 
-                   onClick={handleDecrement}
-                   disabled={qty === 0}
-                   className={`w-[22px] h-[22px] rounded-full bg-white shadow-sm flex items-center justify-center active:scale-90 transition-transform text-[#222222] font-medium ${qty === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
-                   aria-label="Уменьшить"
-                 >
-                   -
-                 </button>
-                 <span className="text-[12px] font-bold min-w-[14px] text-center">{qty}</span>
-                 <button 
-                   onClick={handleIncrement}
-                   className="w-[22px] h-[22px] rounded-full bg-[#267A2D] flex items-center justify-center active:scale-90 transition-transform text-white font-medium"
-                   aria-label="Увеличить"
-                 >
-                   +
-                 </button>
+        {/* Price Section */}
+        <div className="mt-1 flex flex-col items-start">
+           {/* Old Price */}
+           {(isDiscounted || item.id === 6 || item.id === 2) && (
+               <div className="text-[10px] text-[#8A8A8A] line-through font-[family-name:var(--font-family)]">
+                   {item.id === 6 ? "6000 РУБ" : item.id === 2 ? "32 000 р." : ""}
                </div>
            )}
-
-           {/* Price (Right) */}
-           <div className={`text-right ${!showCartButton ? "ml-auto" : ""}`}>
-               <span className={`${showCartButton ? "text-[13px]" : "text-[10px]"} font-extrabold text-[#222222]`}>
-                 {isDiscounted ? (item.id === 6 ? "4200руб" : item.id === 2 ? "24 000 р." : priceParts.main) : priceParts.main}
-               </span>
-               {priceParts.sub && (
-                 <span className={`${showCartButton ? "text-[13px]" : "text-[10px]"} font-extrabold text-[#7b7b7b]`}>/{priceParts.sub}</span>
-               )}
+           {/* New Price */}
+           <div className="text-[13px] font-extrabold text-[#222222] font-[family-name:var(--font-family)]">
+               {isDiscounted ? (item.id === 6 ? "4200руб" : item.id === 2 ? "24 000 р." : priceParts.main) : priceParts.main}
            </div>
+        </div>
+
+        {/* Quantity Controls */}
+        <div className="mt-auto w-full flex items-center justify-between gap-2">
+           <button 
+             onClick={handleMinus}
+             className="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center shadow-sm active:scale-90 transition-transform text-[#222222] pb-1"
+             aria-label="Уменьшить"
+           >
+             -
+           </button>
+           <span className="text-[14px] font-semibold text-[#222222] min-w-[20px] text-center">
+             {quantity}
+           </span>
+           <button 
+             onClick={handlePlus}
+             className="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center shadow-sm active:scale-90 transition-transform text-[#222222] pb-1"
+             aria-label="Увеличить"
+           >
+             +
+           </button>
         </div>
       </div>
     </div>

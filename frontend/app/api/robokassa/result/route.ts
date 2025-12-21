@@ -138,6 +138,17 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
                         }
                     }
 
+                    // Fallback to summary if still empty
+                    if (standardizedItems.length === 0 && payload.summary) {
+                         standardizedItems = [{
+                             id: 0,
+                             name: payload.summary,
+                             quantity: 1,
+                             price: Number(outSum),
+                             sum: Number(outSum)
+                         }]
+                    }
+
                     // Restore customer info if missing in payload
                     if (!payload.name) payload.name = orderData.customer_info?.name || ''
                     if (!payload.phone) payload.phone = orderData.customer_info?.phone || ''
@@ -475,6 +486,7 @@ export async function GET(req: Request) {
     ref: params.get('Shp_ref') || '',
     client: params.get('Shp_client') || '',
     username: params.get('Shp_username') || '',
+    summary: params.get('Shp_summary') || '',
   }
   await processOrder(invId, outSum, payload)
   return ack(invId)
@@ -533,6 +545,7 @@ export async function POST(req: Request) {
         ref: params.get('Shp_ref') || '',
         client: params.get('Shp_client') || '',
         username: params.get('Shp_username') || '',
+        summary: params.get('Shp_summary') || '',
     }
 
     await processOrder(invId, outSum, payload)

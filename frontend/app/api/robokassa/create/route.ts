@@ -188,6 +188,12 @@ export async function POST(req: Request) {
     Shp_username: sanitizeText(body.customerInfo?.username || '')
   }
 
+  // Add Shp_summary with product names as a fallback for notification
+  if (body.items && body.items.length > 0) {
+      const summary = body.items.map(it => `${it.name || 'Товар'} (x${it.quantity || 1})`).join(', ')
+      shp.Shp_summary = sanitizeText(summary).substring(0, 500) // Limit length just in case
+  }
+
   if (body.items && body.items.length > 0) {
     try {
       const receiptItems = body.items.map((it: ReceiptItemInput) => ({
