@@ -15,8 +15,8 @@ export default function Garland() {
     // Setup canvas size
     const updateSize = () => {
       canvas.width = window.innerWidth
-      // Height can be adjusted. Original was 200, we use 150 to be less intrusive
-      canvas.height = 160 
+      // Height increased to 130 to allow full glow and wave without cutting off
+      canvas.height = 130 
     }
     updateSize()
     window.addEventListener('resize', updateSize)
@@ -96,8 +96,8 @@ export default function Garland() {
         
         for(let i = 0; i < lightCount; i++) {
             const x = spacing * (i + 1)
-            // Sine wave position
-            const y = canvas.height / 3 + Math.sin(i * 0.5) * 20
+            // Sine wave position - restored amplitude to 20 for better look, base at 30 to stay high
+            const y = 30 + Math.sin(i * 0.5) * 20
             const color = colors[i % colors.length]
             const speed = 0.05 + Math.random() * 0.03
             lights.push(new Light(x, y, 12, color, speed))
@@ -160,7 +160,7 @@ export default function Garland() {
   }, [])
 
   return (
-    <div className="fixed top-0 left-0 w-full pointer-events-none z-40" style={{ height: '160px' }}>
+    <div className="fixed top-0 left-0 w-full pointer-events-none z-40" style={{ height: '130px' }}>
       <canvas 
         ref={canvasRef} 
         className="w-full h-full pointer-events-auto"
