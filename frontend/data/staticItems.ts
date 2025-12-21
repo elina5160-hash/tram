@@ -13,7 +13,7 @@ export const staticItems = [
   { id: 15, title: "Полезный энергетик", price: "750 руб / 1л", image: "/нг.png" },
   { id: 16, title: "Энзимный напиток Рислинг", price: "800 руб.", image: "/рислинг1.png" },
   { id: 17, title: "Энзимный напиток Апельсин", price: "800 руб.", image: "/Etra PROMO ORANGE-2.mp4" },
-  { id: 18, title: "Антипаразитарные пребиотики ПАРАЗИТОФФ", price: "750 руб.", image: "/PARAZITOFF 1500x2667 9-16 PROMO-4_1.mp4" },
+  { id: 18, title: "Антипаразитарные пребиотики ПАРАЗИТОФФ", price: "750 руб.", image: "/параз.jpg" },
   { id: 19, title: "Каша ЭТРАсУТРА", price: "750 руб / 200гр", image: "/каша.jpg" },
   { id: 20, title: "НАБОР СЕМЕЙНЫЙ", price: "4 200 руб.", image: "/семейный.jpg" },
   { id: 21, title: "Набор для бани", price: "4 200 руб.", image: "/баня.PNG" },
