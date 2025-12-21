@@ -118,19 +118,32 @@ export async function POST(req: Request) {
 
   // Send Telegram notification about order attempt
   try {
+      // Calculate tickets
+      const tickets = Math.floor(outSum / 1000);
+      let ticketsText = `Начислено билетов: ${tickets}`;
+      if (tickets > 0) {
+          ticketsText += `\n(1000р - 1 билет, 2000р - 2 билета и т.д.)`;
+      } else {
+          ticketsText += ` (ожидает оплаты)`;
+      }
+
       const msg = [
           `🆕 НОВЫЙ ЗАКАЗ (Ожидает оплаты)`,
           `📦 Заказ #${invId}`,
           `💰 Сумма: ${outSum} руб.`,
           ``,
           `👤 Клиент: ${body.customerInfo?.name || 'Не указано'}`,
+          `🆔 ID клиента: ${body.customerInfo?.client_id || 'Не указано'}`,
           `📞 Телефон: ${body.customerInfo?.phone || 'Не указано'}`,
           `📧 Email: ${email || 'Не указано'}`,
           `📍 Адрес: ${body.customerInfo?.address || body.customerInfo?.cdek || 'Не указано'}`,
           `🎟 Промокод: ${body.promoCode || 'Нет'}`,
           ``,
           `🛒 Товары:`,
-          itemsText
+          itemsText,
+          ``,
+          `🎁 Конкурс:`,
+          ticketsText
       ].join('\n');
 
       await sendTelegramMessage(msg);
