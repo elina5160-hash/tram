@@ -125,17 +125,17 @@ export function ProductCard({ item, index, isVisible, onClick, showBadge, showCa
         <div className="mt-auto w-full flex items-center justify-between gap-2">
            <button 
              onClick={handleMinus}
-             className="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center shadow-sm active:scale-90 transition-transform text-[#222222] pb-1"
+             className="w-8 h-8 shrink-0 rounded-full bg-white border border-gray-200 flex items-center justify-center shadow-sm active:scale-90 transition-transform text-[#222222] pb-1"
              aria-label="Уменьшить"
            >
              -
            </button>
-           <span className="text-[14px] font-semibold text-[#222222] min-w-[20px] text-center">
+           <span className="text-[14px] font-semibold text-[#222222] min-w-[20px] text-center shrink-0">
              {quantity}
            </span>
            <button 
              onClick={handlePlus}
-             className="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center shadow-sm active:scale-90 transition-transform text-[#222222] pb-1"
+             className="w-8 h-8 shrink-0 rounded-full bg-white border border-gray-200 flex items-center justify-center shadow-sm active:scale-90 transition-transform text-[#222222] pb-1"
              aria-label="Увеличить"
            >
              +
