@@ -276,11 +276,8 @@ function CartContent() {
           <button
             aria-label="Очистить корзину"
             onClick={() => {
-              if (confirm("Очистить корзину?")) {
-                clearCart()
-                setItems([])
-                router.push("/home")
-              }
+              clearCart()
+              setItems([])
             }}
             className="w-10 h-10 rounded-[12px] bg-white border border-gray-300 flex items-center justify-center"
           >

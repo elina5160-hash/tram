@@ -10,7 +10,7 @@ export const staticItems = [
   { id: 12, title: "Энзимный напиток Детский", price: "750 руб.", image: "/Etra PROMO strz Detskii.mp4" },
   { id: 13, title: "Энзимный напиток Хмель", price: "900 руб / 1л", image: "/хмель1.png" },
   { id: 14, title: "Энзимный напиток Розлинг", price: "800 руб / 1л", image: "/розлинг1.jpg" },
-  { id: 15, title: "Полезный энергетик", price: "750 руб / 1л", image: "/нг.png" },
+  { id: 15, title: "Полезный энергетик", price: "750 руб / 1л", image: "/энергетик.jpg" },
   { id: 16, title: "Энзимный напиток Рислинг", price: "800 руб.", image: "/рислинг1.png" },
   { id: 17, title: "Энзимный напиток Апельсин", price: "800 руб.", image: "/Etra PROMO ORANGE-2.mp4" },
   { id: 18, title: "Антипаразитарные пребиотики ПАРАЗИТОФФ", price: "750 руб.", image: "/параз.jpg" },
