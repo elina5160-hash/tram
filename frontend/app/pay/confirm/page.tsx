@@ -5,11 +5,11 @@ import BackButton from "@/components/ui/back-button"
 import BottomBanner from "@/components/ui/bottom-banner"
 import { HoverButton } from "@/components/ui/hover-button"
 import { getCart, clearCart } from "@/lib/cart"
-import products from "@/data/products.json"
 import { getPriceValue } from "@/lib/price"
 import { getSupabaseClient } from "@/lib/supabase"
+import { useProducts } from "@/hooks/useProducts"
+import { staticItems } from "@/data/staticItems"
 
-type ProductShort = { id: number; price?: string }
 type ParsedItem = { name?: string; sum?: number; quantity?: number }
 type TelegramWindow = { Telegram?: { WebApp?: { openLink?: (url: string) => void } } }
 
@@ -25,6 +25,34 @@ function ConfirmContent() {
   const [statusText, setStatusText] = useState("")
 
   const items = useMemo(() => getCart(), [])
+  
+  const { products: fetchedProducts, isLoading: isProductsLoading } = useProducts()
+
+  const catalog = useMemo(() => {
+    if (fetchedProducts && fetchedProducts.length > 0) {
+      const fetchedIds = new Set(fetchedProducts.map((p: any) => p.id))
+      const missingStatic = staticItems.filter((s) => !fetchedIds.has(s.id))
+      return [...fetchedProducts, ...missingStatic]
+    }
+    // Only fallback to static items if we are NOT loading and have no products
+    // or if we just want to show something immediately (static items are usually safe)
+    return staticItems
+  }, [fetchedProducts, isProductsLoading])
+
+  const priceMap = useMemo(() => {
+    const m: Record<number, number> = {}
+    catalog.forEach((c: any) => {
+        let p = 0
+        if (typeof c.price === 'number') {
+            p = c.price
+        } else {
+            p = getPriceValue(c.price)
+        }
+        m[c.id] = p
+    })
+    return m
+  }, [catalog])
+
   const parsed = useMemo(() => {
     try {
       if (!payUrl) return { items: [], out: 0 }
@@ -39,48 +67,8 @@ function ConfirmContent() {
       return { items: [], out: 0 }
     }
   }, [payUrl])
-  const catalogPrices: Record<number, number> = {
-    1: 3000,
-    2: 24000,
-    3: 2400,
-    4: 1200,
-    6: 4200,
-    7: 53000,
-    8: 950,
-    9: 16000,
-    10: 0,
-    11: 750,
-    12: 750,
-    13: 900,
-    1013: 490,
-    14: 800,
-    1014: 490,
-    15: 750,
-    1015: 490,
-    16: 800,
-    17: 800,
-    18: 750,
-    19: 750,
-    1019: 6300,
-    20: 4200,
-    21: 4200,
-    22: 750,
-    999: 5,
-  }
 
-  try {
-    const priceFromProducts: Record<number, number> = {}
-    ;(products as unknown as ProductShort[]).forEach((p) => {
-      const v = getPriceValue(p.price || "")
-      if (typeof p.id === "number" && v > 0) priceFromProducts[p.id] = v
-    })
-    Object.keys(priceFromProducts).forEach((k) => {
-      const id = Number(k)
-      if (!catalogPrices[id]) catalogPrices[id] = priceFromProducts[id]
-    })
-  } catch {}
-
-  const total = items.reduce((sum, it) => sum + (catalogPrices[Number(it.id)] || 0) * (it.qty || 1), 0)
+  const total = items.reduce((sum, it) => sum + (priceMap[Number(it.id)] || 0) * (it.qty || 1), 0)
   const totalParsed = parsed.items.reduce((s: number, it: ParsedItem) => s + Number(it.sum || 0), 0) || parsed.out
 
   useEffect(() => {
@@ -164,7 +152,7 @@ function ConfirmContent() {
             {items.map((it) => (
               <div key={it.id} className="rounded-[12px] border border-gray-200 p-3 flex items-center justify-between">
                 <div className="text-[13px] font-medium truncate" style={{ color: "#000000" }}>{it.title}</div>
-                <div className="text-[12px]" style={{ color: "#000000" }}>{(catalogPrices[Number(it.id)] || 0).toLocaleString("ru-RU")} × {it.qty}</div>
+                <div className="text-[12px]" style={{ color: "#000000" }}>{(priceMap[Number(it.id)] || 0).toLocaleString("ru-RU")} руб. × {it.qty}</div>
               </div>
             ))}
             <div className="rounded-[12px] border border-gray-200 p-3 flex items-center justify-between">

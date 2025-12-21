@@ -13,6 +13,13 @@ export function splitPrice(s: string | number) {
     return { main: s.toLocaleString('ru-RU') + ' руб.', sub: '' }
   }
   if (!s) return { main: "", sub: "" }
+  
+  // If string contains only digits (and maybe whitespace), parse it and add руб.
+  if (/^[\d\s]+$/.test(String(s))) {
+      const val = parseInt(String(s).replace(/\s/g, ''), 10)
+      return { main: val.toLocaleString('ru-RU') + ' руб.', sub: '' }
+  }
+
   const str = String(s)
   const m = str.match(/^(.*?руб\.?)/i)
   if (m) {
