@@ -1,6 +1,6 @@
 export const staticItems = [
   { id: 1, title: "Закваска ПРАЭнзим", price: "3 000 руб / 1л", image: "/1500x2000 3-4 Zakvaska.mp4" },
-  { id: 2, title: "АКЦИЯ ДВА КУРСА смены микробиома", price: "24 000 руб", image: "/1.jpg" },
+  { id: 2, title: "АКЦИЯ ДВА КУРСА смены микробиома", price: "24 000 руб", image: "/курс.jpg" },
   { id: 3, title: "Чистое утро", price: "2400 руб / 2 л + 100гр", image: "/чистоеутро.jpg" },
   { id: 4, title: "БифидумФаната", price: "1 200 руб / 1л", image: "/fanata.png" },
   { id: 6, title: "Набор СЕЗОННЫЙ", price: "4 200 руб / 6л", image: "/сезонный.jpg" },
