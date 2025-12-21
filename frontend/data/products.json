@@ -128,9 +128,9 @@
   },
   {
     "id": 22,
-    "title": "Супер Квас",
+    "title": "Энзимный напиток «Супер Квас»",
     "price": "750 руб.",
-    "image": "/квас.jpg",
+    "image": "/kvas.jpg",
     "category": "drinks"
   }
 ]

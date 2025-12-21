@@ -27,7 +27,7 @@ function saveProductsToJson(products: any[]) {
 }
 
 export async function GET() {
-  const supabase = getSupabaseClient();
+  const supabase = getServiceSupabaseClient();
   
   // 1. Try Supabase
   if (supabase) {

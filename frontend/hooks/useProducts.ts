@@ -1,6 +1,6 @@
 import useSWR, { mutate } from 'swr';
 
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
+const fetcher = (url: string) => fetch(url, { headers: { 'Cache-Control': 'no-cache' } }).then((res) => res.json());
 
 export function useProducts() {
   const { data, error, isLoading } = useSWR('/api/products', fetcher, {

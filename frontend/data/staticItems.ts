@@ -17,7 +17,7 @@ export const staticItems = [
   { id: 19, title: "Каша ЭТРАсУТРА", price: "750 руб / 200гр", image: "/porridge.jpg" },
   { id: 20, title: "НАБОР СЕМЕЙНЫЙ", price: "4 200 руб.", image: "/family-set.jpg" },
   { id: 21, title: "Набор для бани", price: "4 200 руб.", image: "/bath-set.jpg" },
-  { id: 22, title: "Супер Квас", price: "750 руб.", image: "/kvas.jpg" },
+  { id: 22, title: "Энзимный напиток «Супер Квас»", price: "750 руб.", image: "/kvas.jpg" },
   // Hidden variants for cart calculation
   { id: 7001, title: "Бак для приготовления энзимных напитков — КТО ГОТОВИТ САМ", price: "42 000 руб", image: "/2.png" },
   { id: 7002, title: "Бак для приготовления энзимных напитков — ОСНОВНОЙ", price: "55 000 руб", image: "/2.png" },
