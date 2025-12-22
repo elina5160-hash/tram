@@ -23,10 +23,34 @@ function ConfirmContent() {
   const signatureSuccess = params.get("SignatureValue") || ""
   const [isPaid, setIsPaid] = useState(false)
   const [statusText, setStatusText] = useState("")
+  const [orderData, setOrderData] = useState<any>(null)
 
   const items = useMemo(() => getCart(), [])
   
   const { products: fetchedProducts, isLoading: isProductsLoading } = useProducts()
+
+  // Fetch order data immediately
+  useEffect(() => {
+    if (!invId) return
+    const fetchOrder = async () => {
+        try {
+            const client = getSupabaseClient()
+            if (!client) return
+            const { data } = await client
+                .from('orders')
+                .select('*')
+                .eq('id', Number(invId))
+                .single()
+            
+            if (data) {
+                setOrderData(data)
+            }
+        } catch (e) {
+            console.error("Failed to fetch order", e)
+        }
+    }
+    fetchOrder()
+  }, [invId])
 
   const catalog = useMemo(() => {
     if (fetchedProducts && fetchedProducts.length > 0) {
@@ -70,6 +94,28 @@ function ConfirmContent() {
 
   const total = items.reduce((sum, it) => sum + (priceMap[Number(it.id)] || 0) * (it.qty || 1), 0)
   const totalParsed = parsed.items.reduce((s: number, it: ParsedItem) => s + Number(it.sum || 0), 0) || parsed.out
+
+  // Derived from orderData if available
+  const displayItems = useMemo(() => {
+    if (orderData?.items && Array.isArray(orderData.items)) {
+        return orderData.items.map((it: any) => ({
+            id: it.id || 0, // might be missing in invoice items
+            title: it.name,
+            qty: it.quantity,
+            price: it.cost
+        }))
+    }
+    return items.map(it => ({
+        id: it.id,
+        title: it.title,
+        qty: it.qty,
+        price: priceMap[Number(it.id)] || 0
+    }))
+  }, [orderData, items, priceMap])
+
+  const displayTotal = orderData ? Number(orderData.total_amount) : total
+  const displayDiscount = orderData?.customer_info?.discount_amount ? Number(orderData.customer_info.discount_amount) : 0
+  const displaySubtotal = orderData ? displayTotal + displayDiscount : total
 
   useEffect(() => {
     const hasSuccessParams = !!(outSumSuccess && invIdSuccess && signatureSuccess)
@@ -145,19 +191,27 @@ function ConfirmContent() {
         <h1 className="text-xl font-bold mb-4">Подтверждение заказа</h1>
         <div className="mt-2 text-[13px] text-[#232323]">№ {invId || "—"}</div>
 
-        {items.length === 0 && parsed.items.length === 0 ? (
+        {items.length === 0 && parsed.items.length === 0 && !orderData ? (
           <div className="mt-6 text-[14px]">Ваша корзина пуста.</div>
-        ) : items.length > 0 ? (
+        ) : displayItems.length > 0 ? (
           <div className="mt-4 space-y-3">
-            {items.map((it) => (
-              <div key={it.id} className="rounded-[12px] border border-gray-200 p-3 flex items-center justify-between">
+            {displayItems.map((it: any, idx: number) => (
+              <div key={it.id || idx} className="rounded-[12px] border border-gray-200 p-3 flex items-center justify-between">
                 <div className="text-[13px] font-medium truncate" style={{ color: "#000000" }}>{it.title}</div>
-                <div className="text-[12px]" style={{ color: "#000000" }}>{(priceMap[Number(it.id)] || 0).toLocaleString("ru-RU")} руб. × {it.qty}</div>
+                <div className="text-[12px]" style={{ color: "#000000" }}>{it.price.toLocaleString("ru-RU")} руб. × {it.qty}</div>
               </div>
             ))}
+            
+            {displayDiscount > 0 && (
+                <div className="rounded-[12px] border border-gray-200 p-3 flex items-center justify-between text-green-600">
+                    <span className="text-[13px] font-medium">Скидка</span>
+                    <span className="text-[13px] font-medium">-{displayDiscount.toLocaleString("ru-RU")} руб.</span>
+                </div>
+            )}
+
             <div className="rounded-[12px] border border-gray-200 p-3 flex items-center justify-between">
               <span className="text-[13px] font-semibold" style={{ color: "#000000" }}>Итого</span>
-              <span className="text-[13px] font-semibold" style={{ color: "#000000" }}>{total.toLocaleString("ru-RU")} руб.</span>
+              <span className="text-[13px] font-semibold" style={{ color: "#000000" }}>{displayTotal.toLocaleString("ru-RU")} руб.</span>
             </div>
           </div>
         ) : (
