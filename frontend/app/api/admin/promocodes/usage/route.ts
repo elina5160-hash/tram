@@ -14,6 +14,7 @@ export async function GET() {
         .select('*')
         .not('promo_code', 'is', null)
         .neq('promo_code', '')
+        .in('status', ['paid', 'Оплачен', 'completed'])
         .order('created_at', { ascending: false })
 
     if (error) {

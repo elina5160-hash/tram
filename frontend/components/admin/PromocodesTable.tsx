@@ -5,6 +5,7 @@ export function PromocodesTable() {
     const [orders, setOrders] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
     const [dateFilter, setDateFilter] = useState("")
+    const [searchQuery, setSearchQuery] = useState("")
 
     useEffect(() => {
         fetch('/api/admin/promocodes/usage')
@@ -17,9 +18,24 @@ export function PromocodesTable() {
     }, [])
 
     const filtered = orders.filter(o => {
-        if (!dateFilter) return true
-        const d = new Date(o.created_at || o.updated_at).toISOString().split('T')[0]
-        return d === dateFilter
+        let matches = true
+        
+        if (dateFilter) {
+            const d = new Date(o.created_at || o.updated_at).toISOString().split('T')[0]
+            if (d !== dateFilter) matches = false
+        }
+
+        if (matches && searchQuery) {
+            const q = searchQuery.toLowerCase()
+            const idMatch = String(o.id).toLowerCase().includes(q)
+            const nameMatch = o.customer_info?.name?.toLowerCase().includes(q)
+            const usernameMatch = o.customer_info?.username?.toLowerCase().includes(q)
+            const userIdMatch = String(o.customer_info?.user_id || "").toLowerCase().includes(q)
+            
+            if (!idMatch && !nameMatch && !usernameMatch && !userIdMatch) matches = false
+        }
+
+        return matches
     })
 
     const exportCSV = () => {
@@ -66,6 +82,17 @@ export function PromocodesTable() {
                             Сбросить
                         </button>
                     )}
+                    
+                    <div className="h-6 w-px bg-gray-300 mx-2" />
+                    
+                    <label className="text-sm font-medium">Поиск:</label>
+                    <input 
+                        type="text" 
+                        placeholder="ID, имя или ник"
+                        value={searchQuery}
+                        onChange={e => setSearchQuery(e.target.value)}
+                        className="border rounded p-1 w-48"
+                    />
                 </div>
                 <button 
                     onClick={exportCSV}
