@@ -323,10 +323,45 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
           [promo, ref].filter(Boolean).length ? `\n${[promo, ref].filter(Boolean).join('\n')}` : '',
         ].filter(Boolean).join('\n')
         
-        // Calculate tickets
+        // Calculate tickets (Cumulative Logic)
         let ticketsEarned = 0
+        let totalSpent = Number(outSum)
+        let shortForNext = 0
+        
         if (payload.client) {
-             ticketsEarned = Math.floor(Number(outSum) / 1000)
+             if (client) {
+                 try {
+                     // Fetch past paid orders to calculate cumulative spend
+                     // We use customer_info->>client_id to identify the user's orders
+                     const { data: pastOrders } = await client
+                        .from('orders')
+                        .select('total_amount')
+                        .eq('customer_info->>client_id', payload.client)
+                        .neq('id', invId) // Exclude current if somehow present
+                        .in('status', ['paid', 'Оплачен'])
+                     
+                     const pastSpent = pastOrders?.reduce((sum, o) => sum + (Number(o.total_amount) || 0), 0) || 0
+                     const cumulativeSpent = pastSpent + Number(outSum)
+                     
+                     const totalTicketsFromSpend = Math.floor(cumulativeSpent / 1000)
+                     const pastTicketsFromSpend = Math.floor(pastSpent / 1000)
+                     
+                     ticketsEarned = Math.max(0, totalTicketsFromSpend - pastTicketsFromSpend)
+                     totalSpent = cumulativeSpent
+                     shortForNext = 1000 - (cumulativeSpent % 1000)
+                     
+                     console.log(`Cumulative Spend: ${cumulativeSpent} (Past: ${pastSpent} + Curr: ${outSum}). Tickets: ${ticketsEarned}`)
+                 } catch (e) {
+                     console.error("Error calculating cumulative tickets:", e)
+                     // Fallback to simple logic if DB fails
+                     ticketsEarned = Math.floor(Number(outSum) / 1000)
+                     shortForNext = 1000 - (Number(outSum) % 1000)
+                 }
+             } else {
+                 // Fallback if no client available
+                 ticketsEarned = Math.floor(Number(outSum) / 1000)
+                 shortForNext = 1000 - (Number(outSum) % 1000)
+             }
         }
 
         // Send formatted notification to specific channel
@@ -334,17 +369,17 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
         const notificationText = [
             `📦 ${productNames} #${invId}`,
             `💰 Сумма: ${Number(outSum).toLocaleString('ru-RU')} руб.`,
+            `💳 Общая сумма покупок: ${totalSpent.toLocaleString('ru-RU')} руб.`,
             `👤 Клиент: ${payload.name || 'Не указано'}`,
             `🆔 ID клиента: ${payload.client || 'Не указано'}`,
             `📧 Email: ${payload.email || 'Не указано'}`,
             `📍 Адрес: ${payload.address || payload.cdek || 'Не указано'}`,
             ``,
             `🎁 Конкурс:`,
-            `Начислено билетов: ${ticketsEarned}`,
-            `1000р -1 билет`,
-            `2000р - 2 билета`,
-            `3000р -3 билета`,
-            `4000р - 4 билета`
+            `Начислено билетов за этот заказ: ${ticketsEarned}`,
+            `Всего билетов за покупки: ${Math.floor(totalSpent / 1000)}`,
+            `До следующего билета: ${shortForNext} руб.`,
+            `1000р = 1 билет (накопительно)`
         ].join('\n')
 
         await sendTelegramMessage(notificationText, '-1003590157576', undefined)
