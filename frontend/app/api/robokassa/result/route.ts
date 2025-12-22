@@ -450,15 +450,15 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
                     const kb6 = { inline_keyboard: [ [{ text: '🛒 Купить ещё', url: 'https://tram-navy.vercel.app/home' }] ] }
                     await sendTelegramMessage(msg6, String(refereeId), kb6)
                 } else {
-                    // Scenario 11: Purchase < 1000
-                    const short = 1000 - Number(outSum)
+                    // Scenario 11: Purchase < 1000 (or not enough cumulative for new ticket)
                     const msg11 = `Спасибо за покупку!
 Сумма: ${Number(outSum)} руб
+Общая сумма покупок: ${totalSpent} руб
 
-До билета не хватило: ${short} руб
-Купи еще на ${short} руб, чтобы получить билет!
+До билета не хватило: ${shortForNext} руб
+Купи еще на ${shortForNext} руб, чтобы получить билет!
 
-Билеты начисляются за каждые 1000 руб в чеке.`
+Билеты начисляются за каждые 1000 руб суммарных покупок.`
                     
                     const kb11 = { inline_keyboard: [ [{ text: '🛒 Купить ещё', url: 'https://tram-navy.vercel.app/home' }] ] }
                     await sendTelegramMessage(msg11, String(refereeId), kb11)
