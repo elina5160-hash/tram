@@ -54,18 +54,27 @@ export default function UserOrdersPage() {
   }, [fetchedProducts])
 
   useEffect(() => {
-    // 1. Try Telegram WebApp
-    if (typeof window !== "undefined") {
-        const tg = (window as any).Telegram?.WebApp
-        if (tg?.initDataUnsafe?.user?.id) {
+    // Check for Telegram WebApp
+    if (typeof window !== 'undefined' && (window as any).Telegram?.WebApp) {
+        const tg = (window as any).Telegram.WebApp
+        if (tg.initDataUnsafe?.user?.id) {
             setClientId(String(tg.initDataUnsafe.user.id))
-            return
+        }
+        
+        // Show native back button
+        tg.BackButton.show()
+        const handleBack = () => router.push("/home")
+        tg.BackButton.onClick(handleBack)
+
+        return () => {
+            tg.BackButton.offClick(handleBack)
+            tg.BackButton.hide()
         }
     }
-    // 2. Try LocalStorage
-    const stored = window.localStorage.getItem("user_id")
-    if (stored) {
-        setClientId(stored)
+    // Fallback for dev/browser
+    const searchParams = new URLSearchParams(window.location.search)
+    if (searchParams.get('profile')) {
+        setClientId(searchParams.get('profile'))
     }
   }, [])
 
