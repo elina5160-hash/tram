@@ -156,6 +156,15 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
                 }
                 
                 if (orderData) {
+                    // Ensure customer_info is an object (handle if stored as string in DB)
+                    if (typeof orderData.customer_info === 'string') {
+                        try {
+                            orderData.customer_info = JSON.parse(orderData.customer_info)
+                        } catch (e) {
+                            console.error("Failed to parse customer_info JSON", e)
+                        }
+                    }
+
                     // Always prefer items from backup if available, as they are more reliable/detailed than Shp_items
                     if (orderData.customer_info?.items_backup && Array.isArray(orderData.customer_info.items_backup)) {
                         const backup = orderData.customer_info.items_backup
