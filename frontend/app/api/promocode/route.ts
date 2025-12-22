@@ -9,6 +9,18 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Code is required" }, { status: 400 })
     }
 
+    const upperCode = code.toUpperCase();
+
+    // Temporary hardcode for START10 until migration is run
+    if (upperCode === 'START10') {
+        return NextResponse.json({ 
+            valid: true, 
+            type: 'percent', 
+            value: 10,
+            partner_name: 'General'
+        })
+    }
+
     const client = getSupabaseClient()
     if (!client) {
         // Fallback if Supabase is not configured yet (should not happen in prod)
@@ -18,7 +30,7 @@ export async function POST(req: Request) {
     const { data, error } = await client
       .from('promo_codes')
       .select('*')
-      .eq('code', code.toUpperCase())
+      .eq('code', upperCode)
       .eq('is_active', true)
       .single()
 

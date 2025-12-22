@@ -23,6 +23,7 @@ export async function POST(req: Request) {
     email?: string
     customerInfo?: unknown
     promoCode?: string
+    discountAmount?: number
     refCode?: string
     invoiceItems?: { name: string; quantity: number; cost: number; tax?: string; paymentMethod?: string; paymentObject?: string }[]
     invId?: number
@@ -54,7 +55,7 @@ export async function POST(req: Request) {
       id: invId,
       total_amount: outSum,
       items: body.invoiceItems || [],
-      customer_info: body.customerInfo || { email: body.email },
+      customer_info: { ...(body.customerInfo as object || { email: body.email }), discount_amount: body.discountAmount || 0 },
       promo_code: body.promoCode,
       ref_code: body.refCode,
       status: 'pending',

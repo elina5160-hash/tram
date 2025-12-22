@@ -6,13 +6,14 @@ import { ProductForm } from "@/components/admin/ProductForm"
 import { BottomBannerEditor } from "./BottomBannerEditor"
 import { ContestTable } from "./ContestTable"
 import { OrdersTable } from "./OrdersTable"
+import { PromocodesTable } from "./PromocodesTable"
 import { useProducts } from "@/hooks/useProducts"
 
 interface AdminPanelProps {
   onClose: () => void
 }
 
-type Tab = 'products' | 'bottom-banner' | 'contest' | 'orders'
+type Tab = 'products' | 'bottom-banner' | 'contest' | 'orders' | 'promocodes'
 
 export function AdminPanel({ onClose }: AdminPanelProps) {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -115,6 +116,14 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
                     }`}
                 >
                     Заказы
+                </button>
+                <button
+                    onClick={() => handleTabChange('promocodes')}
+                    className={`whitespace-nowrap px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                        activeTab === 'promocodes' ? 'bg-gray-900 text-white shadow' : 'bg-gray-100 text-gray-500 hover:text-gray-700'
+                    }`}
+                >
+                    Промокоды
                 </button>
             </div>
           </div>
@@ -223,6 +232,8 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
             <ContestTable />
         ) : activeTab === 'orders' ? (
             <OrdersTable />
+        ) : activeTab === 'promocodes' ? (
+            <PromocodesTable />
         ) : (
             <BottomBannerEditor onBack={() => { setActiveTab('products'); setMode('initial') }} />
         )}

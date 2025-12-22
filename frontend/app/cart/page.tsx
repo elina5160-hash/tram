@@ -559,6 +559,7 @@ function CartContent() {
                             order_time: new Date().toISOString()
                           },
                           promoCode,
+                          discountAmount,
                           refCode,
                           items: itemsForCreate,
                           invId

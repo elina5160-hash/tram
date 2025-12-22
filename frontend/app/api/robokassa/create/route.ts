@@ -36,6 +36,7 @@ export async function POST(req: Request) {
     email?: string
     customerInfo?: any
     promoCode?: string
+    discountAmount?: number
     refCode?: string
     items?: ReceiptItemInput[]
     invId?: number
@@ -104,7 +105,8 @@ export async function POST(req: Request) {
       items: fullText,
       customer_info: { 
         ...(body.customerInfo || { email }),
-        items_backup: itemsBackup 
+        items_backup: itemsBackup,
+        discount_amount: body.discountAmount || 0
       },
       promo_code: body.promoCode,
       ref_code: body.refCode,
