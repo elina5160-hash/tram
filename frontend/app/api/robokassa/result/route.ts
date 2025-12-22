@@ -235,8 +235,8 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
                         if (totalParsedSum === 0 && Number(outSum) > 0) {
                              const pricePerItem = Number(outSum) / parsedItems.length;
                              parsedItems.forEach(it => {
-                                 it.sum = pricePerItem * it.quantity; // Approximation
-                                 it.price = pricePerItem;
+                                 it.sum = Number(pricePerItem.toFixed(2)); 
+                                 it.price = Number(pricePerItem.toFixed(2));
                              });
                         }
 
@@ -270,8 +270,8 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
                         if (totalParsedSum === 0 && Number(outSum) > 0) {
                              const pricePerItem = Number(outSum) / parsedItems.length;
                              parsedItems.forEach(it => {
-                                 it.sum = pricePerItem * it.quantity; // Approximation
-                                 it.price = pricePerItem;
+                                 it.sum = Number(pricePerItem.toFixed(2));
+                                 it.price = Number(pricePerItem.toFixed(2));
                              });
                         }
 
