@@ -2,7 +2,7 @@
 import { useState, useEffect, Suspense, useMemo } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { addToCart, incrementQty } from "@/lib/cart"
 import { getPriceValue, splitPrice } from "@/lib/price"
 import { useProducts } from "@/hooks/useProducts"
@@ -10,6 +10,7 @@ import { AdminPanel } from "@/components/admin/AdminPanel"
 import { staticItems } from "@/data/staticItems"
 
 import { MenuDrawer } from "@/components/ui/menu-drawer"
+import { ProfileDrawer } from "@/components/ui/profile-drawer"
 import BottomBanner from "@/components/ui/bottom-banner"
 import { ProductCard } from "@/components/ui/product-card"
 
@@ -48,8 +49,17 @@ export default function HomeClient() {
   })
   const [pressedId, setPressedId] = useState<number | null>(null)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [profileOpen, setProfileOpen] = useState(false)
   const [catalogEntered, setCatalogEntered] = useState(false)
   const [clientId, setClientId] = useState<string | null>(null)
+  
+  const searchParams = useSearchParams()
+
+  useEffect(() => {
+    if (searchParams.get('profile')) {
+        setProfileOpen(true)
+    }
+  }, [searchParams])
   type MenuView = "grid" | "delivery" | "payment" | "contacts" | "reviews" | "returns" | "about" | "offer" | "help" | "stores"
   const [menuView, setMenuView] = useState<MenuView>("grid")
   const menuItems: { label: string; key: MenuView }[] = [
@@ -224,6 +234,13 @@ export default function HomeClient() {
         <div className="h-24 w-full" />
       </div>
       <MenuDrawer isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
+      <ProfileDrawer 
+        isOpen={profileOpen} 
+        onClose={() => {
+            setProfileOpen(false)
+            router.replace('/home')
+        }} 
+      />
 
       <BottomBanner />
       {adminOpen && <AdminPanel onClose={() => setAdminOpen(false)} />}

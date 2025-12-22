@@ -9,11 +9,11 @@
     "dev:web": "npm --prefix frontend run dev",
     "dev:bot": "node bot/index.js",
     "dev": "npm --prefix frontend run dev",
-    "build:web": "npm --prefix frontend run build",
+    "build:web": "cd frontend && npm install && npm run build",
     "start:web": "npm --prefix frontend run start",
     "lint:web": "npm --prefix frontend run lint",
     "lint": "npm --prefix frontend run lint",
-    "build": "npm --prefix frontend run build"
+    "build": "cd frontend && npm install && npm run build"
   },
   "engines": {
     "node": ">=18"
