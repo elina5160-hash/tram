@@ -260,15 +260,17 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
             ].join('\n')
 
             // Format: USER ID | USER ID LINK | USERNAME | USERNAME LINK | FIRST NAME | DATA | TOTAL | PRODUCT | PARTNER PROMO | СТАТУС | ТРЕК НОМЕР | Данные для отправки | Коменты | Отправка Трека | CATEGORIES | Деньги за доставку | Проверка | ок | Количество
-            const row = [
+            
+            // Create one row per item
+            const rows = standardizedItems.map(item => [
                 payload.client || '', // USER ID
                 'https://tram-navy.vercel.app/', // USER ID LINK
                 username || '', // USERNAME
                 username ? `https://t.me/${username}` : '', // USERNAME LINK
                 telegramFirstName || payload.name || '', // FIRST NAME (Telegram Name or Form Name)
                 new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' }), // DATA
-                Number(outSum).toLocaleString('ru-RU'), // TOTAL
-                lines.join('\n'), // PRODUCT
+                Number(outSum).toLocaleString('ru-RU'), // TOTAL (Order Total)
+                item.name, // PRODUCT NAME (Specific item)
                 payload.promo || '', // PARTNER PROMO
                 '', // СТАТУС (пусто по запросу)
                 '', // ТРЕК НОМЕР
@@ -279,15 +281,33 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
                 '', // Деньги за доставку
                 '', // Проверка
                 '', // ок
-                totalQuantity // Количество
-            ]
+                item.quantity // QUANTITY (Specific item quantity)
+            ])
+
+            // If no items (should not happen due to fallback), send a summary row
+            if (rows.length === 0) {
+                 rows.push([
+                    payload.client || '', 
+                    'https://tram-navy.vercel.app/', 
+                    username || '', 
+                    username ? `https://t.me/${username}` : '', 
+                    telegramFirstName || payload.name || '', 
+                    new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' }), 
+                    Number(outSum).toLocaleString('ru-RU'), 
+                    payload.summary || 'Заказ', 
+                    payload.promo || '', 
+                    '', '', shippingData, '', '', '', '', '', '', 
+                    1
+                ])
+            }
 
             const webhook = process.env.GOOGLE_SHEETS_WEBHOOK_URL || "https://script.google.com/macros/s/AKfycbwGwgJALfqu38YOSClGsr-2XyRoNSi_vlTxpjKHUvbTmMaxkkRpo4EEyPWYkW4MQFgVdQ/exec"
             console.log('Sending to Google Sheet webhook:', webhook)
+            // Send object with 'rows' property to handle multiple rows in GAS
             const response = await fetch(webhook, { 
                 method: "POST", 
                 headers: { "Content-Type": "application/json" }, 
-                body: JSON.stringify({ values: row }) 
+                body: JSON.stringify({ rows }) 
             })
             const responseText = await response.text()
             console.log('Google Sheet response:', response.status, responseText)
