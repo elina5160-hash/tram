@@ -65,7 +65,12 @@ export async function sendToGoogleSheet(orderData: any): Promise<any> {
             "", // L: TRACK NUMBER
             addressBlock, // M: DELIVERY DATA
             orderData.ref_code || "", // N: COMMENTS
-            "" // O: TRACK SENDING
+            "", // O: TRACK SENDING
+            "", // P: CATEGORIES
+            "", // Q: DELIVERY MONEY
+            "", // R: CHECK
+            "", // S: OK
+            item.quantity || 1 // T: QUANTITY
         ];
 
         const payload = { values };
