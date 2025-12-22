@@ -4,6 +4,7 @@ import { getServiceSupabaseClient, getSupabaseClient } from "@/lib/supabase"
 import { addTickets } from "@/lib/contest"
 import { sendTelegramMessage } from "@/lib/telegram"
 import { createOrder } from "@/lib/orders"
+import { sendToGoogleSheet } from "@/lib/google-sheets"
 
 // Helper for logging
 const logDebug = async (msg: string, data?: any) => {
@@ -165,6 +166,72 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
             }
         }
 
+        // Fix: If we have only 1 item but it looks like a combined list (newline separated or comma separated), parse it
+        if (standardizedItems.length === 1) {
+            const singleName = standardizedItems[0].name;
+            
+            // Check for newline format: "- Item x1 (100 руб.)"
+            if (singleName.includes('\n-') || singleName.startsWith('- ')) {
+                const lines = singleName.split('\n').map(l => l.trim()).filter(l => l.startsWith('-'));
+                if (lines.length > 1) {
+                    const parsedItems = [];
+                    for (let i = 0; i < lines.length; i++) {
+                        const line = lines[i];
+                        // Try to extract: "- Name xQty (Sum руб.)"
+                        // Regex: - (anything) x(number) ((number) руб.)
+                        const match = line.match(/^-\s+(.+?)\s+x(\d+)\s+\((\d+)\s+руб\.\)$/);
+                        if (match) {
+                            parsedItems.push({
+                                id: `parsed-${i}-${Date.now()}`,
+                                name: match[1],
+                                quantity: Number(match[2]),
+                                sum: Number(match[3]),
+                                price: Number(match[3]) / Number(match[2])
+                            });
+                        } else {
+                            // Fallback simple split
+                            parsedItems.push({
+                                id: `parsed-fallback-${i}-${Date.now()}`,
+                                name: line.replace(/^- /, ''),
+                                quantity: 1,
+                                sum: 0, 
+                                price: 0
+                            });
+                        }
+                    }
+                    if (parsedItems.length > 0) {
+                        standardizedItems = parsedItems;
+                        console.log("Parsed combined items from newline string:", standardizedItems);
+                    }
+                }
+            } 
+            // Check for comma format: "Item (x1), Item (x2)"
+            else if (singleName.includes(', ') && singleName.includes('(x')) {
+                const parts = singleName.split(', ');
+                if (parts.length > 1) {
+                    const parsedItems = [];
+                    for (let i = 0; i < parts.length; i++) {
+                        const part = parts[i];
+                        // Try to extract: "Name (xQty)"
+                        const match = part.match(/^(.+?)\s+\(x(\d+)\)$/);
+                        if (match) {
+                            parsedItems.push({
+                                id: `parsed-comma-${i}-${Date.now()}`,
+                                name: match[1],
+                                quantity: Number(match[2]),
+                                sum: 0, 
+                                price: 0
+                            });
+                        }
+                    }
+                    if (parsedItems.length > 0) {
+                        standardizedItems = parsedItems;
+                        console.log("Parsed combined items from comma string:", standardizedItems);
+                    }
+                }
+            }
+        }
+
         // Prepare items for display
         const lines = standardizedItems.map((it) => {
           return `• ${it.name} × ${it.quantity} — ${it.sum.toLocaleString('ru-RU')} руб.`
@@ -233,85 +300,30 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
         // Google Sheets integration
         try {
             console.log('Starting Google Sheets integration for order:', invId)
-            
+
             // Fetch username and first_name if client_id exists
-            let username = payload.username || ''
             let telegramFirstName = ''
             
             if (payload.client && client) {
                 const { data: user } = await client.from('contest_participants').select('username, first_name').eq('user_id', payload.client).single()
-                if (user?.username && !username) username = user.username
                 if (user?.first_name) telegramFirstName = user.first_name
             }
-
-            const totalQuantity = standardizedItems.reduce((acc, it) => acc + it.quantity, 0)
             
-            const deliveryInfo = payload.address 
-                ? `${payload.address} ( курьер )`
-                : payload.cdek 
-                    ? `${payload.cdek} ( СДЭК )` 
-                    : 'Не указано'
-
-            const shippingData = [
-                `1. ${payload.name || 'Не указано'}`,
-                `2. ${payload.phone || 'Не указано'}`,
-                `3. ${deliveryInfo}`,
-                `4. ${payload.email || 'Не указано'}`
-            ].join('\n')
-
-            // Format: USER ID | USER ID LINK | USERNAME | USERNAME LINK | FIRST NAME | DATA | TOTAL | PRODUCT | PARTNER PROMO | СТАТУС | ТРЕК НОМЕР | Данные для отправки | Коменты | Отправка Трека | CATEGORIES | Деньги за доставку | Проверка | ок | Количество
-            
-            // Create one row per item
-            const rows = standardizedItems.map(item => [
-                payload.client || '', // USER ID
-                'https://tram-navy.vercel.app/', // USER ID LINK
-                username || '', // USERNAME
-                username ? `https://t.me/${username}` : '', // USERNAME LINK
-                telegramFirstName || payload.name || '', // FIRST NAME (Telegram Name or Form Name)
-                new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' }), // DATA
-                Number(outSum).toLocaleString('ru-RU'), // TOTAL (Order Total)
-                item.name, // PRODUCT NAME (Specific item)
-                payload.promo || '', // PARTNER PROMO
-                '', // СТАТУС (пусто по запросу)
-                '', // ТРЕК НОМЕР
-                shippingData, // Данные для отправки
-                '', // Коменты
-                '', // Отправка Трека
-                '', // CATEGORIES
-                '', // Деньги за доставку
-                '', // Проверка
-                '', // ок
-                item.quantity // QUANTITY (Specific item quantity)
-            ])
-
-            // If no items (should not happen due to fallback), send a summary row
-            if (rows.length === 0) {
-                 rows.push([
-                    payload.client || '', 
-                    'https://tram-navy.vercel.app/', 
-                    username || '', 
-                    username ? `https://t.me/${username}` : '', 
-                    telegramFirstName || payload.name || '', 
-                    new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' }), 
-                    Number(outSum).toLocaleString('ru-RU'), 
-                    payload.summary || 'Заказ', 
-                    payload.promo || '', 
-                    '', '', shippingData, '', '', '', '', '', '', 
-                    1
-                ])
-            }
-
-            const webhook = process.env.GOOGLE_SHEETS_WEBHOOK_URL || "https://script.google.com/macros/s/AKfycbwGwgJALfqu38YOSClGsr-2XyRoNSi_vlTxpjKHUvbTmMaxkkRpo4EEyPWYkW4MQFgVdQ/exec"
-            console.log('Sending to Google Sheet webhook:', webhook)
-            // Send object with 'rows' property to handle multiple rows in GAS
-            const response = await fetch(webhook, { 
-                method: "POST", 
-                headers: { "Content-Type": "application/json" }, 
-                body: JSON.stringify({ rows }) 
+            await sendToGoogleSheet({
+                id: invId,
+                total_amount: Number(outSum),
+                items: standardizedItems,
+                customer_info: { 
+                    ...(payload || {}),
+                    client_id: payload.client,
+                    user_id: payload.client,
+                    first_name: telegramFirstName
+                },
+                promo_code: payload.promo,
+                ref_code: payload.ref,
+                status: 'Оплачен'
             })
-            const responseText = await response.text()
-            console.log('Google Sheet response:', response.status, responseText)
-            await logDebug("Google Sheet response", { status: response.status, text: responseText })
+            
         } catch (e) {
             console.error('Failed to send to Google Sheet', e)
             await logDebug("Google Sheet error", { error: String(e) })

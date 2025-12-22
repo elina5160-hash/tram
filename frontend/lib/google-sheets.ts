@@ -1,28 +1,11 @@
 export async function sendToGoogleSheet(orderData: any): Promise<any> {
+  // Web App URL provided by user
   const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwevBSpHdLKyj8MlM8rAPkSPlFRf-oCL_U0zNerFVkOerSCjDIy2WqbjPvyC0hBq1Oq0g/exec"
-
+  
   try {
-    // Preparing data according to the script requirements:
-    // data.values must be an array of values for the row.
-    // Columns mapping based on screenshot:
-    // A: ORDER ID (Empty)
-    // B: USER ID
-    // C: USER ID LINK (Empty or generated)
-    // D: USERNAME
-    // E: USERNAME LINK
-    // F: FIRST NAME
-    // G: DATA (Date)
-    // H: TOTAL
-    // I: PRODUCT
-    // J: PARTNER PROMO
-    // K: STATUS
-    // L: TRACK NUMBER (Empty)
-    // M: DELIVERY DATA (Combined)
-    // N: COMMENTS (Empty)
-    // O: TRACK SENDING (Empty)
-
     const info = orderData.customer_info || {};
     const username = info.username ? String(info.username).replace('@', '') : '';
+    const telegramFirstName = info.first_name || info.name || '';
     
     // Construct address block
     const addressBlockParts = [
@@ -31,55 +14,89 @@ export async function sendToGoogleSheet(orderData: any): Promise<any> {
         info.email,
         info.address,
         info.cdek
-    ].filter(Boolean); // Remove empty values
-    
+    ].filter(Boolean);
     const addressBlock = addressBlockParts.join('\n');
 
-    const values = [
-        "", // A: ORDER ID (Empty as requested)
-        info.client_id || info.user_id || "", // B: USER ID
-        "https://tram-navy.vercel.app/home", // C: USER ID LINK
-        username, // D: USERNAME
-        username ? `https://t.me/${username}` : "", // E: USERNAME LINK
-        info.name || "", // F: FIRST NAME
-        new Date().toLocaleString("ru-RU"), // G: DATA
-        orderData.total_amount || 0, // H: TOTAL
-        orderData.items || "", // I: PRODUCT
-        orderData.promo_code || "", // J: PARTNER PROMO
-        "", // K: STATUS
-        "", // L: TRACK NUMBER
-        addressBlock, // M: DELIVERY DATA
-        orderData.ref_code || "", // N: COMMENTS (Using ref_code or empty)
-        "" // O: TRACK SENDING
-    ];
-
-    const payload = {
-        values: values
-    };
-
-    console.log("Sending to Google Sheets (JSON):", JSON.stringify(payload, null, 2))
-
-    const response = await fetch(SCRIPT_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-      redirect: "manual",
-    })
-
-    const text = await response.text()
-    console.log("Google Sheets response:", response.status, text)
+    const items = Array.isArray(orderData.items) ? orderData.items : [];
     
-    // 302 Found means Google accepted the request and is redirecting to the result
-    if (response.status === 302 || response.status === 200) {
-       return { status: response.status, text: "Request sent (Redirected)" }
+    // Fallback if no items array but we have total (should not happen in correct flow)
+    if (items.length === 0) {
+        items.push({
+            name: "Заказ",
+            quantity: 1,
+            sum: orderData.total_amount || 0
+        });
+    }
+
+    const results = [];
+
+    // Loop through items and send one request per item
+    for (const item of items) {
+        // Mapping based on screenshot and requirements:
+        // A: ORDER ID
+        // B: USER ID
+        // C: USER ID LINK
+        // D: USERNAME
+        // E: USERNAME LINK
+        // F: FIRST NAME
+        // G: DATA
+        // H: TOTAL (Item Sum)
+        // I: PRODUCT
+        // J: PARTNER PROMO
+        // K: STATUS
+        // L: TRACK NUMBER
+        // M: DELIVERY DATA
+        // N: COMMENTS
+        // O: TRACK SENDING
+
+        const values = [
+            orderData.id || "", // A: ORDER ID
+            info.client_id || info.user_id || "", // B: USER ID
+            "https://tram-navy.vercel.app/home", // C: USER ID LINK
+            username, // D: USERNAME
+            username ? `https://t.me/${username}` : "", // E: USERNAME LINK
+            telegramFirstName, // F: FIRST NAME
+            new Date().toLocaleString("ru-RU", { timeZone: "Europe/Moscow" }), // G: DATA
+            item.sum || 0, // H: TOTAL (Item Sum)
+            item.name || "Товар", // I: PRODUCT
+            orderData.promo_code || "", // J: PARTNER PROMO
+            "Оплачен", // K: STATUS
+            "", // L: TRACK NUMBER
+            addressBlock, // M: DELIVERY DATA
+            orderData.ref_code || "", // N: COMMENTS
+            "" // O: TRACK SENDING
+        ];
+
+        const payload = { values };
+
+        console.log(`Sending item "${item.name}" to Google Sheets...`);
+        
+        try {
+            const response = await fetch(SCRIPT_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+                redirect: "manual",
+            });
+            
+            // 302/200 OK
+            if (response.status === 302 || response.status === 200) {
+                results.push({ status: "ok", item: item.name });
+            } else {
+                const text = await response.text();
+                console.error(`Google Sheets error for item ${item.name}:`, response.status, text);
+                results.push({ status: "error", code: response.status, text });
+            }
+        } catch (e) {
+             console.error(`Fetch error for item ${item.name}:`, e);
+             results.push({ status: "error", error: String(e) });
+        }
     }
     
-    return { status: response.status, text }
-    
+    return { results };
+
   } catch (error) {
-    console.error("Error sending to Google Sheet:", error)
+    console.error("Error in sendToGoogleSheet:", error)
     return { error: String(error) }
   }
 }

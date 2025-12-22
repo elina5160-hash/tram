@@ -156,20 +156,6 @@ export async function POST(req: Request) {
 
       await sendTelegramMessage(msg);
 
-      // Send to Google Sheets (fire and forget to not block payment)
-      sendToGoogleSheet({
-        id: invId,
-        total_amount: outSum,
-        items: itemsText, // Text format
-        customer_info: { 
-            ...(body.customerInfo || { email }),
-            items_backup: itemsBackup // Structured format if needed by script
-        },
-        promo_code: body.promoCode,
-        ref_code: body.refCode,
-        status: 'pending'
-      }).catch(e => console.error("Background Google Sheet send failed:", e))
-
   } catch (e) {
       console.error("Failed to send notification:", e);
   }

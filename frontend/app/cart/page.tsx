@@ -149,6 +149,14 @@ function CartContent() {
   }, [items])
 
   useEffect(() => {
+    // Helper for fallback logic
+    const applyFallbackPromo = (code: string) => {
+        if (code === "PROMO10" || code === "PRA10") setDiscountAmount(Math.round(total * 0.1))
+        else if (code === "PROMO5" || code === "PRA5") setDiscountAmount(Math.round(total * 0.05))
+        else if (code === "PROMO200" || code === "PRA200") setDiscountAmount(200)
+        else setDiscountAmount(0)
+    }
+
     // Debounce promo code check
     const checkPromo = async () => {
         if (!promoCode || promoCode.length < 3) {
@@ -174,15 +182,11 @@ function CartContent() {
                     setDiscountAmount(Number(data.value))
                 }
             } else {
-                // Fallback to old hardcoded logic
-                if (code === "PROMO10" || code === "PRA10") setDiscountAmount(Math.round(total * 0.1))
-                else if (code === "PROMO5" || code === "PRA5") setDiscountAmount(Math.round(total * 0.05))
-                else if (code === "PROMO200" || code === "PRA200") setDiscountAmount(200)
-                else setDiscountAmount(0)
+                applyFallbackPromo(code)
             }
         } catch (e) {
             console.error("Error checking promo", e)
-            setDiscountAmount(0)
+            applyFallbackPromo(code)
         } finally {
             setIsCheckingPromo(false)
         }
@@ -275,9 +279,13 @@ function CartContent() {
           <h1 className="text-xl font-bold">Корзина</h1>
           <button
             aria-label="Очистить корзину"
-            onClick={() => {
-              clearCart()
-              setItems([])
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              if (confirm("Вы точно хотите очистить корзину?")) {
+                clearCart()
+                setItems([])
+              }
             }}
             className="w-10 h-10 rounded-[12px] bg-white border border-gray-300 flex items-center justify-center"
           >
