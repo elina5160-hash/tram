@@ -435,6 +435,8 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
         }
         try {
             // 1. Upsert order (Create or Update) via centralized logic
+            const finalClientId = payload.client || orderData?.customer_info?.client_id
+            
             await createOrder({
                 id: Number(invId),
                 total_amount: Number(outSum),
@@ -445,7 +447,7 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
                     email: payload.email,
                     address: payload.address,
                     cdek: payload.cdek,
-                    client_id: payload.client 
+                    client_id: finalClientId 
                 },
                 promo_code: payload.promo,
                 ref_code: payload.ref,

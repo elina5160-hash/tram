@@ -28,14 +28,21 @@ export function ProfileDrawer({ isOpen, onClose, initialView = 'profile' }: Prof
   }, [isOpen, initialView])
 
   useEffect(() => {
-    if (typeof window !== "undefined" && (window as any).Telegram?.WebApp) {
-      const tg = (window as any).Telegram.WebApp
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setUserInfo(tg.initDataUnsafe?.user || {})
+    if (typeof window !== "undefined") {
+        const tg = (window as any).Telegram?.WebApp
+        if (tg?.initDataUnsafe?.user) {
+            setUserInfo(tg.initDataUnsafe.user)
+        } else {
+            // Try to recover from localStorage for non-Telegram envs
+            const localId = localStorage.getItem("user_id")
+            if (localId) {
+                setUserInfo({ id: localId, first_name: 'User' })
+            }
+        }
     }
   }, [])
 
-  const userId = userInfo?.id || "1287944066" // Fallback or demo ID
+  const userId = userInfo?.id || localStorage.getItem("user_id") || "1287944066"
   const refLink = `https://t.me/beautykoreanbot?start=u${userId}`
 
   // Fetch orders when in 'orders' view
