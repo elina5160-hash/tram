@@ -1,11 +1,13 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, Suspense } from "react"
 import { HoverButton } from "@/components/ui/hover-button"
 import { getPendingOrder, savePendingOrder, clearCart } from "@/lib/cart"
 import { CheckCircle2, Loader2, X } from "lucide-react"
+import { useSearchParams } from "next/navigation"
 
-export default function SuccessPage() {
+function SuccessPageContent() {
+  const searchParams = useSearchParams()
   const [isTelegram, setIsTelegram] = useState(false)
   const [showPopup, setShowPopup] = useState(false)
   const [orderId, setOrderId] = useState<number | null>(null)
@@ -17,16 +19,25 @@ export default function SuccessPage() {
         setIsTelegram(true)
     }
 
-    // Check for pending order
-    const pendingId = getPendingOrder()
+    // Check for pending order from LocalStorage OR URL
+    let pendingId = getPendingOrder()
+    const invIdParam = searchParams.get("InvId")
+    
+    // If no local pending order, try to recover from URL
+    if (!pendingId && invIdParam) {
+        pendingId = Number(invIdParam)
+    }
+
+    const shpClient = searchParams.get("Shp_client")
+
     if (pendingId) {
       setOrderId(pendingId)
       setShowPopup(true)
-      handleOrderSync(pendingId)
+      handleOrderSync(pendingId, shpClient)
     }
-  }, [])
+  }, [searchParams])
 
-  const handleOrderSync = async (id: number) => {
+  const handleOrderSync = async (id: number, urlClientId?: string | null) => {
     setIsLoading(true)
     try {
       // 1. Get Client ID
@@ -36,19 +47,25 @@ export default function SuccessPage() {
          if (tgUser?.id) clientId = String(tgUser.id)
          else clientId = localStorage.getItem("user_id") || ""
       }
+      
+      // Fallback to URL param if local detection failed
+      if (!clientId && urlClientId) {
+          clientId = urlClientId
+      }
 
       // 2. Sync with backend
-      await fetch('/api/orders/sync', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderId: id, clientId })
-      })
+      if (clientId) {
+          await fetch('/api/orders/sync', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ orderId: id, clientId })
+          })
+      }
 
       // 3. Clear local state
       clearCart()
-      savePendingOrder(0) // Clear pending order (pass 0 or handle logic to remove)
+      savePendingOrder(0) // Clear pending order
       
-      // Actually savePendingOrder logic:
       if (typeof window !== "undefined") {
          window.localStorage.removeItem("pending_order_id")
       }
@@ -98,38 +115,49 @@ export default function SuccessPage() {
 
       {/* Payment Accepted Popup */}
       {showPopup && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-          <div className="w-full max-w-sm bg-white rounded-2xl p-6 shadow-xl relative animate-in fade-in zoom-in duration-300">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-white rounded-[24px] w-full max-w-sm p-6 shadow-xl transform transition-all scale-100 relative">
             <button 
               onClick={() => setShowPopup(false)}
-              className="absolute right-4 top-4 text-gray-400 hover:text-gray-600"
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
             >
-              <X className="h-5 w-5" />
+              <X size={20} />
             </button>
-            
-            <div className="flex flex-col items-center text-center">
-              <div className="h-16 w-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
-                <CheckCircle2 className="h-8 w-8 text-green-600" />
+
+            <div className="flex flex-col items-center text-center gap-4">
+              <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center text-green-600 mb-2">
+                <CheckCircle2 size={32} />
               </div>
               
-              <h2 className="text-xl font-bold mb-2">Оплата принята!</h2>
-              <p className="text-gray-600 mb-6">
-                Ваш заказ {orderId ? `№${orderId}` : ''} успешно оплачен и сохранен в истории.
+              <h3 className="text-xl font-bold text-gray-900">Оплата принята!</h3>
+              
+              <p className="text-gray-500 text-sm leading-relaxed">
+                Ваш заказ #{orderId} успешно оплачен и передан в обработку.
+                <br />
+                История заказов доступна в профиле.
               </p>
 
-              <HoverButton 
+              <button
                 onClick={() => {
-                  setShowPopup(false)
-                  if (isTelegram) handleReturn()
+                    setShowPopup(false)
+                    handleReturn()
                 }}
-                className="w-full bg-[#6800E9] text-white py-3 rounded-xl font-medium"
+                className="w-full py-3 bg-[#2eb886] hover:bg-[#269970] text-white rounded-[16px] font-medium transition-colors mt-2"
               >
                 Отлично
-              </HoverButton>
+              </button>
             </div>
           </div>
         </div>
       )}
     </div>
+  )
+}
+
+export default function SuccessPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin" /></div>}>
+      <SuccessPageContent />
+    </Suspense>
   )
 }
