@@ -7,6 +7,7 @@ import { HoverButton } from "@/components/ui/hover-button"
 import BottomBanner from "@/components/ui/bottom-banner"
 import { addToCart } from "@/lib/cart"
 import { addRatingOnce, addReview, getRatingCount, getRatings, getUserStar, removeUserRating } from "@/lib/ratings"
+import { splitPrice } from "@/lib/price"
 import { useProducts } from "@/hooks/useProducts"
 import { staticItems } from "@/data/staticItems"
 
@@ -21,18 +22,6 @@ function plural(count: number, one: string, few: string, many: string) {
 }
 
 type RouteParams = { id: string }
-
-function splitPrice(s: string) {
-  const m = s.match(/^(.*?руб\.?)/i)
-  if (m) {
-    const main = m[1].trim()
-    let rest = s.slice(m[1].length).trim()
-    if (rest.startsWith("/")) rest = rest.slice(1).trim()
-    return { main, sub: rest }
-  }
-  const parts = s.split("/")
-  return { main: (parts[0] || "").trim(), sub: (parts[1] || "").trim() }
-}
 
 export default function ItemPage() {
   const params = useParams<RouteParams>()
