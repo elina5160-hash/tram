@@ -115,13 +115,45 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
         }) : []
 
         // Fallback: If no items from payload or missing client info, try to fetch from Supabase order
+        let orderData: any = null
+        let supabaseError: any = null
+        
+        // Log client status
+        if (!client) {
+            console.error("No Supabase client available (Service Role or Anon)")
+        } else {
+            const isService = !!process.env.SUPABASE_SERVICE_ROLE_KEY
+            // console.log("Using Supabase client. Service role available:", isService)
+        }
+
         if (client) {
             try {
-                const { data: orderData } = await client
+                // Try fetching by ID
+                const { data, error } = await client
                     .from('orders')
                     .select('*')
                     .eq('id', invId)
                     .single()
+                
+                if (error) {
+                    supabaseError = error
+                    console.error("Supabase fetch error:", error)
+                    
+                    // Retry with number conversion if ID looks numeric
+                    if (!data && /^\d+$/.test(invId)) {
+                        const { data: retryData, error: retryError } = await client
+                            .from('orders')
+                            .select('*')
+                            .eq('id', Number(invId))
+                            .single()
+                        if (retryData) {
+                             orderData = retryData
+                             console.log("Found order on retry with numeric ID")
+                        }
+                    }
+                } else {
+                    orderData = data
+                }
                 
                 if (orderData) {
                     // Always prefer items from backup if available, as they are more reliable/detailed than Shp_items
@@ -198,6 +230,16 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
                         }
                     }
                     if (parsedItems.length > 0) {
+                        // Distribute total sum if individual sums are 0
+                        const totalParsedSum = parsedItems.reduce((acc, it) => acc + it.sum, 0);
+                        if (totalParsedSum === 0 && Number(outSum) > 0) {
+                             const pricePerItem = Number(outSum) / parsedItems.length;
+                             parsedItems.forEach(it => {
+                                 it.sum = pricePerItem * it.quantity; // Approximation
+                                 it.price = pricePerItem;
+                             });
+                        }
+
                         standardizedItems = parsedItems;
                         console.log("Parsed combined items from newline string:", standardizedItems);
                     }
@@ -223,6 +265,16 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
                         }
                     }
                     if (parsedItems.length > 0) {
+                        // Distribute total sum if individual sums are 0
+                        const totalParsedSum = parsedItems.reduce((acc, it) => acc + it.sum, 0);
+                        if (totalParsedSum === 0 && Number(outSum) > 0) {
+                             const pricePerItem = Number(outSum) / parsedItems.length;
+                             parsedItems.forEach(it => {
+                                 it.sum = pricePerItem * it.quantity; // Approximation
+                                 it.price = pricePerItem;
+                             });
+                        }
+
                         standardizedItems = parsedItems;
                         console.log("Parsed combined items from comma string:", standardizedItems);
                     }
@@ -301,10 +353,19 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
 
             // Fetch username and first_name if client_id exists
             let telegramFirstName = ''
+            let telegramUsername = payload.username || ''
+            let clientId = payload.client || ''
             
-            if (payload.client && client) {
-                const { data: user } = await client.from('contest_participants').select('username, first_name').eq('user_id', payload.client).single()
+            // Stronger restoration from DB
+            if (orderData?.customer_info) {
+                if (!clientId) clientId = orderData.customer_info.client_id || ''
+                if (!telegramUsername) telegramUsername = orderData.customer_info.username || ''
+            }
+
+            if (clientId && client) {
+                const { data: user } = await client.from('contest_participants').select('username, first_name').eq('user_id', clientId).single()
                 if (user?.first_name) telegramFirstName = user.first_name
+                if (user?.username && !telegramUsername) telegramUsername = user.username
             }
             
             await sendToGoogleSheet({
@@ -313,12 +374,14 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
                 items: standardizedItems,
                 customer_info: { 
                     ...(payload || {}),
-                    client_id: payload.client,
-                    user_id: payload.client,
-                    first_name: telegramFirstName
+                    ...(orderData?.customer_info || {}), // Merge DB info to ensure fields like client_id exist
+                    client_id: clientId,
+                    user_id: clientId,
+                    first_name: telegramFirstName,
+                    username: telegramUsername
                 },
-                promo_code: payload.promo,
-                ref_code: payload.ref,
+                promo_code: payload.promo || orderData?.promo_code,
+                ref_code: payload.ref || orderData?.ref_code,
                 status: 'Оплачен'
             })
             
