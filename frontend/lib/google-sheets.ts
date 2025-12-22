@@ -60,7 +60,7 @@ export async function sendToGoogleSheet(orderData: any): Promise<any> {
             item.sum || 0, // H: TOTAL (Item Sum)
             item.name || "Товар", // I: PRODUCT
             orderData.promo_code || "", // J: PARTNER PROMO
-            "Оплачен", // K: STATUS
+            "", // K: STATUS
             "", // L: TRACK NUMBER
             addressBlock, // M: DELIVERY DATA
             orderData.ref_code || "", // N: COMMENTS

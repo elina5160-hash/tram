@@ -124,19 +124,17 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
                     .single()
                 
                 if (orderData) {
-                    // Restore items if needed
-                    if (standardizedItems.length === 0 && orderData.customer_info?.items_backup) {
+                    // Always prefer items from backup if available, as they are more reliable/detailed than Shp_items
+                    if (orderData.customer_info?.items_backup && Array.isArray(orderData.customer_info.items_backup)) {
                         const backup = orderData.customer_info.items_backup
-                        if (Array.isArray(backup)) {
-                            standardizedItems = backup.map((it: any) => ({
-                                id: it.id,
-                                name: it.name,
-                                quantity: it.quantity,
-                                price: it.price,
-                                sum: it.sum
-                            }))
-                            await logDebug("Restored items from Supabase backup", { count: standardizedItems.length })
-                        }
+                        standardizedItems = backup.map((it: any) => ({
+                            id: it.id,
+                            name: it.name,
+                            quantity: it.quantity,
+                            price: it.price,
+                            sum: it.sum
+                        }))
+                        await logDebug("Restored items from Supabase backup", { count: standardizedItems.length })
                     }
 
                     // Fallback to summary if still empty
