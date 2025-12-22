@@ -19,33 +19,32 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
 
   useEffect(() => {
-    // Auto-login disabled as per request: password 6789 for everyone
-    /*
-    if (typeof window !== "undefined") {
-      const tg = (window as any).Telegram?.WebApp
-      if (tg?.initDataUnsafe?.user?.id) {
-        const userId = tg.initDataUnsafe.user.id
-        const admins = [1287944066, 5137709082]
-        if (admins.includes(userId)) {
-          setIsAuthenticated(true)
-        }
-      }
-    }
-    */
+    // Auto-login disabled as per request
   }, [])
 
   const [activeTab, setActiveTab] = useState<Tab>('orders')
   const [editingProduct, setEditingProduct] = useState<any | null>(null)
   const [isCreating, setIsCreating] = useState(false)
-  const [mode, setMode] = useState<'initial' | 'list' | 'form'>('initial')
+  
+  // We don't need 'mode' anymore if we simplify: List is default, Form is overlay/switch
   const { products, isLoading, addProduct, updateProduct, deleteProduct } = useProducts()
 
-  // Reset mode when tab changes
+  // Reset state when tab changes
   const handleTabChange = (tab: Tab) => {
     setActiveTab(tab)
-    setMode('initial')
     setEditingProduct(null)
     setIsCreating(false)
+  }
+
+  const handleBulkDelete = async (ids: number[]) => {
+      try {
+          // Sequential delete to avoid race conditions or backend limits
+          for (const id of ids) {
+              await deleteProduct(id)
+          }
+      } catch (e) {
+          alert('Ошибка при удалении: ' + e)
+      }
   }
 
   if (!isAuthenticated) {
@@ -66,13 +65,12 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm md:p-10">
-      <div className="relative bg-white md:rounded-2xl w-full max-w-4xl shadow-2xl flex flex-col h-full md:h-auto md:max-h-[85vh] overflow-hidden">
+      <div className="relative bg-white md:rounded-2xl w-full max-w-6xl shadow-2xl flex flex-col h-full md:h-auto md:max-h-[90vh] overflow-hidden">
         {/* Header Section */}
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between p-4 md:p-6 border-b shrink-0 gap-4">
           <div className="flex flex-col gap-4 w-full">
             <div className="flex items-center justify-between w-full">
               <h2 className="text-xl md:text-2xl font-bold">Админ-панель</h2>
-              {/* Close Button - Visible here on mobile */}
               <button 
                 onClick={onClose}
                 className="md:hidden p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors -mr-2"
@@ -86,20 +84,20 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
             
             <div className="flex overflow-x-auto pb-2 md:pb-0 -mx-4 px-4 md:mx-0 md:px-0 gap-2 no-scrollbar">
                 <button
+                    onClick={() => handleTabChange('orders')}
+                    className={`whitespace-nowrap px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                        activeTab === 'orders' ? 'bg-gray-900 text-white shadow' : 'bg-gray-100 text-gray-500 hover:text-gray-700'
+                    }`}
+                >
+                    Заказы
+                </button>
+                <button
                     onClick={() => handleTabChange('products')}
                     className={`whitespace-nowrap px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
                         activeTab === 'products' ? 'bg-gray-900 text-white shadow' : 'bg-gray-100 text-gray-500 hover:text-gray-700'
                     }`}
                 >
                     Товары
-                </button>
-                <button
-                    onClick={() => handleTabChange('bottom-banner')}
-                    className={`whitespace-nowrap px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                        activeTab === 'bottom-banner' ? 'bg-gray-900 text-white shadow' : 'bg-gray-100 text-gray-500 hover:text-gray-700'
-                    }`}
-                >
-                    Баннер
                 </button>
                 <button
                     onClick={() => handleTabChange('contest')}
@@ -110,14 +108,6 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
                     Конкурс
                 </button>
                 <button
-                    onClick={() => handleTabChange('orders')}
-                    className={`whitespace-nowrap px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                        activeTab === 'orders' ? 'bg-gray-900 text-white shadow' : 'bg-gray-100 text-gray-500 hover:text-gray-700'
-                    }`}
-                >
-                    Заказы
-                </button>
-                <button
                     onClick={() => handleTabChange('promocodes')}
                     className={`whitespace-nowrap px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
                         activeTab === 'promocodes' ? 'bg-gray-900 text-white shadow' : 'bg-gray-100 text-gray-500 hover:text-gray-700'
@@ -125,10 +115,17 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
                 >
                     Промокоды
                 </button>
+                <button
+                    onClick={() => handleTabChange('bottom-banner')}
+                    className={`whitespace-nowrap px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                        activeTab === 'bottom-banner' ? 'bg-gray-900 text-white shadow' : 'bg-gray-100 text-gray-500 hover:text-gray-700'
+                    }`}
+                >
+                    Баннер
+                </button>
             </div>
           </div>
           
-          {/* Close Button - Desktop */}
           <button 
             onClick={onClose}
             className="hidden md:block absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
@@ -140,93 +137,61 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 md:p-6">
+        <div className="flex-1 overflow-y-auto p-4 md:p-6 bg-gray-50/50">
 
         {activeTab === 'products' ? (
-            mode === 'initial' ? (
-              <div className="flex-1 flex flex-col items-center justify-center gap-4 md:gap-6 h-full">
-                <button
-                  onClick={() => setMode('list')}
-                  className="w-full max-w-xs py-4 text-lg md:text-xl font-medium bg-white border-2 border-blue-600 text-blue-600 rounded-xl hover:bg-blue-50 transition-colors shadow-sm"
-                >
-                  Изменить товар
-                </button>
-                <button
-                  onClick={() => {
-                    setEditingProduct(null)
-                    setIsCreating(true)
-                    setMode('form')
-                  }}
-                  className="w-full max-w-xs py-4 text-lg md:text-xl font-medium bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors shadow-md"
-                >
-                  Добавить товар
-                </button>
-              </div>
-            ) : mode === 'form' || isCreating || editingProduct ? (
-            <ProductForm 
-                initialData={editingProduct}
-                onSubmit={async (data: any) => {
-                try {
-                    const button = document.activeElement as HTMLButtonElement;
-                    if (button) button.disabled = true;
-                    
-                    if (editingProduct) {
-                    await updateProduct(editingProduct.id, data)
-                    } else {
-                    await addProduct(data)
-                    }
-                    alert('Товар успешно сохранен!');
-                    setEditingProduct(null)
-                    setIsCreating(false)
-                    setMode('list') // Go back to list instead of initial
-                } catch (e: any) {
-                    alert("Ошибка сохранения: " + e.message)
-                    const button = document.activeElement as HTMLButtonElement;
-                    if (button) button.disabled = false;
-                }
-                }}
-                onCancel={() => {
-                setEditingProduct(null)
-                setIsCreating(false)
-                setMode('initial')
-                }}
-            />
-            ) : (
-            <div className="flex-1 flex flex-col">
-                <div className="sticky top-0 z-10 bg-white pt-1 pb-3 -mt-1 border-b flex justify-between items-center">
-                  <button
-                    onClick={() => setMode('initial')}
-                    className="text-gray-600 hover:text-gray-900 flex items-center gap-2"
-                  >
-                    ← Назад
-                  </button>
-                  <button
-                      onClick={() => {
-                        setIsCreating(true)
-                        setMode('form')
-                      }}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                      + Добавить товар
-                  </button>
-                </div>
-                {isLoading ? (
-                <div className="flex-1 flex items-center justify-center">Загрузка...</div>
-                ) : (
-                <ProductList 
-                    products={products} 
-                    onEdit={(product: any) => {
-                      setEditingProduct(product)
-                      setMode('form')
+            isCreating || editingProduct ? (
+                <ProductForm 
+                    initialData={editingProduct}
+                    onSubmit={async (data: any) => {
+                        try {
+                            const button = document.activeElement as HTMLButtonElement;
+                            if (button) button.disabled = true;
+                            
+                            if (editingProduct) {
+                                await updateProduct(editingProduct.id, data)
+                            } else {
+                                await addProduct(data)
+                            }
+                            // alert('Товар успешно сохранен!'); // Optional: removed for smoother UX
+                            setEditingProduct(null)
+                            setIsCreating(false)
+                        } catch (e: any) {
+                            alert("Ошибка сохранения: " + e.message)
+                            const button = document.activeElement as HTMLButtonElement;
+                            if (button) button.disabled = false;
+                        }
                     }}
-                    onDelete={async (id: number) => {
-                    if (confirm("Вы уверены?")) {
-                        await deleteProduct(id)
-                    }
+                    onCancel={() => {
+                        setEditingProduct(null)
+                        setIsCreating(false)
                     }}
                 />
-                )}
-            </div>
+            ) : (
+                <div className="flex flex-col h-full gap-4">
+                    <div className="flex justify-between items-center">
+                        <h3 className="text-lg font-semibold">Управление товарами</h3>
+                        <button
+                            onClick={() => setIsCreating(true)}
+                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm flex items-center gap-2"
+                        >
+                            <span className="text-xl leading-none">+</span> Добавить товар
+                        </button>
+                    </div>
+                    {isLoading ? (
+                        <div className="flex-1 flex items-center justify-center text-gray-500">Загрузка товаров...</div>
+                    ) : (
+                        <ProductList 
+                            products={products} 
+                            onEdit={(product: any) => setEditingProduct(product)}
+                            onDelete={async (id: number) => {
+                                // confirm handled in ProductList, but double check logic
+                                await deleteProduct(id)
+                            }}
+                            onBulkDelete={handleBulkDelete}
+                        />
+                    )}
+                </div>
             )
         ) : activeTab === 'contest' ? (
             <ContestTable />
@@ -235,7 +200,7 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
         ) : activeTab === 'promocodes' ? (
             <PromocodesTable />
         ) : (
-            <BottomBannerEditor onBack={() => { setActiveTab('products'); setMode('initial') }} />
+            <BottomBannerEditor onBack={() => setActiveTab('products')} />
         )}
       </div>
     </div>
