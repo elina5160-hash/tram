@@ -9,7 +9,7 @@ export function useProducts() {
     keepPreviousData: true, 
   });
 
-  const addProduct = async (product: any) => {
+  const addProduct = async (product: Record<string, unknown>) => {
     const res = await fetch('/api/products', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -23,7 +23,7 @@ export function useProducts() {
     throw new Error(err.error || 'Failed to add product');
   };
 
-  const updateProduct = async (id: number, updates: any) => {
+  const updateProduct = async (id: number, updates: Record<string, unknown>) => {
     const res = await fetch(`/api/products/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },

@@ -39,7 +39,7 @@ const LOG_TABLE = 'bot_logs'
 const ORDERS_TABLE = 'orders'
 
 // Helper for reliable logging
-async function logOrderOperation(operation: string, orderId: number | string, status: 'success' | 'error', details?: any) {
+async function logOrderOperation(operation: string, orderId: number | string, status: 'success' | 'error', details?: unknown) {
   try {
     const client = getServiceSupabaseClient() || getSupabaseClient()
     if (!client) {
@@ -67,6 +67,7 @@ export async function createOrder(data: CreateOrderDTO) {
   // 1. Validation
   const validationResult = CreateOrderSchema.safeParse(data)
   if (!validationResult.success) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const errors = (validationResult as any).error.errors.map((e: any) => `${e.path.join('.')}: ${e.message}`).join(', ')
     await logOrderOperation('create_validation', data.id || 'unknown', 'error', { errors, data })
     throw new Error(`Validation failed: ${errors}`)
