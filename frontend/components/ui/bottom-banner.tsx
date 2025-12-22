@@ -52,7 +52,7 @@ function Item({ href, renderIcon, label, onClick }: { href: string; renderIcon: 
   )
 }
 
-export default function BottomBanner() {
+export default function BottomBanner({ onProfileClick }: { onProfileClick?: () => void }) {
   const { items: bannerItems } = useBottomBanner()
   const [count, setCount] = useState(() => getCart().reduce((sum, it) => sum + (it.qty ?? 1), 0))
   const [userPhoto, setUserPhoto] = useState<string | null>(null)
@@ -151,8 +151,9 @@ export default function BottomBanner() {
         )}
 
         <Item
-            href="/profile/orders"
-            label="Домой"
+            href={onProfileClick ? "" : "/home?profile=true"}
+            onClick={onProfileClick}
+            label="Профиль"
             renderIcon={() => (
                 <div className="w-[24px] h-[24px] rounded-full overflow-hidden bg-gray-300 flex items-center justify-center">
                     {userPhoto ? (

@@ -2,7 +2,7 @@
   {
     "id": "home",
     "label": "Главная",
-    "href": "/home?profile=1",
+    "href": "/home",
     "icon": "home",
     "enabled": true
   },

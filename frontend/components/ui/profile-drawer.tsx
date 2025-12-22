@@ -9,16 +9,23 @@ import useSWR from "swr"
 interface ProfileDrawerProps {
   isOpen: boolean
   onClose: () => void
+  initialView?: 'profile' | 'orders'
 }
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json())
 
-export function ProfileDrawer({ isOpen, onClose }: ProfileDrawerProps) {
+export function ProfileDrawer({ isOpen, onClose, initialView = 'profile' }: ProfileDrawerProps) {
   const router = useRouter()
   const [userInfo, setUserInfo] = useState<any>(null)
   const [showBonuses, setShowBonuses] = useState(false)
-  const [view, setView] = useState<'profile' | 'orders'>('profile')
+  const [view, setView] = useState<'profile' | 'orders'>(initialView)
   const [expandedOrderId, setExpandedOrderId] = useState<number | null>(null)
+
+  useEffect(() => {
+    if (isOpen) {
+        setView(initialView)
+    }
+  }, [isOpen, initialView])
 
   useEffect(() => {
     if (typeof window !== "undefined" && (window as any).Telegram?.WebApp) {
@@ -56,10 +63,10 @@ export function ProfileDrawer({ isOpen, onClose }: ProfileDrawerProps) {
   // Reset view when closed
   useEffect(() => {
     if (!isOpen) {
-      const t = setTimeout(() => setView('profile'), 300)
+      const t = setTimeout(() => setView(initialView), 300)
       return () => clearTimeout(t)
     }
-  }, [isOpen])
+  }, [isOpen, initialView])
 
   return (
     <div 

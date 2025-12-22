@@ -127,7 +127,7 @@ function ContestContent() {
                         transition={{ delay: 0.1 }}
                     >
                         <a 
-                            href={`/profile/orders?client_id=${clientId}`}
+                            href={`/home?profile=true&view=orders`}
                             className="block bg-white rounded-2xl p-4 shadow-sm border border-[#E14D2A]/10 flex items-center justify-between active:scale-95 transition-transform"
                         >
                             <div className="flex items-center gap-3">
