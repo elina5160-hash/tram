@@ -50,7 +50,7 @@ export async function sendToGoogleSheet(orderData: any): Promise<any> {
         // O: TRACK SENDING
 
         const values = [
-            orderData.id || "", // A: ORDER ID
+            "", // A: ORDER ID (Requested to be empty)
             info.client_id || info.user_id || "", // B: USER ID
             "https://tram-navy.vercel.app/home", // C: USER ID LINK
             username, // D: USERNAME
