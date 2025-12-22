@@ -575,7 +575,7 @@ function CartContent() {
                           navigator.sendBeacon('/api/log', blob)
                         } catch {}
                         savePendingOrder(Number(dc.invId || invId))
-                        const url = `/pay/confirm?url=${encodeURIComponent(dc.url)}&invId=${encodeURIComponent(String(dc.invId || invId))}`
+                        const url = `/pay/confirm?url=${encodeURIComponent(dc.url)}&invId=${encodeURIComponent(String(dc.invId || invId))}&discountAmount=${discountAmount}&outSum=${totalWithDiscount}`
                         router.push(url)
                         return
                       }
@@ -618,7 +618,7 @@ function CartContent() {
                           navigator.sendBeacon('/api/log', blob)
                         } catch {}
                         savePendingOrder(Number(di.invId || invId))
-                        const url = `/pay/confirm?url=${encodeURIComponent(di.url)}&invId=${encodeURIComponent(String(di.invId || invId))}`
+                        const url = `/pay/confirm?url=${encodeURIComponent(di.url)}&invId=${encodeURIComponent(String(di.invId || invId))}&discountAmount=${discountAmount}&outSum=${totalWithDiscount}`
                         router.push(url)
                         return
                       }
@@ -627,7 +627,7 @@ function CartContent() {
                         const m = (di2.raw as string).match(/https?:\/\/\S+/)
                         if (m) {
                           savePendingOrder(Number(di2.invId || invId))
-                          const url = `/pay/confirm?url=${encodeURIComponent(m[0])}&invId=${encodeURIComponent(String(di2.invId || invId))}`
+                          const url = `/pay/confirm?url=${encodeURIComponent(m[0])}&invId=${encodeURIComponent(String(di2.invId || invId))}&discountAmount=${discountAmount}&outSum=${totalWithDiscount}`
                           router.push(url)
                           return
                         }

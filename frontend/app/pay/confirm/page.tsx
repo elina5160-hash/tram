@@ -21,6 +21,9 @@ function ConfirmContent() {
   const outSumSuccess = params.get("OutSum") || ""
   const invIdSuccess = params.get("InvId") || ""
   const signatureSuccess = params.get("SignatureValue") || ""
+  const urlDiscountAmount = Number(params.get("discountAmount") || 0)
+  const urlOutSum = Number(params.get("outSum") || 0)
+
   const [isPaid, setIsPaid] = useState(false)
   const [statusText, setStatusText] = useState("")
   const [orderData, setOrderData] = useState<any>(null)
@@ -113,9 +116,9 @@ function ConfirmContent() {
     }))
   }, [orderData, items, priceMap])
 
-  const displayTotal = orderData ? Number(orderData.total_amount) : total
-  const displayDiscount = orderData?.customer_info?.discount_amount ? Number(orderData.customer_info.discount_amount) : 0
-  const displaySubtotal = orderData ? displayTotal + displayDiscount : total
+  const displayTotal = orderData ? Number(orderData.total_amount) : (urlOutSum > 0 ? urlOutSum : total)
+  const displayDiscount = orderData?.customer_info?.discount_amount ? Number(orderData.customer_info.discount_amount) : urlDiscountAmount
+  const displaySubtotal = displayTotal + displayDiscount
 
   useEffect(() => {
     const hasSuccessParams = !!(outSumSuccess && invIdSuccess && signatureSuccess)
