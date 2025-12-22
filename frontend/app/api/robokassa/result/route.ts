@@ -364,6 +364,25 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
              }
         }
 
+        if (payload.client) {
+             const itemsReceipt = standardizedItems.map(it => 
+                ` Товар: ${it.name}\n Количество: ${it.quantity}\n Сумма: ${it.sum.toLocaleString('ru-RU')} руб.`
+            ).join('\n\n')
+
+            const customerReceiptText = [
+                `Спасибо за покупку!`,
+                itemsReceipt,
+                ` Общая сумма покупок: ${totalSpent.toLocaleString('ru-RU')} руб.`,
+                ``,
+                ` До билета не хватило: ${shortForNext} руб.`,
+                ` Купи еще на ${shortForNext} руб, чтобы получить билет!`,
+                ``,
+                ` Билеты начисляются за каждые 1000 руб суммарных покупок.`
+            ].join('\n')
+
+            await sendTelegramMessage(customerReceiptText, payload.client, undefined)
+        }
+
         // Send formatted notification to specific channel
         const productNames = standardizedItems.map(it => it.name).join(', ')
         const notificationText = [

@@ -32,12 +32,13 @@ export default function HomeClient() {
   }, [fetchedProducts])
   const promos = items.filter((it: any) => {
     const priceVal = getPriceValue(it.price)
-    const isCheap = priceVal > 0 && priceVal < 1000
+    // Cheap items < 1000, but exclude Cork (id 8) explicitly
+    const isCheap = priceVal > 0 && priceVal < 1000 && it.id !== 8
     // Check for hardcoded discounted items (IDs 2 and 6 have old prices shown in JSX)
     // Also check title for "акция" keyword
     const isDiscounted = [2, 6].includes(it.id) || it.title.toLowerCase().includes("акция")
-    // Keep original manual IDs [6, 8] (8 is cheap, 6 is discounted)
-    return isCheap || isDiscounted || [6, 8].includes(it.id)
+    // Keep original manual IDs [6], remove 8, add 1004 (Mini Set Share)
+    return isCheap || isDiscounted || [6, 1004].includes(it.id)
   })
   const bests = items.filter((it: any) => [1, 7, 3, 4].includes(it.id))
   const novelties = items.filter((it: any) => [1, 2, 3, 4, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22].includes(it.id))
