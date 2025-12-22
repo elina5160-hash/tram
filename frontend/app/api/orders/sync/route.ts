@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getServiceSupabaseClient } from '@/lib/supabase'
+import { addTickets } from '@/lib/contest'
 
 export async function POST(req: Request) {
   try {
@@ -34,11 +35,40 @@ export async function POST(req: Request) {
     if ((!currentClientId || currentClientId === 'undefined' || currentClientId === 'null') && clientId) {
        const newInfo = { ...currentInfo, client_id: clientId }
        
-       // Also update the main text if needed? 
-       // The main text (items column) is a string, hard to patch. 
-       // But customer_info json is what we use for logic.
-       
        await client.from('orders').update({ customer_info: newInfo }).eq('id', orderId)
+       
+       // Handle missed tickets if order is already paid
+       if (order.status === 'paid' || order.status === 'Оплачен') {
+           try {
+               // Calculate tickets (Cumulative Logic)
+               const { data: pastOrders } = await client
+                   .from('orders')
+                   .select('total_amount')
+                   .eq('customer_info->>client_id', clientId)
+                   .neq('id', orderId)
+                   .in('status', ['paid', 'Оплачен'])
+
+               const pastSpent = pastOrders?.reduce((sum, o) => sum + (Number(o.total_amount) || 0), 0) || 0
+               const currentAmount = Number(order.total_amount) || 0
+               const cumulativeSpent = pastSpent + currentAmount
+
+               const totalTicketsFromSpend = Math.floor(cumulativeSpent / 1000)
+               const pastTicketsFromSpend = Math.floor(pastSpent / 1000)
+
+               const ticketsEarned = Math.max(0, totalTicketsFromSpend - pastTicketsFromSpend)
+               
+               if (ticketsEarned > 0) {
+                   // Update order record
+                   await client.from('orders').update({ tickets_earned: ticketsEarned }).eq('id', orderId)
+                   
+                   // Award tickets to user
+                   await addTickets(clientId, ticketsEarned, 'purchase_reward', String(orderId), true)
+               }
+           } catch (e) {
+               console.error("Error awarding tickets during sync:", e)
+           }
+       }
+
        return NextResponse.json({ status: 'linked', order: { ...order, customer_info: newInfo } })
     }
 
