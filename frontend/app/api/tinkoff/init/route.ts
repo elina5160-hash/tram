@@ -5,14 +5,9 @@ import { sendTelegramMessage } from "@/lib/telegram"
 
 // Credentials from Environment Variables
 const TERMINAL_KEY = process.env.TINKOFF_TERMINAL_KEY
-const PASSWORD = process.env.TINKOFF_PASSWORD
-let API_URL = process.env.TINKOFF_API_URL || "https://securepay.tinkoff.ru/v2"
-
-// Force Test API URL if using a DEMO terminal key
-if (TERMINAL_KEY && TERMINAL_KEY.includes("DEMO")) {
-    API_URL = "https://rest-api-test.tinkoff.ru/v2"
-    console.log("⚠️ Using Test API URL because TERMINAL_KEY contains 'DEMO'")
-}
+// Remove surrounding quotes if present (fix for Vercel UI double-quoting)
+const PASSWORD = process.env.TINKOFF_PASSWORD ? process.env.TINKOFF_PASSWORD.replace(/^"|"$/g, '') : ""
+const API_URL = process.env.TINKOFF_API_URL || "https://securepay.tinkoff.ru/v2"
 
 function sanitizeText(input: string | number) {
   return Array.from(String(input)).filter((ch) => !/\p{Extended_Pictographic}/u.test(ch) && ch !== "\u200D" && ch !== "\uFE0F").join("")
@@ -218,10 +213,17 @@ export async function POST(req: Request) {
           return NextResponse.json({ url: data.PaymentURL, invId })
       } else {
           console.error("Tinkoff Init Error:", data)
-          return NextResponse.json({ error: data.Message, details: data.Details }, { status: 400 })
+          return NextResponse.json({ 
+            error: data.Message || "Payment failed", 
+            details: data.Details || "No details provided",
+            debug: { message: data.Message, details: data.Details, errorCode: data.ErrorCode }
+          }, { status: 400 })
       }
-  } catch (e) {
+  } catch (e: any) {
       console.error("Tinkoff Init Failed:", e)
-      return NextResponse.json({ error: "Payment initialization failed" }, { status: 500 })
+      return NextResponse.json({ 
+        error: "Payment initialization failed", 
+        details: e.message || String(e)
+      }, { status: 500 })
   }
 }
