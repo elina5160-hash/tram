@@ -575,6 +575,7 @@ function CartContent() {
                       })
                       let dataClassic: unknown = null
                       try { dataClassic = await resClassic.json() } catch {}
+                      
                       if (resClassic.ok && typeof dataClassic === 'object' && dataClassic && 'url' in dataClassic) {
                         const dc = dataClassic as { url: string; invId?: number | string }
                         try {
@@ -587,8 +588,16 @@ function CartContent() {
                         router.push(url)
                         return
                       }
-                    } catch {
-                      // игнорируем
+                      
+                      // Handle error from Tinkoff API
+                      if (dataClassic && typeof dataClassic === 'object' && 'error' in dataClassic) {
+                         const err = dataClassic as { error: string, details?: string }
+                         alert(`Ошибка оплаты: ${err.error}${err.details ? ` (${err.details})` : ''}`)
+                         setIsProcessing(false)
+                         return
+                      }
+                    } catch (e) {
+                      console.error("Payment init error:", e)
                     }
 
                     /* Robokassa InvoiceService Fallback - Disabled for Tinkoff
