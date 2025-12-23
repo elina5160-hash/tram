@@ -6,7 +6,13 @@ import { sendTelegramMessage } from "@/lib/telegram"
 // Credentials from Environment Variables
 const TERMINAL_KEY = process.env.TINKOFF_TERMINAL_KEY
 const PASSWORD = process.env.TINKOFF_PASSWORD
-const API_URL = process.env.TINKOFF_API_URL || "https://securepay.tinkoff.ru/v2"
+let API_URL = process.env.TINKOFF_API_URL || "https://securepay.tinkoff.ru/v2"
+
+// Force Test API URL if using a DEMO terminal key
+if (TERMINAL_KEY && TERMINAL_KEY.includes("DEMO")) {
+    API_URL = "https://rest-api-test.tinkoff.ru/v2"
+    console.log("⚠️ Using Test API URL because TERMINAL_KEY contains 'DEMO'")
+}
 
 function sanitizeText(input: string | number) {
   return Array.from(String(input)).filter((ch) => !/\p{Extended_Pictographic}/u.test(ch) && ch !== "\u200D" && ch !== "\uFE0F").join("")
@@ -20,8 +26,9 @@ function generateToken(params: Record<string, any>) {
             str += params[k]
         }
     }
-    str += PASSWORD
-    return crypto.createHash("sha256").update(str).digest("hex")
+    const tokenInput = str + PASSWORD
+    // console.log("Debug Token Input (masked):", str + "******")
+    return crypto.createHash("sha256").update(tokenInput).digest("hex")
 }
 
 export async function POST(req: Request) {
@@ -137,7 +144,7 @@ export async function POST(req: Request) {
 
   // Add Receipt if items exist
   if (body.items && body.items.length > 0) {
-      const receiptItems = body.items.map(it => ({
+      let receiptItems = body.items.map(it => ({
           Name: sanitizeText(it.name || "Товар").substring(0, 128), // Tinkoff limit
           Price: Math.round((it.cost || 0) * 100),
           Quantity: it.quantity || 1,
@@ -146,9 +153,48 @@ export async function POST(req: Request) {
           PaymentMethod: "full_prepayment",
           PaymentObject: "commodity"
       }))
+
+      // Balance check: Sum of items vs Order Amount
+      const currentSum = receiptItems.reduce((acc, item) => acc + item.Amount, 0)
+      const diff = amountKopecks - currentSum
+
+      if (diff > 0) {
+          // Add Delivery/Shipping item
+          receiptItems.push({
+              Name: "Доставка",
+              Price: diff,
+              Quantity: 1,
+              Amount: diff,
+              Tax: "none",
+              PaymentMethod: "full_prepayment",
+              PaymentObject: "service"
+          })
+      } else if (diff < 0) {
+          // Handle Discount (simple approach: reduce from first item that can absorb it)
+          // Note: This is a basic implementation. For complex cases, proportional distribution is needed.
+          let remainingDiff = -diff // positive value to subtract
+          
+          for (const item of receiptItems) {
+              if (remainingDiff <= 0) break;
+              
+              if (item.Amount > remainingDiff) {
+                  item.Amount -= remainingDiff
+                  // Recalculate Price. Ideally should handle Quantity > 1 splitting, 
+                  // but for now we assume Quantity 1 or accept slight price deviation if Tinkoff allows.
+                  // Tinkoff validates Amount = Price * Quantity. 
+                  // So we must adjust Price.
+                  item.Price = Math.floor(item.Amount / item.Quantity)
+                  // Adjust Amount to match strict Price * Quantity
+                  const newAmount = item.Price * item.Quantity
+                  const dust = item.Amount - newAmount // remainder
+                  item.Amount = newAmount
+                  remainingDiff = dust // passed to next item or ignored if small
+              }
+          }
+      }
       
       initParams.Receipt = {
-          Email: email || undefined,
+          Email: email || "no-reply@example.com",
           Phone: body.customerInfo?.phone || undefined,
           Taxation: "usn_income", // Simplified or Patent. Adjust as needed.
           FfdVersion: "1.05",
