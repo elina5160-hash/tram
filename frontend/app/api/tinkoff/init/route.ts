@@ -200,6 +200,8 @@ export async function POST(req: Request) {
   // Generate Token
   initParams.Token = generateToken(initParams)
 
+  console.log(`🔌 Tinkoff Init: Connecting to ${API_URL}/Init with TerminalKey=${TERMINAL_KEY}`)
+
   try {
       const res = await fetch(`${API_URL}/Init`, {
           method: "POST",
@@ -207,7 +209,20 @@ export async function POST(req: Request) {
           body: JSON.stringify(initParams)
       })
       
-      const data = await res.json()
+      const text = await res.text()
+      // console.log("🔌 Tinkoff Response Raw:", text.substring(0, 500))
+
+      let data: any
+      try {
+        data = JSON.parse(text)
+      } catch (err) {
+        console.error("❌ Tinkoff Response is not JSON:", text.substring(0, 200))
+        return NextResponse.json({ 
+            error: "Invalid response from bank", 
+            details: `Bank returned non-JSON (Status ${res.status}): ${text.substring(0, 100)}`,
+            debug_url: API_URL
+        }, { status: 502 })
+      }
       
       if (data.Success) {
           return NextResponse.json({ url: data.PaymentURL, invId })
