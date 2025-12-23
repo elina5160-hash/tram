@@ -547,9 +547,9 @@ function CartContent() {
                       paymentObject: it.paymentObject
                     }))
 
-                    // Быстрый путь: классический интерфейс (локальная генерация URL) → мгновенный редирект
+                    // Быстрый путь: Tinkoff (вместо Robokassa)
                     try {
-                      const resClassic = await fetch("/api/robokassa/create", {
+                      const resClassic = await fetch("/api/tinkoff/init", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({
@@ -588,59 +588,18 @@ function CartContent() {
                         return
                       }
                     } catch {
-                      // игнорируем, упадёт — попробуем InvoiceService ниже
+                      // игнорируем
                     }
 
+                    /* Robokassa InvoiceService Fallback - Disabled for Tinkoff
                     // Резервный путь: InvoiceService (внешний вызов) → редирект
                     try {
                       const resInvoice = await fetch("/api/robokassa/invoice/create", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                          outSum: totalWithDiscount,
-                          description: "Оплата заказа",
-                          email,
-                          customerInfo: {
-                            name,
-                            phone,
-                            cdek,
-                            address,
-                            email,
-                            client_id: clientId,
-                            username,
-                            order_time: new Date().toISOString()
-                          },
-                          promoCode,
-                          refCode,
-                          invoiceItems,
-                          invId
-                        }),
+                      ...
                       })
-                      let dataInvoice: unknown = null
-                      try { dataInvoice = await resInvoice.json() } catch {}
-                      if (resInvoice.ok && typeof dataInvoice === 'object' && dataInvoice && 'url' in dataInvoice) {
-                        const di = dataInvoice as { url: string; invId?: number | string }
-                        try {
-                          const payload = { type: 'CHECKOUT_REDIRECT', message: 'redirect to pay (invoice)', data: { url: di.url } }
-                          const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' })
-                          navigator.sendBeacon('/api/log', blob)
-                        } catch {}
-                        savePendingOrder(Number(di.invId || invId))
-                        const url = `/pay/confirm?url=${encodeURIComponent(di.url)}&invId=${encodeURIComponent(String(di.invId || invId))}&discountAmount=${discountAmount}&outSum=${totalWithDiscount}`
-                        router.push(url)
-                        return
-                      }
-                      if (resInvoice.ok && typeof dataInvoice === 'object' && dataInvoice && 'raw' in dataInvoice && typeof (dataInvoice as { raw?: string }).raw === 'string') {
-                        const di2 = dataInvoice as { raw?: string; invId?: number | string }
-                        const m = (di2.raw as string).match(/https?:\/\/\S+/)
-                        if (m) {
-                          savePendingOrder(Number(di2.invId || invId))
-                          const url = `/pay/confirm?url=${encodeURIComponent(m[0])}&invId=${encodeURIComponent(String(di2.invId || invId))}&discountAmount=${discountAmount}&outSum=${totalWithDiscount}`
-                          router.push(url)
-                          return
-                        }
-                      }
+                      ...
                     } catch {}
+                    */
                     
                     setIsProcessing(false)
                     alert("Не удалось получить ссылку на оплату. Попробуйте позже.")

@@ -23,6 +23,17 @@ function ConfirmContent() {
   const signatureSuccess = params.get("SignatureValue") || ""
   const urlDiscountAmount = Number(params.get("discountAmount") || 0)
   const urlOutSum = Number(params.get("outSum") || 0)
+  
+  const successTinkoff = params.get("Success") === "true"
+  const orderIdTinkoff = params.get("OrderId")
+
+  useEffect(() => {
+    if (successTinkoff && orderIdTinkoff) {
+      clearCart()
+      setIsPaid(true)
+      setStatusText("Оплата прошла успешно! Ожидайте уведомление.")
+    }
+  }, [successTinkoff, orderIdTinkoff])
 
   const [isPaid, setIsPaid] = useState(false)
   const [statusText, setStatusText] = useState("")
