@@ -4,10 +4,10 @@ import { getServiceSupabaseClient, getSupabaseClient } from "@/lib/supabase"
 import { sendTelegramMessage } from "@/lib/telegram"
 
 // Credentials from Environment Variables
-const TERMINAL_KEY = "1765992881356" // process.env.TINKOFF_TERMINAL_KEY
+const TERMINAL_KEY = process.env.TINKOFF_TERMINAL_KEY
 // Remove surrounding quotes if present (fix for Vercel UI double-quoting)
-const PASSWORD = "ejlk$s_nR!5rZTPR" // process.env.TINKOFF_PASSWORD
-const API_URL = "https://securepay.tinkoff.ru/v2" // process.env.TINKOFF_API_URL
+const PASSWORD = process.env.TINKOFF_PASSWORD ? process.env.TINKOFF_PASSWORD.replace(/^"|"$/g, '') : ""
+const API_URL = process.env.TINKOFF_API_URL || "https://securepay.tinkoff.ru/v2"
 
 function sanitizeText(input: string | number) {
   return Array.from(String(input)).filter((ch) => !/\p{Extended_Pictographic}/u.test(ch) && ch !== "\u200D" && ch !== "\uFE0F").join("")

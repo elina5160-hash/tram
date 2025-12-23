@@ -5,8 +5,8 @@ import { sendTelegramMessage } from "@/lib/telegram"
 import { sendToGoogleSheet } from "@/lib/google-sheets"
 
 // Credentials from Environment Variables
-const TERMINAL_KEY = "1765992881356" // process.env.TINKOFF_TERMINAL_KEY
-const PASSWORD = "ejlk$s_nR!5rZTPR" // process.env.TINKOFF_PASSWORD
+const TERMINAL_KEY = process.env.TINKOFF_TERMINAL_KEY
+const PASSWORD = process.env.TINKOFF_PASSWORD
 
 function generateToken(params: Record<string, any>) {
     const keys = Object.keys(params).filter(k => k !== "Token").sort()
