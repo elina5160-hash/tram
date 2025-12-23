@@ -133,13 +133,13 @@ export function MenuDrawer({ isOpen, onClose }: MenuDrawerProps) {
                   <p className="mt-2">Оплата картой: онлайн по указанным реквизитам в уведомлении заказа.</p>
                   <p className="mt-2">Наличными: при самовывозе со склада.</p>
                   <p className="mt-2">Можете написать нашей службе поддержки и уточнить актуальную информацию об оплате.</p>
-                  <p className="mt-2"><a href="https://t.me/avatime_cosmetics_income" target="_blank" rel="noopener noreferrer" className="underline">Нажмите, чтобы написать нам (@avatime_cosmetics_income)</a></p>
+                  <p className="mt-2"><a href="https://t.me/etra_info" target="_blank" rel="noopener noreferrer" className="underline">Нажмите, чтобы написать нам (@etra_info)</a></p>
                 </>
               )}
               {menuView === "contacts" && (
                 <>
                   <p><strong>Контакты:</strong> Поддержка на связи каждый будний день. В нашем сообществе ответ можно получить в любое время дня и ночи.</p>
-                  <p className="mt-2">Служба поддержки <a href="https://t.me/avatime_cosmetics_income" target="_blank" rel="noopener noreferrer" className="underline">@avatime_cosmetics_income</a></p>
+                  <p className="mt-2">Служба поддержки <a href="https://t.me/etra_info" target="_blank" rel="noopener noreferrer" className="underline">@etra_info</a></p>
                   <p className="mt-2">Дружелюбное сообщество <a href="http://t.me/enzyme_trend_russia" target="_blank" rel="noopener noreferrer" className="underline">http://t.me/enzyme_trend_russia</a></p>
                   <p className="mt-2"><strong>У нас нет официального сайта</strong> и нашу оригинальную продукцию нельзя купить на маркетплейсах. Остерегайтесь подделок!</p>
                 </>
@@ -160,7 +160,7 @@ export function MenuDrawer({ isOpen, onClose }: MenuDrawerProps) {
                   <p className="mt-2">Решение о возврате денежных средств или замене товара принимается продавцом в течение <strong>10 календарных дней</strong> с момента получения обращения покупателя.</p>
                   <p className="mt-2">Возврат денежных средств осуществляется в срок, не превышающий <strong>10 календарных дней</strong> после принятия решения о возврате.</p>
                   <p className="mt-2">В случае возврата товара ненадлежащего качества расходы по доставке товара обратно к продавцу и повторной доставке товара покупателю возмещаются продавцом.</p>
-                  <p className="mt-2">По любым вопросам обращайтесь в поддержку: <a href="https://t.me/avatime_cosmetics_income" target="_blank" rel="noopener noreferrer" className="underline">@avatime_cosmetics_income</a></p>
+                  <p className="mt-2">По любым вопросам обращайтесь в поддержку: <a href="https://t.me/etra_info" target="_blank" rel="noopener noreferrer" className="underline">@etra_info</a></p>
                 </>
               )}
               {menuView === "about" && (
@@ -179,6 +179,33 @@ export function MenuDrawer({ isOpen, onClose }: MenuDrawerProps) {
                   <p className="mt-2">📱 Эфиры в Telegram <a href="https://t.me/ETRA_EFIR" target="_blank" rel="noopener noreferrer" className="underline">https://t.me/ETRA_EFIR</a></p>
                   <p className="mt-2">📱 YouTube канал Этра <a href="https://www.youtube.com/@KirillSerebrjansky" target="_blank" rel="noopener noreferrer" className="underline">https://www.youtube.com/@KirillSerebrjansky</a></p>
                   <p className="mt-2">📱 YouTube канал Кирилл Серебрянский <a href="https://youtube.com/@kirillserebrjansky" target="_blank" rel="noopener noreferrer" className="underline">https://youtube.com/@kirillserebrjansky</a></p>
+                  <p className="mt-2"><strong>Наше производство:</strong> Краснодарский край, Сочи, Пластунская улица, 102Б</p>
+                  <p className="mt-2"><strong>Контакты и адреса партнёров:</strong></p>
+                  <ul className="mt-2 list-disc pl-5">
+                    <li>Сочи, пгт Красная Поляна, Вознесенская улица, 36, «Гранат» — +7 (963) 160-10-75</li>
+                    <li>Сочи, пгт Красная Поляна, улица ГЭС, 49А, «Sunsvet” — +7 (938) 469-03-69</li>
+                    <li>Сочи, улица Островского, 1, Кафе «Я люблю тебя» — +7 (962) 888-86-56</li>
+                    <li>Сочи, Параллельная улица, 9лит5, ЖК Остров Мечты, этаж 1, «PROПитание» — +7 (988) 401-00-50</li>
+                    <li>Сочи, микрорайон Центральный, Морской переулок, 2, Магазин «Птичка» — +7 (981) 244-65-74</li>
+                  </ul>
+                </>
+              )}
+              {menuView === "offer" && (
+                <>
+                   <p><strong>Оферта</strong></p>
+                   <p className="mt-2">Информация об оферте будет добавлена позже.</p>
+                </>
+              )}
+              {menuView === "help" && (
+                <>
+                  <p><strong>Помощь менеджера</strong></p>
+                  <p className="mt-2">Если у вас возникли вопросы, наш менеджер с радостью вам поможет.</p>
+                  <p className="mt-2"><a href="https://t.me/etra_info" target="_blank" rel="noopener noreferrer" className="underline">Написать менеджеру (@etra_info)</a></p>
+                </>
+              )}
+              {menuView === "stores" && (
+                <>
+                  <p><strong>Адреса офлайн-магазинов</strong></p>
                   <p className="mt-2"><strong>Наше производство:</strong> Краснодарский край, Сочи, Пластунская улица, 102Б</p>
                   <p className="mt-2"><strong>Контакты и адреса партнёров:</strong></p>
                   <ul className="mt-2 list-disc pl-5">

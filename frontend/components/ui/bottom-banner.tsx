@@ -139,7 +139,7 @@ export default function BottomBanner({ onProfileClick }: { onProfileClick?: () =
 
         {supportItem?.enabled !== false && (
           <Item
-            href={supportItem?.href || "https://t.me/avatime_cosmetics_income"}
+            href={supportItem?.href || "https://t.me/etra_info"}
             label={supportItem?.label || "Поддержка"}
             renderIcon={() => (
               <svg className="w-[24px] h-auto" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

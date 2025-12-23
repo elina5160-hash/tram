@@ -585,7 +585,7 @@ export default function ItemPage() {
         <div className="mt-4 grid grid-cols-2 gap-2">
           <button
             className="w-full rounded-[12px] bg-[#EAEAEA] px-3 py-3 text-[13px] text-black"
-            onClick={() => window.open("https://t.me/avatime_cosmetics_income", "_blank")}
+            onClick={() => window.open("https://t.me/etra_info", "_blank")}
           >
             Помощь менеджера
           </button>

@@ -12,7 +12,7 @@ function getData() {
             { "id": "home", "label": "Главная", "href": "/home", "icon": "home", "enabled": true },
             { "id": "shop", "label": "Каталог", "href": "/shop", "icon": "shop", "enabled": true },
             { "id": "cart", "label": "Корзина", "href": "/cart", "icon": "cart", "enabled": true },
-            { "id": "support", "label": "Поддержка", "href": "https://t.me/avatime_cosmetics_income", "icon": "support", "enabled": true }
+            { "id": "support", "label": "Поддержка", "href": "https://t.me/etra_info", "icon": "support", "enabled": true }
         ];
     }
     const fileContent = fs.readFileSync(dataPath, 'utf8');
