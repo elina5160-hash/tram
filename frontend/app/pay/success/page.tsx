@@ -96,20 +96,18 @@ function SuccessPageContent() {
       <div className="w-full max-w-[420px] mx-auto px-4 pt-6">
         <h1 className="text-xl font-semibold">Оплата прошла успешно</h1>
         <div className="mt-4">
-          <a 
-            href="https://t.me/beautykoreanbot/app" 
-            className="block w-full"
-            onClick={(e) => {
-                if (isTelegram) {
-                    e.preventDefault()
-                    handleReturn()
-                }
-            }}
-          >
-            <HoverButton className="rounded-[12px] bg-[#6800E9] text-white px-4 py-2 w-full text-center">
+            <HoverButton 
+                onClick={() => {
+                    if (isTelegram) {
+                        handleReturn()
+                    } else {
+                        window.location.href = "https://t.me/beautykoreanbot/app"
+                    }
+                }}
+                className="rounded-[12px] bg-[#6800E9] text-white px-4 py-2 w-full text-center"
+            >
                 Вернуться в приложение
             </HoverButton>
-          </a>
         </div>
       </div>
 
