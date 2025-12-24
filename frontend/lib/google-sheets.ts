@@ -29,10 +29,8 @@ export async function sendToGoogleSheet(orderData: any): Promise<any> {
         });
     }
 
-    const results = [];
-
-    // Loop through items and send one request per item
-    for (const item of items) {
+    // Use Promise.all to send requests in parallel
+    const promises = items.map(async (item: any) => {
         // Mapping based on screenshot and requirements:
         // A: ORDER ID
         // B: USER ID
@@ -87,17 +85,19 @@ export async function sendToGoogleSheet(orderData: any): Promise<any> {
             
             // 200 OK (final destination) or 302 (if manual)
             if (response.ok || response.status === 302) {
-                results.push({ status: "ok", item: item.name });
+                return { status: "ok", item: item.name };
             } else {
                 const text = await response.text();
                 console.error(`Google Sheets error for item ${item.name}:`, response.status, text);
-                results.push({ status: "error", code: response.status, text });
+                return { status: "error", code: response.status, text };
             }
         } catch (e) {
              console.error(`Fetch error for item ${item.name}:`, e);
-             results.push({ status: "error", error: String(e) });
+             return { status: "error", error: String(e) };
         }
-    }
+    });
+
+    const results = await Promise.all(promises);
     
     return { results };
 

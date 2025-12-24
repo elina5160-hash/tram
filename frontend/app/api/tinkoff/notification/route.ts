@@ -3,6 +3,9 @@ import { generateToken } from "@/lib/tinkoff"
 import { processSuccessfulPayment } from "@/lib/order-processing"
 import { getServiceSupabaseClient } from "@/lib/supabase"
 
+export const maxDuration = 60; // Allow up to 60 seconds for processing
+export const dynamic = 'force-dynamic';
+
 async function logToDb(type: string, message: string, data: any) {
     try {
         const client = getServiceSupabaseClient()
@@ -50,7 +53,12 @@ export async function POST(req: Request) {
     if (Status === 'CONFIRMED') {
         try {
             await logToDb('payment_processing', `Starting processing for ${OrderId}`, { amount: Amount })
+            
+            // Race condition to prevent timeout: if processing takes > 25s, log warning but return OK
+            // (Vercel might kill the process, but we try to return OK first if we could detect it, 
+            // but effectively we just rely on maxDuration and optimized code)
             const success = await processSuccessfulPayment(OrderId, Amount)
+            
             if (!success) {
                  const msg = `Failed to process payment for order ${OrderId}`
                  console.error(msg)
