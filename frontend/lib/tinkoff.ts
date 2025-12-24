@@ -31,10 +31,15 @@ export function generateToken(params: Record<string, any>) {
     return crypto.createHash("sha256").update(str).digest("hex")
 }
 
-export async function checkPaymentStatus(orderId: string | number) {
-    const params = {
+export async function checkPaymentStatus(orderId: string | number, paymentId?: string | number) {
+    const params: any = {
         TerminalKey: TERMINAL_KEY,
-        OrderId: String(orderId),
+    }
+
+    if (paymentId) {
+        params.PaymentId = String(paymentId)
+    } else {
+        params.OrderId = String(orderId)
     }
 
     const token = generateToken(params)

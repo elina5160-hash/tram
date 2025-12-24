@@ -193,6 +193,26 @@ export async function POST(req: Request) {
       console.log("Tinkoff Init response:", data)
 
       if (data.Success) {
+          // Update order with PaymentId
+          if (data.PaymentId) {
+             const { error: updateError } = await client
+                 .from("orders")
+                 .update({ 
+                     customer_info: { 
+                         ...body.customerInfo,
+                         email,
+                         items_backup: itemsBackup,
+                         description: description,
+                         payment_id: data.PaymentId 
+                     } 
+                 })
+                 .eq("id", invId)
+             
+             if (updateError) {
+                 console.error("Failed to save PaymentId:", updateError)
+             }
+          }
+
           return NextResponse.json({ url: data.PaymentURL, invId })
       } else {
           return NextResponse.json({ error: data.Message, details: data.Details }, { status: 400 })

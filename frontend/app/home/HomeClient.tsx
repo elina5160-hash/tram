@@ -3,7 +3,7 @@ import { useState, useEffect, Suspense, useMemo } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
-import { addToCart, incrementQty } from "@/lib/cart"
+import { addToCart, incrementQty, clearCart } from "@/lib/cart"
 import { getPriceValue, splitPrice } from "@/lib/price"
 import { useProducts } from "@/hooks/useProducts"
 import { AdminPanel } from "@/components/admin/AdminPanel"
@@ -51,6 +51,10 @@ export default function HomeClient() {
     if (searchParams.get('profile')) {
         setProfileOpen(true)
     }
+    if (searchParams.get('startapp') === 'payment_success' || searchParams.get('tgWebAppStartParam') === 'payment_success') {
+        clearCart()
+        setProfileOpen(true)
+    }
   }, [searchParams])
   type MenuView = "grid" | "delivery" | "payment" | "contacts" | "reviews" | "returns" | "about" | "offer" | "help" | "stores"
   const [menuView, setMenuView] = useState<MenuView>("grid")
@@ -88,8 +92,14 @@ export default function HomeClient() {
           if (tg) {
               tg.ready() // Notify Telegram we are ready
               
-              if (tg.initDataUnsafe?.start_param === 'profile') {
+              const startParam = tg.initDataUnsafe?.start_param
+              if (startParam === 'profile') {
                   setProfileOpen(true)
+              }
+              if (startParam === 'payment_success') {
+                  clearCart()
+                  setProfileOpen(true)
+                  // Optionally show a success message or update purchase history immediately
               }
 
               if (tg.initDataUnsafe?.user?.id) {

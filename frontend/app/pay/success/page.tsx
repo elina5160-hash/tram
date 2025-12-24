@@ -83,10 +83,16 @@ function SuccessPageContent() {
   }
 
   const handleReturn = () => {
-      // Always redirect to the Mini App home or profile
-      // Using window.location.href ensures we break out of any potential iframe or redirect logic
+      // Always redirect to the Mini App with a specific start param to trigger cart clearing
       if (typeof window !== "undefined") {
-          window.location.href = "https://t.me/KonkursEtraBot/app?startapp=profile"
+          const tg = (window as any).Telegram?.WebApp;
+          const url = "https://t.me/KonkursEtraBot/app?startapp=payment_success";
+          
+          if (tg && tg.openTelegramLink) {
+              tg.openTelegramLink(url);
+          } else {
+              window.location.href = url;
+          }
       }
   }
 

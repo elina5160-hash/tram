@@ -47,7 +47,8 @@ export async function POST(req: Request) {
     if (order.status !== 'paid' && order.status !== 'Оплачен') {
         try {
             console.log(`Checking Tinkoff status for order ${orderId}...`)
-            const tinkoffState = await checkPaymentStatus(orderId)
+            const paymentId = order.customer_info?.payment_id
+            const tinkoffState = await checkPaymentStatus(orderId, paymentId)
             
             if (tinkoffState && tinkoffState.Status === 'CONFIRMED') {
                 console.log(`Order ${orderId} confirmed by Tinkoff. Processing...`)
