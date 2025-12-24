@@ -175,7 +175,7 @@ export default function HomeClient() {
           className="mt-3 h-[220px] relative rounded-[20px] overflow-hidden"
         >
           <div className="block w-full h-full relative">
-            <Image src="/главная.png" alt="Афиша" fill className="object-contain rounded-[20px]" priority />
+            <Image src="/главная3.png" alt="Афиша" fill className="object-contain rounded-[20px]" priority />
           </div>
         </div>
 
