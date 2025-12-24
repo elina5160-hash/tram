@@ -5,14 +5,15 @@ const TERMINAL_KEY = "1765992881356";
 const API_URL = "https://securepay.tinkoff.ru/v2/Init";
 
 function generateToken(params, pwd) {
-    const keys = Object.keys(params).filter(k => k !== "Token" && k !== "Receipt" && k !== "DATA").sort();
+    const paramsWithPwd = { ...params, Password: pwd };
+    const keys = Object.keys(paramsWithPwd).filter(k => k !== "Token" && k !== "Receipt" && k !== "DATA").sort();
     let str = "";
     for (const k of keys) {
-        if (params[k] !== undefined && params[k] !== null && params[k] !== "") {
-            str += params[k];
+        if (paramsWithPwd[k] !== undefined && paramsWithPwd[k] !== null && paramsWithPwd[k] !== "") {
+            str += paramsWithPwd[k];
         }
     }
-    const tokenInput = str + pwd;
+    const tokenInput = str;
     return crypto.createHash("sha256").update(tokenInput).digest("hex");
 }
 
@@ -56,62 +57,93 @@ function checkPassword(pwd) {
 }
 
 async function run() {
-    console.log("Starting advanced password recovery...");
+    const pwd = "ejlk$s_nR!5rZTPR";
     
-    // Base candidates including user input
-    let candidates = [
-        "ejlk$s_nR!5rZTPR", 
-        "ejIk$s_nR!5rZTPR", 
-        "ej1k$s_nR!5rZTPR",
-        "ej|k$s_nR!5rZTPR",
-        "ejlk$s_nRl5rZTPR", // l instead of !
-        "ejlk$s_nRI5rZTPR", // I instead of !
-        "ejlk$s_nR15rZTPR", // 1 instead of !
-    ];
-
-    // Homoglyph map (Latin -> Cyrillic lookalikes)
-    const homoglyphs = {
-        'e': ['е'],
-        's': ['с'], // small s -> small es
-        'r': ['г'], 
-        'P': ['Р'],
-        'T': ['Т'],
-        'a': ['а'],
-        'o': ['о'],
-        'k': ['к'],
-        'x': ['х'],
-        'c': ['с'],
-        'B': ['В'],
-        'H': ['Н'],
-        'M': ['М']
+    console.log("=== DIAGNOSTIC START ===");
+    console.log("TerminalKey:", TERMINAL_KEY);
+    console.log("Password:", pwd);
+    
+    const orderId = "test_" + Math.floor(Date.now() / 1000);
+    const initParams = {
+        TerminalKey: TERMINAL_KEY,
+        Amount: 1000,
+        OrderId: orderId,
+        Description: "Test Payment",
+        Language: "ru"
     };
-
-    // Generate variations with homoglyphs
-    const base = "ejlk$s_nR!5rZTPR";
-    // We will try replacing characters one by one with Cyrillic equivalents if they exist
-    for (let i = 0; i < base.length; i++) {
-        const char = base[i];
-        if (homoglyphs[char]) {
-            for (const cyr of homoglyphs[char]) {
-                const newPwd = base.substring(0, i) + cyr + base.substring(i + 1);
-                candidates.push(newPwd);
-            }
+    
+    // Generate Token manually with logging
+    // Correct logic per T-Bank support: Password should be treated as a parameter "Password" and sorted alphabetically
+    const paramsForToken = { ...initParams, Password: pwd };
+    const keys = Object.keys(paramsForToken).filter(k => k !== "Token" && k !== "Receipt" && k !== "DATA").sort();
+    console.log("Sorted Keys (including Password):", keys);
+    
+    let str = "";
+    for (const k of keys) {
+        if (paramsForToken[k] !== undefined && paramsForToken[k] !== null && paramsForToken[k] !== "") {
+            str += paramsForToken[k];
         }
     }
+    const tokenInput = str;
+    console.log("String to Sign (concatenated params):");
+    console.log(`"${tokenInput}"`);
     
-    // Add variations with "0" instead of "O" if applicable (none here)
+    const token = crypto.createHash("sha256").update(tokenInput).digest("hex");
+    console.log("Generated Token (SHA-256):", token);
     
-    // Remove duplicates
-    candidates = [...new Set(candidates)];
+    initParams.Token = token;
+    
+    console.log("Sending Request to:", API_URL);
+    console.log("Body:", JSON.stringify(initParams, null, 2));
+    
+    await checkPassword(pwd);
+}
 
-    console.log(`Testing ${candidates.length} variations (Minimal Request)...`);
-    
-    for (const pwd of candidates) {
-        if (await checkPassword(pwd)) {
-            break;
-        }
-    }
-    console.log("\nDone.");
+// Override checkPassword to just run one test with logging
+function checkPassword(pwd) {
+    return new Promise((resolve) => {
+        // Reuse the logic but we already generated params in run()
+        // Let's just do a fetch here for simplicity using the params from run() if we could pass them
+        // But since checkPassword is self-contained, let's just let it run its own test 
+        // OR better, let's copy the fetch logic here.
+        
+        // We will just let the original logic run but for ONE password
+        
+        const orderId = "diag_" + Math.random().toString(36).substring(7);
+        const initParams = {
+            TerminalKey: TERMINAL_KEY,
+            Amount: 1000,
+            OrderId: orderId,
+            Description: "Test Payment",
+            Language: "ru"
+        };
+        initParams.Token = generateToken(initParams, pwd);
+        
+        const req = https.request(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        }, (res) => {
+            let data = '';
+            res.on('data', c => data += c);
+            res.on('end', () => {
+                console.log("=== SERVER RESPONSE ===");
+                console.log("Status:", res.statusCode);
+                console.log("Body:", data);
+                if (data.includes("Неверный токен")) {
+                    console.log("\n❌ CONCLUSION: Password is incorrect or TerminalKey is invalid.");
+                } else if (JSON.parse(data).Success) {
+                    console.log("\n✅ CONCLUSION: Password is CORRECT!");
+                }
+                resolve(true);
+            });
+        });
+        req.on('error', (e) => {
+            console.error("Error:", e);
+            resolve(false);
+        });
+        req.write(JSON.stringify(initParams));
+        req.end();
+    });
 }
 
 run();

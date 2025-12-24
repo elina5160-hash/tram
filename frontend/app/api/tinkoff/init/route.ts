@@ -14,15 +14,16 @@ function sanitizeText(input: string | number) {
 }
 
 function generateToken(params: Record<string, any>) {
-    const keys = Object.keys(params).filter(k => k !== "Token" && k !== "Receipt" && k !== "DATA").sort()
+    // Correct logic per T-Bank support: Password should be treated as a parameter "Password" and sorted alphabetically
+    const paramsWithPwd: Record<string, any> = { ...params, Password: PASSWORD }
+    const keys = Object.keys(paramsWithPwd).filter(k => k !== "Token" && k !== "Receipt" && k !== "DATA").sort()
     let str = ""
     for (const k of keys) {
-        if (params[k] !== undefined && params[k] !== null && params[k] !== "") {
-            str += params[k]
+        if (paramsWithPwd[k] !== undefined && paramsWithPwd[k] !== null && paramsWithPwd[k] !== "") {
+            str += paramsWithPwd[k]
         }
     }
-    const tokenInput = str + PASSWORD
-    // console.log("Debug Token Input (masked):", str + "******")
+    const tokenInput = str
     return crypto.createHash("sha256").update(tokenInput).digest("hex")
 }
 
