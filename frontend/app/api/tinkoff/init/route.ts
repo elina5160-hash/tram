@@ -113,7 +113,11 @@ export async function POST(req: Request) {
 
   // Init Tinkoff Payment
   const amountKopecks = Math.round(outSum * 100)
-  const baseUrl = "https://app.etra-shop.ru" // Hardcode base URL for stability
+  
+  // Determine base URL dynamically from request
+  const protocol = req.headers.get("x-forwarded-proto") || "https"
+  const host = req.headers.get("host")
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || (host ? `${protocol}://${host}` : "https://tram-app.vercel.app")
 
   // Configure Receipt (Check FZ-54)
   const receiptItems = (body.items || []).map(it => ({
