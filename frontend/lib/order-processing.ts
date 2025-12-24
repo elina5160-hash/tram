@@ -8,7 +8,12 @@ export async function processSuccessfulPayment(invId: string | number, amountKop
     const orderId = Number(invId)
 
     let client = getServiceSupabaseClient()
-    if (!client) client = getSupabaseClient()
+    let isService = true
+    if (!client) {
+        console.warn("⚠️ Service Client missing! Falling back to Anon Client. If RLS is enabled, this will fail to find the order.")
+        client = getSupabaseClient()
+        isService = false
+    }
     
     if (!client) {
         console.error("Database unavailable for processing payment")
@@ -16,7 +21,7 @@ export async function processSuccessfulPayment(invId: string | number, amountKop
     }
 
     // 1. Check if order exists
-    console.log(`Searching for order ${orderId} in DB...`)
+    console.log(`Searching for order ${orderId} in DB (Client: ${isService ? 'Service' : 'Anon'})...`)
     const { data: currentOrder, error: selectError } = await client.from('orders').select('*').eq('id', orderId).single()
     
     if (selectError && selectError.code !== 'PGRST116') {
