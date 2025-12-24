@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { getServiceSupabaseClient } from '@/lib/supabase'
 import { addTickets } from '@/lib/contest'
+import { checkPaymentStatus } from '@/lib/tinkoff'
+import { processSuccessfulPayment } from '@/lib/order-processing'
 
 export async function POST(req: Request) {
   try {
@@ -16,7 +18,7 @@ export async function POST(req: Request) {
     }
 
     // Check if order exists
-    const { data: order, error } = await client
+    let { data: order, error } = await client
       .from('orders')
       .select('*')
       .eq('id', orderId)
@@ -35,41 +37,73 @@ export async function POST(req: Request) {
     if ((!currentClientId || currentClientId === 'undefined' || currentClientId === 'null') && clientId) {
        const newInfo = { ...currentInfo, client_id: clientId }
        
-       await client.from('orders').update({ customer_info: newInfo }).eq('id', orderId)
-       
-       // Handle missed tickets if order is already paid
-       if (order.status === 'paid' || order.status === 'Оплачен') {
-           try {
-               // Calculate tickets (Cumulative Logic)
-               const { data: pastOrders } = await client
-                   .from('orders')
-                   .select('total_amount')
-                   .eq('customer_info->>client_id', clientId)
-                   .neq('id', orderId)
-                   .in('status', ['paid', 'Оплачен'])
-
-               const pastSpent = pastOrders?.reduce((sum, o) => sum + (Number(o.total_amount) || 0), 0) || 0
-               const currentAmount = Number(order.total_amount) || 0
-               const cumulativeSpent = pastSpent + currentAmount
-
-               const totalTicketsFromSpend = Math.floor(cumulativeSpent / 1000)
-               const pastTicketsFromSpend = Math.floor(pastSpent / 1000)
-
-               const ticketsEarned = Math.max(0, totalTicketsFromSpend - pastTicketsFromSpend)
-               
-               if (ticketsEarned > 0) {
-                   // Update order record
-                   await client.from('orders').update({ tickets_earned: ticketsEarned }).eq('id', orderId)
-                   
-                   // Award tickets to user
-                   await addTickets(clientId, ticketsEarned, 'purchase_reward', String(orderId), true)
-               }
-           } catch (e) {
-               console.error("Error awarding tickets during sync:", e)
-           }
+       const { error: updateError } = await client.from('orders').update({ customer_info: newInfo }).eq('id', orderId)
+       if (!updateError) {
+           order.customer_info = newInfo // Update local object
        }
+    }
 
-       return NextResponse.json({ status: 'linked', order: { ...order, customer_info: newInfo } })
+    // CHECK PAYMENT STATUS WITH TINKOFF IF NOT PAID
+    if (order.status !== 'paid' && order.status !== 'Оплачен') {
+        try {
+            console.log(`Checking Tinkoff status for order ${orderId}...`)
+            const tinkoffState = await checkPaymentStatus(orderId)
+            
+            if (tinkoffState && tinkoffState.Status === 'CONFIRMED') {
+                console.log(`Order ${orderId} confirmed by Tinkoff. Processing...`)
+                const success = await processSuccessfulPayment(orderId, tinkoffState.Amount)
+                if (success) {
+                    // Refetch order to return updated status
+                    const { data: updatedOrder } = await client.from('orders').select('*').eq('id', orderId).single()
+                    if (updatedOrder) order = updatedOrder
+                }
+            } else if (tinkoffState) {
+                console.log(`Order ${orderId} status is ${tinkoffState.Status}`)
+            }
+        } catch (e) {
+            console.error("Failed to check Tinkoff status:", e)
+        }
+    }
+
+    // Handle missed tickets if order is now paid (either was paid before, or just became paid)
+    if (order.status === 'paid' || order.status === 'Оплачен') {
+        // Only run this logic if we suspect tickets weren't awarded (e.g. tickets_earned is null/0 but amount > 1000)
+        // OR if we just linked the client_id (which we did above)
+        
+        // We can just run the check safely.
+       try {
+           // Calculate tickets (Cumulative Logic)
+           const { data: pastOrders } = await client
+               .from('orders')
+               .select('total_amount')
+               .eq('customer_info->>client_id', clientId)
+               .neq('id', orderId)
+               .in('status', ['paid', 'Оплачен'])
+
+           const pastSpent = pastOrders?.reduce((sum, o) => sum + (Number(o.total_amount) || 0), 0) || 0
+           const currentAmount = Number(order.total_amount) || 0
+           const cumulativeSpent = pastSpent + currentAmount
+
+           const totalTicketsFromSpend = Math.floor(cumulativeSpent / 1000)
+           const pastTicketsFromSpend = Math.floor(pastSpent / 1000)
+
+           const ticketsEarned = Math.max(0, totalTicketsFromSpend - pastTicketsFromSpend)
+           
+           // Check if we need to update
+           if (ticketsEarned > 0 && (!order.tickets_earned || order.tickets_earned < ticketsEarned)) {
+               // Update order record
+               await client.from('orders').update({ tickets_earned: ticketsEarned }).eq('id', orderId)
+               
+               // Award tickets to user
+               // We pass true for 'skipIfTransactionExists' to avoid duplicates
+               await addTickets(clientId, ticketsEarned, 'purchase_reward', String(orderId), true)
+               
+               // Update local object for response
+               order.tickets_earned = ticketsEarned
+           }
+       } catch (e) {
+           console.error("Error awarding tickets during sync:", e)
+       }
     }
 
     return NextResponse.json({ status: 'ok', order })

@@ -46,11 +46,35 @@ export function ProfileDrawer({ isOpen, onClose, initialView = 'profile' }: Prof
   const refLink = `https://t.me/beautykoreanbot?start=u${userId}`
 
   // Fetch orders when in 'orders' view
-  const { data: ordersData, isLoading } = useSWR(
+  const { data: ordersData, isLoading, mutate } = useSWR(
     view === 'orders' && isOpen ? `/api/user/orders?client_id=${userId}` : null,
     fetcher,
     { refreshInterval: 5000 }
   )
+
+  // Check payment status when expanding a pending order
+  useEffect(() => {
+    if (expandedOrderId && ordersData?.orders) {
+        const order = ordersData.orders.find((o: any) => o.id === expandedOrderId)
+        // Check if status implies not paid yet
+        if (order && (order.status === 'created' || order.status === 'pending' || order.status === 'processing')) {
+            // Trigger Sync to check with Tinkoff
+            fetch('/api/orders/sync', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ orderId: order.id, clientId: userId })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.order && data.order.status !== order.status) {
+                    // Status changed, refresh list
+                    mutate()
+                }
+            })
+            .catch(err => console.error("Auto-sync failed:", err))
+        }
+    }
+  }, [expandedOrderId, ordersData, userId, mutate])
 
   interface Order {
     id: number
