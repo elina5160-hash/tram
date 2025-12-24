@@ -82,11 +82,11 @@ export async function sendToGoogleSheet(orderData: any): Promise<any> {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload),
-                redirect: "manual",
+                redirect: "follow", // Follow redirects (Google Scripts often redirect)
             });
             
-            // 302/200 OK
-            if (response.status === 302 || response.status === 200) {
+            // 200 OK (final destination) or 302 (if manual)
+            if (response.ok || response.status === 302) {
                 results.push({ status: "ok", item: item.name });
             } else {
                 const text = await response.text();

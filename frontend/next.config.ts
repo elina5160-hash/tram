@@ -21,7 +21,7 @@ const nextConfig: NextConfig = {
         headers: [
           {
             key: 'Content-Security-Policy',
-            value: "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.tinkoff.ru https://*.tcsbank.ru https://*.tbank.ru https://*.nspk.ru https://*.t-static.ru https://telegram.org https://app.grammy.dev; img-src 'self' data: https://*.tinkoff.ru https://*.tcsbank.ru https://*.tbank.ru https://*.nspk.ru https://*.t-static.ru https://meibdfguaaqcprvyfrpr.supabase.co; connect-src 'self' https://*.tinkoff.ru https://*.tcsbank.ru https://*.tbank.ru https://*.nspk.ru https://*.t-static.ru https://meibdfguaaqcprvyfrpr.supabase.co; style-src 'self' 'unsafe-inline' https://*.tinkoff.ru https://*.tcsbank.ru https://*.tbank.ru https://*.nspk.ru https://*.t-static.ru; frame-src 'self' https://*.tinkoff.ru https://*.tcsbank.ru https://*.tbank.ru"
+            value: "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.tinkoff.ru https://*.tcsbank.ru https://*.tbank.ru https://*.nspk.ru https://*.t-static.ru https://telegram.org https://app.grammy.dev; img-src 'self' data: https://*.tinkoff.ru https://*.tcsbank.ru https://*.tbank.ru https://*.nspk.ru https://*.t-static.ru https://meibdfguaaqcprvyfrpr.supabase.co; connect-src 'self' https://*.tinkoff.ru https://*.tcsbank.ru https://*.tbank.ru https://*.nspk.ru https://*.t-static.ru https://meibdfguaaqcprvyfrpr.supabase.co https://api.telegram.org https://script.google.com; style-src 'self' 'unsafe-inline' https://*.tinkoff.ru https://*.tcsbank.ru https://*.tbank.ru https://*.nspk.ru https://*.t-static.ru; frame-src 'self' https://*.tinkoff.ru https://*.tcsbank.ru https://*.tbank.ru"
           }
         ],
       },
@@ -39,8 +39,6 @@ const nextConfig: NextConfig = {
       { source: "/Xmel.png", destination: "/хмель1.png" },
       { source: "/Zakvaska.png", destination: "/1.png" },
       { source: "/night.png", destination: "/day.png" },
-      { source: "/pay/success", destination: "/pay/confirm?status=success" },
-      { source: "/pay/fail", destination: "/pay/confirm?status=fail" },
     ]
   },
   outputFileTracingExcludes: {

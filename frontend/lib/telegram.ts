@@ -1,4 +1,4 @@
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "7578270389:AAGk1_J4vQ8jQ3Y_Q6pZ7J_8q_Q6pZ7J_8q" // Fallback to provided token if env missing
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "" // Token must be provided in env
 const TELEGRAM_ADMIN_CHAT_ID = process.env.TELEGRAM_ADMIN_CHAT_ID || "1287944066" // Fallback admin ID
 
 function normalizeChatId(id: string) {

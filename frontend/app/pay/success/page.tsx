@@ -97,14 +97,9 @@ function SuccessPageContent() {
         <h1 className="text-xl font-semibold">Оплата прошла успешно</h1>
         <div className="mt-4">
             <HoverButton 
-                onClick={() => {
-                    if (isTelegram) {
-                        handleReturn()
-                    } else {
-                        window.location.href = "https://t.me/beautykoreanbot/app"
-                    }
-                }}
-                className="rounded-[12px] bg-[#6800E9] text-white px-4 py-2 w-full text-center"
+                onClick={handleReturn}
+                className="rounded-[12px] bg-[#6800E9] text-white px-4 py-2 w-full text-center relative z-50 cursor-pointer"
+                style={{ zIndex: 50 }}
             >
                 Вернуться в приложение
             </HoverButton>

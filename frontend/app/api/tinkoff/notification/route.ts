@@ -16,21 +16,21 @@ export async function POST(req: Request) {
     
     if (receivedToken !== calculatedToken) {
         console.error("Token mismatch", { received: receivedToken, calculated: calculatedToken, body })
-        // Return OK to prevent retries if it's a permanent error? Or 400?
-        // Usually return 200 OK to stop bank from retrying if we can't process it.
-        // But if it's a security check, we should return 200 'OK' string but log it.
+        // Return OK to acknowledge receipt, but log error
         return new Response("OK", { status: 200 })
     }
 
     const { OrderId, Status, Amount } = body
+    console.log(`Tinkoff Notification: Order ${OrderId} status ${Status}`)
 
     if (Status === 'CONFIRMED') {
-        const success = await processSuccessfulPayment(OrderId, Amount)
-        if (success) {
-            return new Response("OK", { status: 200 })
-        } else {
-             // If processing failed, maybe retry?
-             return new Response("Processing Failed", { status: 500 })
+        try {
+            const success = await processSuccessfulPayment(OrderId, Amount)
+            if (!success) {
+                 console.error(`Failed to process payment for order ${OrderId}`)
+            }
+        } catch (e) {
+            console.error(`Exception processing payment for order ${OrderId}:`, e)
         }
     }
 
