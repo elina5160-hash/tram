@@ -140,6 +140,7 @@ export async function POST(req: Request) {
       Description: description,
       SuccessURL: `${baseUrl}/pay/success`,
       FailURL: `${baseUrl}/pay/fail`,
+      NotificationURL: `${baseUrl}/api/tinkoff/notification`,
       Language: "ru"
   }
 

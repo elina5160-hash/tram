@@ -9,15 +9,16 @@ const TERMINAL_KEY = "1765992881356"
 const PASSWORD = "ejlk$s_nR!5rZTPR"
 
 function generateToken(params: Record<string, any>) {
-    const keys = Object.keys(params).filter(k => k !== "Token").sort()
+    const paramsWithPwd: Record<string, any> = { ...params, Password: PASSWORD }
+    const keys = Object.keys(paramsWithPwd).filter(k => k !== "Token").sort()
     let str = ""
     for (const k of keys) {
-        if (params[k] !== undefined && params[k] !== null && params[k] !== "") {
-            str += params[k]
+        if (paramsWithPwd[k] !== undefined && paramsWithPwd[k] !== null && paramsWithPwd[k] !== "") {
+            str += paramsWithPwd[k]
         }
     }
-    str += PASSWORD
-    return crypto.createHash("sha256").update(str).digest("hex")
+    const tokenInput = str
+    return crypto.createHash("sha256").update(tokenInput).digest("hex")
 }
 
 export async function POST(req: Request) {
