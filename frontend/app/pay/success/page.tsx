@@ -62,16 +62,22 @@ function SuccessPageContent() {
           })
       }
 
-      // 3. Clear local state
-      clearCart()
-      savePendingOrder(0) // Clear pending order
+      // 3. Clear local state (moved to finally to ensure execution)
+      // clearCart()
+      // savePendingOrder(0) // Clear pending order
       
-      if (typeof window !== "undefined") {
-         window.localStorage.removeItem("pending_order_id")
-      }
+      // if (typeof window !== "undefined") {
+      //    window.localStorage.removeItem("pending_order_id")
+      // }
     } catch (e) {
       console.error("Failed to sync order", e)
     } finally {
+      // Always clear cart on success page, assuming user paid
+      clearCart()
+      savePendingOrder(0)
+      if (typeof window !== "undefined") {
+         window.localStorage.removeItem("pending_order_id")
+      }
       setIsLoading(false)
     }
   }
