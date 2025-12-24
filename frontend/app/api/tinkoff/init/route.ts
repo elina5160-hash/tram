@@ -128,13 +128,18 @@ export async function POST(req: Request) {
   // Prepare Tinkoff Init Request
   const amountKopecks = Math.round(outSum * 100)
   
+  // Determine Base URL for callbacks
+  const host = req.headers.get("host") || "localhost:3000"
+  const protocol = req.headers.get("x-forwarded-proto") || "https"
+  const baseUrl = `${protocol}://${host}`
+
   const initParams: any = {
       TerminalKey: TERMINAL_KEY,
       Amount: amountKopecks,
       OrderId: orderId,
       Description: description,
-      // SuccessURL: `https://.../pay/confirm`, // We can let frontend handle this via URL from response, but Tinkoff might redirect
-      // FailURL: `https://.../pay/fail`
+      SuccessURL: `${baseUrl}/pay/success`,
+      FailURL: `${baseUrl}/pay/fail`,
       Language: "ru"
   }
 

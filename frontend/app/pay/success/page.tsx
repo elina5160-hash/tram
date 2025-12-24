@@ -21,7 +21,7 @@ function SuccessPageContent() {
 
     // Check for pending order from LocalStorage OR URL
     let pendingId = getPendingOrder()
-    const invIdParam = searchParams.get("InvId")
+    const invIdParam = searchParams.get("InvId") || searchParams.get("OrderId")
     
     // If no local pending order, try to recover from URL
     if (!pendingId && invIdParam) {
