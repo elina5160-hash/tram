@@ -1,6 +1,7 @@
 import { getServiceSupabaseClient, getSupabaseClient } from "@/lib/supabase"
 import { sendTelegramMessage } from "@/lib/telegram"
 import { sendToGoogleSheet } from "@/lib/google-sheets"
+import { addTickets } from "@/lib/contest"
 
 export async function processSuccessfulPayment(invId: string | number, amountKopecks: number) {
     const outSum = amountKopecks / 100 // Convert from kopecks
@@ -58,8 +59,7 @@ export async function processSuccessfulPayment(invId: string | number, amountKop
 
         // Calculate Tickets (Cumulative)
         let ticketsEarned = 0
-        let totalSpent = outSum
-        let shortForNext = 0
+        let cumulativeSpent = outSum
 
         if (clientId) {
             const { data: pastOrders } = await client
@@ -70,109 +70,70 @@ export async function processSuccessfulPayment(invId: string | number, amountKop
                 .in('status', ['paid', 'Оплачен'])
             
             const pastSpent = pastOrders?.reduce((sum, o) => sum + (Number(o.total_amount) || 0), 0) || 0
-            const cumulativeSpent = pastSpent + outSum
+            cumulativeSpent = pastSpent + outSum
             
             const totalTickets = Math.floor(cumulativeSpent / 1000)
             const pastTickets = Math.floor(pastSpent / 1000)
             ticketsEarned = Math.max(0, totalTickets - pastTickets)
-            totalSpent = cumulativeSpent
-            shortForNext = 1000 - (cumulativeSpent % 1000)
         } else {
             ticketsEarned = Math.floor(outSum / 1000)
-            shortForNext = 1000 - (outSum % 1000)
         }
         
-        // Update tickets_earned in DB
+        // Award Tickets
         if (ticketsEarned > 0) {
+            // Update local record
             await client.from('orders').update({ tickets_earned: ticketsEarned }).eq('id', orderId)
-            // Also add to contest table if needed? 
-            // Usually 'addTickets' function handles the contest table insertion.
-            // But here we are just calculating. 
-            // The `sync/route.ts` used `addTickets`. We should probably use it here too.
-        }
-        
-        // We should import addTickets from lib/contest if we want to be consistent.
-        // But for now, let's stick to the notification logic which seemed to rely on `sync` for tickets?
-        // Wait, `notification/route.ts` did NOT call `addTickets`. It just calculated and sent text.
-        // `sync/route.ts` called `addTickets`.
-        // Ideally, we should call `addTickets` here to ensure tickets are added even if sync is missed.
-        
-        // Let's try to dynamically import or use it if available.
-        // For now, I will keep the logic from notification/route.ts to ensure stability, 
-        // but I should probably call `addTickets` to be safe.
-        // Importing `addTickets` from `@/lib/contest`
-        try {
-             const { addTickets } = require("@/lib/contest")
-             if (clientId && ticketsEarned > 0) {
-                 await addTickets(clientId, ticketsEarned, 'purchase_reward', String(orderId), true)
-             }
-        } catch (e) {
-             console.error("Failed to add tickets:", e)
+            
+            // Add tickets to contest system
+            if (clientId) {
+                await addTickets(clientId, ticketsEarned, 'purchase_reward', String(orderId), false) // false = send notification
+            }
         }
 
-        // Send Telegram Receipt to User
-        if (clientId) {
-            const itemsReceipt = standardizedItems.map(it => 
-                ` Товар: ${it.name}\n Количество: ${it.quantity}\n Сумма: ${it.sum.toLocaleString('ru-RU')} руб.`
-            ).join('\n\n')
+        // Prepare Notifications
+        const itemsText = standardizedItems.map(it => 
+            `- ${it.name || 'Товар'} x${it.quantity || 1} (${(it.price || 0) * (it.quantity || 1)} руб.)`
+        ).join('\n');
 
-            const receiptText = [
-                `Спасибо за покупку!`,
-                itemsReceipt,
-                ` Общая сумма покупок: ${totalSpent.toLocaleString('ru-RU')} руб.`,
-                ``,
-                ` До билета не хватило: ${shortForNext} руб.`,
-                ` Купи еще на ${shortForNext} руб, чтобы получить билет!`,
-                ``,
-                ` Билеты начисляются за каждые 1000 руб суммарных покупок.`
-            ].join('\n')
-
-            await sendTelegramMessage(receiptText, clientId, undefined)
-        }
-
-        // Send Admin Notification
-        const productNames = standardizedItems.map(it => it.name).join(', ')
-        const notificationText = [
-            `📦 ${productNames} #${invId}`,
-            `💰 Сумма: ${outSum.toLocaleString('ru-RU')} руб.`,
-            `💳 Общая сумма покупок: ${totalSpent.toLocaleString('ru-RU')} руб.`,
+        const message = [
+            `✅ Оплата прошла успешно!`,
+            `📦 Заказ #${orderId}`,
+            `💰 Сумма: ${outSum} руб.`,
             `👤 Клиент: ${name || 'Не указано'}`,
             `🆔 ID клиента: ${clientId || 'Не указано'}`,
+            `📞 Телефон: ${phone || 'Не указано'}`,
             `📧 Email: ${email || 'Не указано'}`,
             `📍 Адрес: ${address || 'Не указано'}`,
-            ``,
-            `🎁 Конкурс:`,
-            `Начислено билетов за этот заказ: ${ticketsEarned}`,
-            `Всего билетов за покупки: ${Math.floor(totalSpent / 1000)}`,
-            `До следующего билета: ${shortForNext} руб.`
-        ].join('\n')
+            `🎟 Билетов начислено: ${ticketsEarned}`,
+            `📝 Товары:`,
+            itemsText
+        ].join('\n');
 
-        // Send to Channel
-        await sendTelegramMessage(notificationText, '-1003590157576', undefined)
-        
-        // Send to Admin Personal
-        const adminChatId = '2058362528'
-        await sendTelegramMessage(notificationText, adminChatId, undefined)
+        // Send to Admin
+        await sendTelegramMessage(message)
 
-        // Google Sheets
-        try {
-                await sendToGoogleSheet({
-                id: orderId,
-                total_amount: outSum,
-                items: standardizedItems,
-                customer_info: {
-                    name, phone, email, address,
-                    client_id: clientId,
-                    username
-                },
-                promo_code: promo,
-                ref_code: ref,
-                created_at: new Date().toISOString()
-            })
-        } catch (e) {
-            console.error("Sheets error:", e)
+        // Send to User (if clientId is valid Telegram ID)
+        if (clientId && /^\d+$/.test(String(clientId))) {
+            await sendTelegramMessage(message, String(clientId))
         }
+
+        // Send to Google Sheets
+        // We need to format data as expected by sendToGoogleSheet
+        const googleSheetData = {
+            id: orderId,
+            total_amount: outSum,
+            promo_code: promo,
+            ref_code: ref,
+            customer_info: {
+                ...customer,
+                user_id: clientId // Ensure user_id is passed
+            },
+            items: standardizedItems
+        }
+
+        console.log(`Sending order ${orderId} to Google Sheets...`)
+        await sendToGoogleSheet(googleSheetData)
     }
-    
+
     return true
 }
