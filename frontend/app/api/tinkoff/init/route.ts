@@ -91,7 +91,7 @@ export async function POST(req: Request) {
           id: invId,
           total_amount: outSum,
           currency: "RUB",
-          description: description,
+          // description: description, // Column missing in DB
           items: itemsText, // Store as text for easy reading
           customer_info: {
              ...body.customerInfo,
