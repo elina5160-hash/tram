@@ -14,6 +14,8 @@ interface ProfileDrawerProps {
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json())
 
+import { getPendingOrder } from "@/lib/cart"
+
 export function ProfileDrawer({ isOpen, onClose, initialView = 'profile' }: ProfileDrawerProps) {
   const router = useRouter()
   const [userInfo, setUserInfo] = useState<any>(null)
@@ -42,7 +44,7 @@ export function ProfileDrawer({ isOpen, onClose, initialView = 'profile' }: Prof
     }
   }, [])
 
-  const userId = userInfo?.id || localStorage.getItem("user_id") || "1287944066"
+  const userId = userInfo?.id || (typeof window !== 'undefined' ? localStorage.getItem("user_id") : null) || "1287944066"
   const refLink = `https://t.me/beautykoreanbot?start=u${userId}`
 
   // Fetch orders when in 'orders' view
@@ -51,6 +53,29 @@ export function ProfileDrawer({ isOpen, onClose, initialView = 'profile' }: Prof
     fetcher,
     { refreshInterval: 5000 }
   )
+
+  // Check for locally stored pending order and sync it
+  useEffect(() => {
+    if (view === 'orders' && isOpen && userId) {
+        const pendingId = getPendingOrder()
+        if (pendingId) {
+            console.log(`Checking pending order ${pendingId} for user ${userId}...`)
+            fetch('/api/orders/sync', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ orderId: pendingId, clientId: userId })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success || data.order) {
+                    // Refresh list
+                    mutate()
+                }
+            })
+            .catch(err => console.error("Pending sync failed:", err))
+        }
+    }
+  }, [view, isOpen, userId, mutate])
 
   // Check payment status when expanding a pending order
   useEffect(() => {
