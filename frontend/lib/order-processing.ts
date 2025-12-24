@@ -3,7 +3,7 @@ import { sendTelegramMessage } from "@/lib/telegram"
 import { sendToGoogleSheet } from "@/lib/google-sheets"
 import { addTickets } from "@/lib/contest"
 
-export async function processSuccessfulPayment(invId: string | number, amountKopecks: number) {
+export async function processSuccessfulPayment(invId: string | number, amountKopecks: number, extraData?: Record<string, string>) {
     const outSum = amountKopecks / 100 // Convert from kopecks
     const orderId = Number(invId)
 
@@ -30,6 +30,22 @@ export async function processSuccessfulPayment(invId: string | number, amountKop
 
     if (!currentOrder) {
         console.warn(`Order ${orderId} (type: ${typeof orderId}) not found in DB. Creating recovery record...`)
+        
+        // Try to recover from extraData (Tinkoff DATA params)
+        const recoveredInfo: any = {
+             description: 'Recovered from payment notification',
+             is_recovery: true
+        }
+        
+        if (extraData) {
+             console.log("Recovering data from Tinkoff params:", extraData)
+             if (extraData.Name) recoveredInfo.name = extraData.Name
+             if (extraData.Phone) recoveredInfo.phone = extraData.Phone
+             if (extraData.Email) recoveredInfo.email = extraData.Email
+             if (extraData.ClientId) recoveredInfo.client_id = extraData.ClientId
+             if (extraData.Address) recoveredInfo.address = extraData.Address
+        }
+
         // Create recovery record
         const { error: insertError } = await client.from('orders').insert({
             id: orderId,
@@ -37,10 +53,7 @@ export async function processSuccessfulPayment(invId: string | number, amountKop
             status: 'paid',
             currency: 'RUB',
             items: 'Восстановлен из уведомления об оплате',
-            customer_info: {
-                description: 'Recovered from payment notification',
-                is_recovery: true
-            },
+            customer_info: recoveredInfo,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
         })

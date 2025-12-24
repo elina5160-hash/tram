@@ -57,7 +57,11 @@ export async function POST(req: Request) {
             // Race condition to prevent timeout: if processing takes > 25s, log warning but return OK
             // (Vercel might kill the process, but we try to return OK first if we could detect it, 
             // but effectively we just rely on maxDuration and optimized code)
-            const success = await processSuccessfulPayment(OrderId, Amount)
+            
+            // Extract DATA params if available (for recovery)
+            const extraData = body.DATA || body.Data || {}
+            
+            const success = await processSuccessfulPayment(OrderId, Amount, extraData)
             
             if (!success) {
                  const msg = `Failed to process payment for order ${OrderId}`
