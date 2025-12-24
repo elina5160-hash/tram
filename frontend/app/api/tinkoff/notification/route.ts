@@ -1,6 +1,22 @@
 import { NextResponse } from "next/server"
 import { generateToken } from "@/lib/tinkoff"
 import { processSuccessfulPayment } from "@/lib/order-processing"
+import { getServiceSupabaseClient } from "@/lib/supabase"
+
+async function logToDb(type: string, message: string, data: any) {
+    try {
+        const client = getServiceSupabaseClient()
+        if (client) {
+            await client.from('bot_logs').insert({
+                type,
+                message,
+                data: JSON.stringify(data)
+            })
+        }
+    } catch (e) {
+        console.error("Failed to log to DB", e)
+    }
+}
 
 export async function POST(req: Request) {
     let body: any = {}
@@ -10,6 +26,9 @@ export async function POST(req: Request) {
         return new Response("Invalid JSON", { status: 400 })
     }
 
+    // Log raw notification
+    await logToDb('tinkoff_notification', `Received status: ${body.Status}`, body)
+
     // Verify Token
     const receivedToken = body.Token
     const calculatedToken = generateToken(body)
@@ -17,7 +36,9 @@ export async function POST(req: Request) {
     console.log("Tinkoff Notification Body:", JSON.stringify(body, null, 2))
 
     if (receivedToken !== calculatedToken) {
-        console.error("⚠️ Token mismatch!", { received: receivedToken, calculated: calculatedToken })
+        const msg = "⚠️ Token mismatch!"
+        console.error(msg, { received: receivedToken, calculated: calculatedToken })
+        await logToDb('tinkoff_error', msg, { received: receivedToken, calculated: calculatedToken })
         // WARNING: Proceeding anyway for debugging purposes. 
         // In production, this should return 200 and exit to prevent fraud.
         // For now, we assume the mismatch might be due to credential sync issues.
@@ -28,12 +49,19 @@ export async function POST(req: Request) {
 
     if (Status === 'CONFIRMED') {
         try {
+            await logToDb('payment_processing', `Starting processing for ${OrderId}`, { amount: Amount })
             const success = await processSuccessfulPayment(OrderId, Amount)
             if (!success) {
-                 console.error(`Failed to process payment for order ${OrderId}`)
+                 const msg = `Failed to process payment for order ${OrderId}`
+                 console.error(msg)
+                 await logToDb('payment_error', msg, {})
+            } else {
+                 await logToDb('payment_success', `Successfully processed ${OrderId}`, {})
             }
         } catch (e) {
-            console.error(`Exception processing payment for order ${OrderId}:`, e)
+            const msg = `Exception processing payment for order ${OrderId}:`
+            console.error(msg, e)
+            await logToDb('payment_exception', msg, { error: String(e) })
         }
     }
 
