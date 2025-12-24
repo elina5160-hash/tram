@@ -15,9 +15,31 @@ export async function processSuccessfulPayment(invId: string | number, amountKop
         return false
     }
 
-    // 1. Check if already paid to avoid duplicate notifications
+    // 1. Check if order exists
     const { data: currentOrder } = await client.from('orders').select('status').eq('id', orderId).single()
-    if (currentOrder && (currentOrder.status === 'paid' || currentOrder.status === 'Оплачен')) {
+    
+    if (!currentOrder) {
+        console.warn(`Order ${orderId} not found in DB. Creating recovery record...`)
+        // Create recovery record
+        const { error: insertError } = await client.from('orders').insert({
+            id: orderId,
+            total_amount: outSum,
+            status: 'paid',
+            currency: 'RUB',
+            items: 'Восстановлен из уведомления об оплате',
+            customer_info: {
+                description: 'Recovered from payment notification',
+                is_recovery: true
+            },
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+        })
+        
+        if (insertError) {
+             console.error("Failed to create recovery order:", insertError)
+             return false
+        }
+    } else if (currentOrder.status === 'paid' || currentOrder.status === 'Оплачен') {
         console.log(`Order ${orderId} is already paid. Skipping processing.`)
         return true
     }

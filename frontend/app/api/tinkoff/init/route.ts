@@ -108,6 +108,7 @@ export async function POST(req: Request) {
         
         if (error) {
             console.error("Failed to save order to Supabase:", error)
+            return NextResponse.json({ error: "Failed to create order in database", details: error }, { status: 500 })
         }
     }
   }
