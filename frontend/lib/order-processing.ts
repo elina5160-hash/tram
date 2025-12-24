@@ -112,12 +112,12 @@ export async function processSuccessfulPayment(invId: string | number, amountKop
             }
         }
 
-        // Prepare Notifications
+        // Prepare Admin Notification
         const itemsText = standardizedItems.map(it => 
             `- ${it.name || 'Товар'} x${it.quantity || 1} (${(it.price || 0) * (it.quantity || 1)} руб.)`
         ).join('\n');
 
-        const message = [
+        const adminMessage = [
             `✅ Оплата прошла успешно!`,
             `📦 Заказ #${orderId}`,
             `💰 Сумма: ${outSum} руб.`,
@@ -132,11 +132,34 @@ export async function processSuccessfulPayment(invId: string | number, amountKop
         ].join('\n');
 
         // Send to Admin
-        await sendTelegramMessage(message)
+        await sendTelegramMessage(adminMessage)
 
-        // Send to User (if clientId is valid Telegram ID)
+        // Prepare User Notification (KonkursEtraBot style)
         if (clientId && /^\d+$/.test(String(clientId))) {
-            await sendTelegramMessage(message, String(clientId))
+            const remainder = cumulativeSpent % 1000
+            const neededForNext = 1000 - remainder
+            
+            const userMessageLines = [
+                `Спасибо за покупку!`,
+                `Сумма: ${outSum} руб`,
+                `Общая сумма покупок: ${cumulativeSpent} руб`,
+                ``
+            ]
+
+            if (ticketsEarned > 0) {
+                 userMessageLines.push(`🎟 Вы получили билетов: ${ticketsEarned}!`)
+                 userMessageLines.push(``)
+            }
+
+            userMessageLines.push(`До билета не хватило: ${neededForNext} руб`)
+            userMessageLines.push(`Купи еще на ${neededForNext} руб, чтобы получить билет!`)
+            userMessageLines.push(``)
+            userMessageLines.push(`Билеты начисляются за каждые 1000 руб суммарных покупок.`)
+
+            const userMessage = userMessageLines.join('\n')
+            
+            // Send to User
+            await sendTelegramMessage(userMessage, String(clientId))
         }
 
         // Send to Google Sheets
