@@ -539,6 +539,7 @@ function CartContent() {
 
                     const invId = Math.floor(Date.now() / 1000)
                     const itemsForCreate = invoiceItems.map(it => ({
+                      id: it.id, // Ensure ID is passed for backup
                       name: it.name,
                       quantity: it.quantity,
                       cost: it.cost,
@@ -546,6 +547,13 @@ function CartContent() {
                       paymentMethod: it.paymentMethod,
                       paymentObject: it.paymentObject
                     }))
+
+                    // Log payload for debugging
+                    console.log("Init payload:", {
+                         outSum: totalWithDiscount,
+                         customerInfoName: name,
+                         itemsCount: itemsForCreate.length
+                    })
 
                     // Быстрый путь: Tinkoff (вместо Robokassa)
                     try {

@@ -33,7 +33,10 @@ export async function POST(req: Request) {
   
   try {
     body = await req.json()
-  } catch {}
+    console.log("Received Init Body:", JSON.stringify(body, null, 2))
+  } catch (e) {
+    console.error("Failed to parse Init body:", e)
+  }
 
   const outSum = body.outSum
   if (!outSum || outSum <= 0) {
