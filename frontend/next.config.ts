@@ -14,6 +14,19 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          {
+            key: 'Content-Security-Policy',
+            value: "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.tinkoff.ru https://*.tcsbank.ru https://*.tbank.ru https://*.nspk.ru https://*.t-static.ru https://telegram.org https://app.grammy.dev; img-src 'self' data: https://*.tinkoff.ru https://*.tcsbank.ru https://*.tbank.ru https://*.nspk.ru https://*.t-static.ru https://meibdfguaaqcprvyfrpr.supabase.co; connect-src 'self' https://*.tinkoff.ru https://*.tcsbank.ru https://*.tbank.ru https://*.nspk.ru https://*.t-static.ru https://meibdfguaaqcprvyfrpr.supabase.co; style-src 'self' 'unsafe-inline' https://*.tinkoff.ru https://*.tcsbank.ru https://*.tbank.ru https://*.nspk.ru https://*.t-static.ru; frame-src 'self' https://*.tinkoff.ru https://*.tcsbank.ru https://*.tbank.ru"
+          }
+        ],
+      },
+    ]
+  },
   async redirects() {
     return [
       { source: "/", destination: "/home", permanent: false },
