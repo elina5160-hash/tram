@@ -117,9 +117,8 @@ export async function POST(req: Request) {
   const amountKopecks = Math.round(outSum * 100)
   
   // Determine base URL dynamically from request
-  const protocol = req.headers.get("x-forwarded-proto") || "https"
-  const host = req.headers.get("host")
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || (host ? `${protocol}://${host}` : "https://tram-app.vercel.app")
+  const baseUrl = "https://tram-navy.vercel.app" // HARDCODED for stability
+
 
   // Configure Receipt (Check FZ-54)
   const receiptItems = (body.items || []).map(it => ({

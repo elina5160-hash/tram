@@ -83,16 +83,9 @@ function SuccessPageContent() {
   }
 
   const handleReturn = () => {
-      if (isTelegram) {
-          // If inside Telegram, close the webview (if it was a popup) or go back
-          const tg = (window as any).Telegram.WebApp
-          if (tg.initData) {
-              tg.close()
-          } else {
-              window.location.href = "/"
-          }
-      } else {
-          // If in external browser, open the bot via deep link
+      // Always redirect to the Mini App home or profile
+      // Using window.location.href ensures we break out of any potential iframe or redirect logic
+      if (typeof window !== "undefined") {
           window.location.href = "https://t.me/KonkursEtraBot/app"
       }
   }
