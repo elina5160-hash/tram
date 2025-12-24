@@ -45,7 +45,7 @@ export function ProfileDrawer({ isOpen, onClose, initialView = 'profile' }: Prof
   }, [])
 
   const userId = userInfo?.id || (typeof window !== 'undefined' ? localStorage.getItem("user_id") : null) || "1287944066"
-  const refLink = `https://t.me/beautykoreanbot?start=u${userId}`
+  const refLink = `https://t.me/KonkursEtraBot?start=ref_${userId}`
 
   // Fetch orders when in 'orders' view
   const { data: ordersData, isLoading, mutate } = useSWR(

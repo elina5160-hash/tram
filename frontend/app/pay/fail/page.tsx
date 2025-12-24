@@ -23,7 +23,7 @@ function FailPageContent() {
               window.location.href = "/"
           }
       } else {
-          window.location.href = "https://t.me/beautykoreanbot/app"
+          window.location.href = "https://t.me/KonkursEtraBot/app"
       }
   }
 
