@@ -87,6 +87,11 @@ export default function HomeClient() {
           const tg = (window as any).Telegram?.WebApp
           if (tg) {
               tg.ready() // Notify Telegram we are ready
+              
+              if (tg.initDataUnsafe?.start_param === 'profile') {
+                  setProfileOpen(true)
+              }
+
               if (tg.initDataUnsafe?.user?.id) {
                   finalId = String(tg.initDataUnsafe.user.id)
               }

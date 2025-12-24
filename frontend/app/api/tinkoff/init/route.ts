@@ -70,47 +70,55 @@ export async function POST(req: Request) {
     client = getSupabaseClient()
   }
 
-  if (client) {
-    const currentTime = new Date().toISOString();
-    const fullText = [
-        `📦 ЗАКАЗ #${invId}`,
-        `💰 Сумма: ${outSum} руб.`,
-        `👤 Клиент: ${body.customerInfo?.name || 'Не указано'}`,
-        `🆔 ID клиента: ${body.customerInfo?.client_id || 'Не указано'}`,
-        `📧 Email: ${email || 'Не указано'}`,
-        `📍 Адрес: ${body.customerInfo?.address || body.customerInfo?.cdek || 'Не указано'}`,
-        `📝 Товары:`,
-        itemsText
-    ].join('\n');
+  if (!client) {
+      console.error("Supabase client not initialized")
+      return NextResponse.json({ error: "Internal Configuration Error: DB connection failed" }, { status: 500 })
+  }
 
-    // Check if order exists (for retry payment)
-    const { data: existingOrder } = await client.from("orders").select("id").eq("id", invId).single();
+  const currentTime = new Date().toISOString();
+  const fullText = [
+      `📦 ЗАКАЗ #${invId}`,
+      `💰 Сумма: ${outSum} руб.`,
+      `👤 Клиент: ${body.customerInfo?.name || 'Не указано'}`,
+      `🆔 ID клиента: ${body.customerInfo?.client_id || 'Не указано'}`,
+      `📧 Email: ${email || 'Не указано'}`,
+      `📍 Адрес: ${body.customerInfo?.address || body.customerInfo?.cdek || 'Не указано'}`,
+      `📝 Товары:`,
+      itemsText
+  ].join('\n');
 
-    if (!existingOrder) {
-        const { error } = await client.from("orders").insert({
-          id: invId,
-          total_amount: outSum,
-          currency: "RUB",
-          // description: description, // Column missing in DB
-          items: itemsText, // Store as text for easy reading
-          customer_info: {
-             ...body.customerInfo,
-             email,
-             items_backup: itemsBackup, // Backup structured items
-             description: description // Store description here since column is missing
-          },
-          promo_code: body.promoCode || "",
-          ref_code: body.refCode || "",
-          status: "pending", // Initial status
-          created_at: currentTime,
-          updated_at: currentTime,
-        })
-        
-        if (error) {
-            console.error("Failed to save order to Supabase:", error)
-            return NextResponse.json({ error: "Failed to create order in database", details: error }, { status: 500 })
-        }
-    }
+  // Check if order exists (for retry payment)
+  const { data: existingOrder, error: fetchError } = await client.from("orders").select("id").eq("id", invId).single();
+
+  if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 is "No rows found"
+      console.error("Failed to check existing order:", fetchError)
+      // We can continue if check fails, but risky. Better to try insert.
+  }
+
+  if (!existingOrder) {
+      const { error } = await client.from("orders").insert({
+        id: invId,
+        total_amount: outSum,
+        currency: "RUB",
+        // description: description, // Column missing in DB
+        items: itemsText, // Store as text for easy reading
+        customer_info: {
+           ...body.customerInfo,
+           email,
+           items_backup: itemsBackup, // Backup structured items
+           description: description // Store description here since column is missing
+        },
+        promo_code: body.promoCode || "",
+        ref_code: body.refCode || "",
+        status: "pending", // Initial status
+        created_at: currentTime,
+        updated_at: currentTime,
+      })
+      
+      if (error) {
+          console.error("Failed to save order to Supabase:", error)
+          return NextResponse.json({ error: "Failed to create order in database", details: error }, { status: 500 })
+      }
   }
 
   // Init Tinkoff Payment

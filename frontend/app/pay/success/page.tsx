@@ -86,7 +86,7 @@ function SuccessPageContent() {
       // Always redirect to the Mini App home or profile
       // Using window.location.href ensures we break out of any potential iframe or redirect logic
       if (typeof window !== "undefined") {
-          window.location.href = "https://t.me/KonkursEtraBot/app"
+          window.location.href = "https://t.me/KonkursEtraBot/app?startapp=profile"
       }
   }
 
