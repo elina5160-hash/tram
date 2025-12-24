@@ -1,10 +1,10 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, Suspense } from "react"
 import { HoverButton } from "@/components/ui/hover-button"
-import { useSearchParams } from "next/navigation"
 
-export default function FailPage() {
+// Content component to handle logic
+function FailPageContent() {
   const [isTelegram, setIsTelegram] = useState(false)
 
   useEffect(() => {
@@ -46,3 +46,11 @@ export default function FailPage() {
   )
 }
 
+// Default export wrapped in Suspense (good practice for client pages)
+export default function FailPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-white" />}>
+      <FailPageContent />
+    </Suspense>
+  )
+}
