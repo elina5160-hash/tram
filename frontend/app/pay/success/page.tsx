@@ -87,7 +87,7 @@ function SuccessPageContent() {
           }
       } else {
           // If in external browser, open the bot via deep link
-          window.location.href = "https://t.me/KonkursEtraBot/app"
+          window.location.href = "https://t.me/beautykoreanbot/app"
       }
   }
 
@@ -97,7 +97,7 @@ function SuccessPageContent() {
         <h1 className="text-xl font-semibold">Оплата прошла успешно</h1>
         <div className="mt-4">
           <a 
-            href="https://t.me/KonkursEtraBot/app" 
+            href="https://t.me/beautykoreanbot/app" 
             className="block w-full"
             onClick={(e) => {
                 if (isTelegram) {

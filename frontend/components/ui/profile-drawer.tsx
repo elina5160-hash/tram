@@ -14,7 +14,7 @@ interface ProfileDrawerProps {
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json())
 
-import { getPendingOrder } from "@/lib/cart"
+import { getPendingOrder, clearCart, savePendingOrder } from "@/lib/cart"
 
 export function ProfileDrawer({ isOpen, onClose, initialView = 'profile' }: ProfileDrawerProps) {
   const router = useRouter()
@@ -68,6 +68,12 @@ export function ProfileDrawer({ isOpen, onClose, initialView = 'profile' }: Prof
             .then(res => res.json())
             .then(data => {
                 if (data.success || data.order) {
+                    // Payment successful! Clear local cart and pending order
+                    console.log("Order confirmed! Clearing cart...")
+                    clearCart()
+                    savePendingOrder(0)
+                    if (typeof window !== "undefined") localStorage.removeItem("pending_order_id")
+                    
                     // Refresh list
                     mutate()
                 }
