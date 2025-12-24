@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export async function sendToGoogleSheet(orderData: any): Promise<any> {
   // Web App URL provided by user
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwevBSpHdLKyj8MlM8rAPkSPlFRf-oCL_U0zNerFVkOerSCjDIy2WqbjPvyC0hBq1Oq0g/exec"
+  const SCRIPT_URL = process.env.GOOGLE_SHEETS_WEBHOOK_URL || "https://script.google.com/macros/s/AKfycbwevBSpHdLKyj8MlM8rAPkSPlFRf-oCL_U0zNerFVkOerSCjDIy2WqbjPvyC0hBq1Oq0g/exec"
   
   try {
     const info = orderData.customer_info || {};
