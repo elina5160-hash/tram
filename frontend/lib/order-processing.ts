@@ -16,10 +16,15 @@ export async function processSuccessfulPayment(invId: string | number, amountKop
     }
 
     // 1. Check if order exists
-    const { data: currentOrder } = await client.from('orders').select('status').eq('id', orderId).single()
+    console.log(`Searching for order ${orderId} in DB...`)
+    const { data: currentOrder, error: selectError } = await client.from('orders').select('*').eq('id', orderId).single()
     
+    if (selectError && selectError.code !== 'PGRST116') {
+        console.error(`Database error selecting order ${orderId}:`, selectError)
+    }
+
     if (!currentOrder) {
-        console.warn(`Order ${orderId} not found in DB. Creating recovery record...`)
+        console.warn(`Order ${orderId} (type: ${typeof orderId}) not found in DB. Creating recovery record...`)
         // Create recovery record
         const { error: insertError } = await client.from('orders').insert({
             id: orderId,

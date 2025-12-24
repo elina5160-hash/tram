@@ -46,7 +46,7 @@ export async function POST(req: Request) {
   const description = sanitizeText(body.description || "Оплата заказа")
   const email = body.email || ""
   // Use provided invId if valid number, else generate new one
-  let invId = body.invId && typeof body.invId === "number" ? body.invId : Math.floor(Date.now() / 1000)
+  let invId = body.invId && typeof body.invId === "number" ? Math.floor(body.invId) : Math.floor(Date.now() / 1000)
   const orderId = String(invId) // Tinkoff uses string OrderId
 
   // Generate text format for items (for Supabase/Telegram)
@@ -99,7 +99,8 @@ export async function POST(req: Request) {
   }
 
   if (!existingOrder) {
-      const { error } = await client.from("orders").insert({
+      console.log(`Inserting new order ${invId} into DB...`)
+      const { error, data: insertedData } = await client.from("orders").insert({
         id: invId,
         total_amount: outSum,
         currency: "RUB",
@@ -116,12 +117,15 @@ export async function POST(req: Request) {
         status: "pending", // Initial status
         created_at: currentTime,
         updated_at: currentTime,
-      })
+      }).select().single()
       
       if (error) {
           console.error("Failed to save order to Supabase:", error)
           return NextResponse.json({ error: "Failed to create order in database", details: error }, { status: 500 })
       }
+      console.log(`Order ${invId} inserted successfully. Verify:`, insertedData?.id)
+  } else {
+      console.log(`Order ${invId} already exists. Skipping insert.`)
   }
 
   // Init Tinkoff Payment

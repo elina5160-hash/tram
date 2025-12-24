@@ -3,15 +3,15 @@ const { createClient } = require('@supabase/supabase-js');
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../.env.local') });
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-if (!SUPABASE_URL || !SUPABASE_KEY) {
-    console.error('Missing Supabase credentials');
+if (!supabaseUrl || !supabaseKey) {
+    console.error("Missing Supabase credentials");
     process.exit(1);
 }
 
-const client = createClient(SUPABASE_URL, SUPABASE_KEY);
+const client = createClient(supabaseUrl, supabaseKey);
 
 async function testInsert() {
     const invId = Math.floor(Date.now() / 1000);
@@ -29,13 +29,14 @@ async function testInsert() {
         id: invId,
         total_amount: outSum,
         currency: "RUB",
-        // description: description, // REMOVED
+        // description: description, // Commented out as per route.ts
         items: itemsText, 
         customer_info: {
             name: "Debug User",
             email: "debug@example.com",
             items_backup: itemsBackup,
-            description: description // Moved inside JSON
+            description: description,
+            client_id: "123456789"
         },
         promo_code: "",
         ref_code: "DEBUG_RUN",
@@ -45,8 +46,7 @@ async function testInsert() {
     };
 
     console.log("Attempting to insert order:", invId);
-    console.log("Payload:", JSON.stringify(payload, null, 2));
-
+    
     const { data, error } = await client.from("orders").insert(payload).select();
 
     if (error) {
