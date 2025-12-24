@@ -96,7 +96,8 @@ export async function POST(req: Request) {
           customer_info: {
              ...body.customerInfo,
              email,
-             items_backup: itemsBackup // Backup structured items
+             items_backup: itemsBackup, // Backup structured items
+             description: description // Store description here since column is missing
           },
           promo_code: body.promoCode || "",
           ref_code: body.refCode || "",
