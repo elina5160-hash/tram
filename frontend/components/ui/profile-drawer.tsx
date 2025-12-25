@@ -227,7 +227,9 @@ export function ProfileDrawer({ isOpen, onClose, initialView = 'profile' }: Prof
                   )}
                 </div>
                 <div className="flex-1 flex flex-col gap-1 min-w-0">
-                  <div className="text-[#2eb886] text-[15px] truncate">@{userInfo?.username || "avavvtt"}</div>
+                  <div className="text-[#2eb886] text-[15px] truncate">
+                    {userInfo?.username ? `@${userInfo.username}` : (userInfo?.first_name || "Пользователь")}
+                  </div>
                   <div className="text-[15px] truncate">{userInfo?.first_name ? `${userInfo.first_name} ${userInfo.last_name || ''}` : "(ФИО не указано)"}</div>
                   <div className="text-[15px] text-gray-400 truncate">(Номер не указан)</div>
                   <div className="text-[15px] text-gray-400 truncate">(Email не указан)</div>
