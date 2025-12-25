@@ -14,7 +14,7 @@ export default function Garland() {
 
     const updateSize = () => {
       canvas.width = window.innerWidth
-      canvas.height = 160 
+      canvas.height = 120 
     }
     updateSize()
     window.addEventListener('resize', updateSize)
@@ -199,34 +199,18 @@ export default function Garland() {
     }
     animate()
 
-    const handleClick = (e: MouseEvent) => {
-        const rect = canvas.getBoundingClientRect()
-        const x = e.clientX - rect.left
-        const y = e.clientY - rect.top
-
-        lights.forEach(light => {
-            // Упрощенная проверка клика
-            if(Math.abs(x - light.x) < 15 && Math.abs(y - (light.y + 15)) < 20) {
-                const newColor = colors[Math.floor(Math.random() * colors.length)]
-                light.color = newColor
-            }
-        })
-    }
-    canvas.addEventListener('click', handleClick)
-
     return () => {
         window.removeEventListener('resize', updateSize)
         window.removeEventListener('resize', initLights)
-        canvas.removeEventListener('click', handleClick)
         cancelAnimationFrame(animationFrameId)
     }
   }, [])
 
   return (
-    <div className="absolute top-0 left-0 w-full pointer-events-none z-40" style={{ height: '160px' }}>
+    <div className="absolute top-0 left-0 w-full pointer-events-none z-40" style={{ height: '120px', borderBottom: 'none' }}>
       <canvas 
         ref={canvasRef} 
-        className="w-full h-full pointer-events-auto"
+        className="w-full h-full pointer-events-none"
       />
     </div>
   )
