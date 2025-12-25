@@ -402,6 +402,9 @@ ${friendName} пригласил тебя в конкурс ЭТРА!
              return NextResponse.json({ ok: true })
         }
 
+        // Debug logging for orders command
+        console.log(`[ORDERS_CMD] Fetching orders for userId: ${userId} (string: ${String(userId)})`)
+
         const { data: orders, error } = await sup
             .from('orders')
             .select('*')
@@ -409,7 +412,20 @@ ${friendName} пригласил тебя в конкурс ЭТРА!
             .in('status', ['paid', 'Оплачен', 'CONFIRMED'])
             .order('created_at', { ascending: false })
 
-        if (error || !orders || orders.length === 0) {
+        if (error) {
+            console.error('[ORDERS_CMD] Error fetching orders:', error)
+            await sendTelegramMessage("Произошла ошибка при получении списка заказов.", chatId)
+            return NextResponse.json({ ok: true })
+        }
+
+        console.log(`[ORDERS_CMD] Found ${orders?.length} orders`)
+
+        if (!orders || orders.length === 0) {
+             // Fallback: try checking if client_id is stored differently or maybe status is different?
+             // Let's try to find ANY order for this user to debug
+             const { count } = await sup.from('orders').select('*', { count: 'exact', head: true }).eq('customer_info->>client_id', String(userId))
+             console.log(`[ORDERS_CMD] Total orders for user (any status): ${count}`)
+             
              await sendTelegramMessage("📭 У вас пока нет оплаченных заказов.", chatId)
              return NextResponse.json({ ok: true })
         }

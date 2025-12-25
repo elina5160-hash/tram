@@ -416,18 +416,8 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
                 ` Товар: ${it.name}\n Количество: ${it.quantity}\n Сумма: ${it.sum.toLocaleString('ru-RU')} руб.`
             ).join('\n\n')
 
-            const customerReceiptText = [
-                `Спасибо за покупку!`,
-                itemsReceipt,
-                ` Общая сумма покупок: ${totalSpent.toLocaleString('ru-RU')} руб.`,
-                ``,
-                ` До билета не хватило: ${shortForNext} руб.`,
-                ` Купи еще на ${shortForNext} руб, чтобы получить билет!`,
-                ``,
-                ` Билеты начисляются за каждые 1000 руб суммарных покупок.`
-            ].join('\n')
-
-            await sendTelegramMessage(customerReceiptText, finalClientId, undefined)
+            // Notification is now handled in the contest logic block below to avoid duplicates
+            // We just prepare itemsReceipt here if needed later, or we can move it down.
         }
 
         // Send formatted notification to specific channel
@@ -526,10 +516,15 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
             
         if (client) {
 
-            // 2. Contest/Referral Logic (Only if client_id exists)
-            if (payload.client) {
-                const refereeId = Number(payload.client)
+            // 2. Contest/Referral Logic (Use finalClientId which is more robust)
+            if (finalClientId) {
+                const refereeId = Number(finalClientId)
                 
+                // Re-prepare items receipt for notification
+                 const itemsReceipt = standardizedItems.map(it => 
+                    ` Товар: ${it.name}\n Количество: ${it.quantity}\n Сумма: ${it.sum.toLocaleString('ru-RU')} руб.`
+                ).join('\n\n')
+
                 // Award tickets for purchase (1 per 1000 rub)
                 // ticketsEarned already calculated above
                 const tickets = ticketsEarned
@@ -543,6 +538,8 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
                     newTotalTickets = user?.tickets || 0
                     
                     const msg6 = `🎉 Покупка засчитана!
+${itemsReceipt}
+
 Ты купил на ${Number(outSum)} руб
 Общая сумма покупок: ${totalSpent} руб
 Получил: +${tickets} билетов 🎟
@@ -558,6 +555,8 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
                 } else {
                     // Scenario 11: Purchase < 1000 (or not enough cumulative for new ticket)
                     const msg11 = `Спасибо за покупку!
+${itemsReceipt}
+
 Сумма: ${Number(outSum)} руб
 Общая сумма покупок: ${totalSpent} руб
 
@@ -592,12 +591,6 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
                 // Check referral linkage and award bonus if applicable
                 const { data: referral } = await client.from('contest_referrals').select('referrer_id,status').eq('referee_id', refereeId).single()
                 
-                // If linked and this is a purchase (we are processing a paid order)
-                // "За каждую покупку друга получишь +1 билет" -> Always give +1 ticket to referrer on purchase?
-                // The prompt says: "8. УВЕДОМЛЕНИЕ: ДРУГ КУПИЛ ... Твой друг купил ... Ты получил +1 билет"
-                // Previous logic was "welcome_bonus" only once. New logic seems "Every purchase"?
-                // "За каждую покупку друга получишь +1 билет" - YES.
-                
                 if (referral) {
                     // Always award +1 to referrer for friend's purchase
                     await addTickets(referral.referrer_id, 1, 'referral_purchase_bonus', invId, true)
@@ -625,12 +618,7 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
                     await sendTelegramMessage(msg8, String(referral.referrer_id), kb8)
 
                     // Also handle "welcome bonus" for the friend (first purchase)?
-                    // Logic says: "3. Друг получает приветственный бонус" (handled at subscription/start?)
-                    // If this is the FIRST purchase, maybe we update status to 'paid'
                     if (referral.status !== 'paid') {
-                        // Maybe award extra bonus if defined? Or just mark as paid.
-                        // Existing code awarded 'welcome_bonus' here.
-                        // I'll keep 'welcome_bonus' but suppressed, just in case.
                          await addTickets(refereeId, 1, 'welcome_bonus', invId, true)
                          await client.from('contest_referrals').update({ status: 'paid' }).eq('referee_id', refereeId)
                     }
