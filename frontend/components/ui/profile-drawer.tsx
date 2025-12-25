@@ -271,6 +271,12 @@ export function ProfileDrawer({ isOpen, onClose, initialView = 'profile' }: Prof
                 <div className="mt-4 p-2 bg-black/20 rounded text-[10px] text-gray-600 font-mono max-w-[200px] break-all">
                     ID: {userId}<br/>
                     {fetchError ? `Error: ${fetchError.message}` : ''}
+                    {ordersData?.debug ? (
+                        <>
+                        <br/>SK: {ordersData.debug.usedServiceKey ? 'Yes' : 'No'}
+                        <br/>Env: {ordersData.debug.hasEnv ? 'Yes' : 'No'}
+                        </>
+                    ) : null}
                 </div>
                 <button 
                   onClick={onClose}

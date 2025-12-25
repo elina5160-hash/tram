@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { listOrders } from '@/lib/orders'
+import { getServiceSupabaseClient } from '@/lib/supabase'
 
 export const dynamic = 'force-dynamic'
 
@@ -16,7 +17,10 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: 'Client ID is required' }, { status: 400 })
     }
 
-    console.log(`[USER_ORDERS_API] Fetching orders for clientId: '${clientId}'`)
+    const serviceClient = getServiceSupabaseClient()
+    const usedServiceKey = !!serviceClient
+
+    console.log(`[USER_ORDERS_API] Fetching orders for clientId: '${clientId}'. ServiceKey: ${usedServiceKey}`)
 
     const result = await listOrders({
       client_id: clientId,
@@ -26,7 +30,14 @@ export async function GET(req: Request) {
       search
     })
 
-    return NextResponse.json(result)
+    return NextResponse.json({
+        ...result,
+        debug: {
+            clientId,
+            usedServiceKey,
+            hasEnv: !!process.env.SUPABASE_SERVICE_ROLE_KEY
+        }
+    })
   } catch (e: any) {
     console.error('Fetch user orders error:', e)
     return NextResponse.json({ error: e.message || 'Failed to fetch orders' }, { status: 500 })
