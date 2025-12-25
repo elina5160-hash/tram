@@ -12,6 +12,18 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/storage/v1/object/public/**',
       },
+      {
+        protocol: 'https',
+        hostname: 't.me',
+      },
+      {
+        protocol: 'https',
+        hostname: 'cdn4.telesco.pe',
+      },
+      {
+        protocol: 'https',
+        hostname: 'telegram.org',
+      },
     ],
   },
   async headers() {
@@ -21,7 +33,7 @@ const nextConfig: NextConfig = {
         headers: [
           {
             key: 'Content-Security-Policy',
-            value: "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.tinkoff.ru https://*.tcsbank.ru https://*.tbank.ru https://*.nspk.ru https://*.t-static.ru https://telegram.org https://app.grammy.dev; img-src 'self' data: https://*.tinkoff.ru https://*.tcsbank.ru https://*.tbank.ru https://*.nspk.ru https://*.t-static.ru https://meibdfguaaqcprvyfrpr.supabase.co; connect-src 'self' https://*.tinkoff.ru https://*.tcsbank.ru https://*.tbank.ru https://*.nspk.ru https://*.t-static.ru https://meibdfguaaqcprvyfrpr.supabase.co https://api.telegram.org https://script.google.com; style-src 'self' 'unsafe-inline' https://*.tinkoff.ru https://*.tcsbank.ru https://*.tbank.ru https://*.nspk.ru https://*.t-static.ru; frame-src 'self' https://*.tinkoff.ru https://*.tcsbank.ru https://*.tbank.ru"
+            value: "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.tinkoff.ru https://*.tcsbank.ru https://*.tbank.ru https://*.nspk.ru https://*.t-static.ru https://telegram.org https://app.grammy.dev; img-src 'self' data: https://*.tinkoff.ru https://*.tcsbank.ru https://*.tbank.ru https://*.nspk.ru https://*.t-static.ru https://meibdfguaaqcprvyfrpr.supabase.co https://t.me https://cdn4.telesco.pe https://telegram.org; connect-src 'self' https://*.tinkoff.ru https://*.tcsbank.ru https://*.tbank.ru https://*.nspk.ru https://*.t-static.ru https://meibdfguaaqcprvyfrpr.supabase.co https://api.telegram.org https://script.google.com; style-src 'self' 'unsafe-inline' https://*.tinkoff.ru https://*.tcsbank.ru https://*.tbank.ru https://*.nspk.ru https://*.t-static.ru; frame-src 'self' https://*.tinkoff.ru https://*.tcsbank.ru https://*.tbank.ru"
           }
         ],
       },
