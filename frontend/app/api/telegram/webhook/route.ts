@@ -43,6 +43,7 @@ export async function POST(req: Request) {
     const isHelp = text.toLowerCase().startsWith('/help')
     const isRules = text.toLowerCase().startsWith('/rules') || text.toLowerCase() === 'правила'
     const isStats = text.toLowerCase().startsWith('/stats') || text.toLowerCase() === 'моя статистика' || text.toLowerCase() === 'статистика'
+    const isOrders = text.toLowerCase().startsWith('/orders') || text.toLowerCase() === '/заказ' || text.toLowerCase() === 'мои заказы'
     const isAdminCmd = text.toLowerCase().startsWith('/admin')
     const isShare = text.toLowerCase().startsWith('/share') || text === 'Поделиться ссылкой' || text === '👥 Пригласить друзей' || text === '👥 Позвать друзей' || text === '👥 Пригласить' || text === '👥 Пригласить ещё'
 
@@ -358,7 +359,7 @@ ${friendName} пригласил тебя в конкурс ЭТРА!
         let friendsBought = 0 // "Друзья купили: [КОЛИЧЕСТВО] раз"
         
         if (sup) {
-            const { data: orders } = await sup.from('orders').select('total_amount').eq('customer_info->>client_id', String(userId))
+            const { data: orders } = await sup.from('orders').select('total_amount').eq('customer_info->>client_id', String(userId)).in('status', ['paid', 'Оплачен', 'CONFIRMED'])
             if (orders) totalSpent = orders.reduce((sum: number, o: any) => sum + (o.total_amount || 0), 0)
             
             const { count } = await sup.from('contest_referrals').select('*', { count: 'exact', head: true }).eq('referrer_id', userId)
@@ -373,7 +374,7 @@ ${friendName} пригласил тебя в конкурс ЭТРА!
         const daysLeft = Math.ceil((new Date('2025-01-07T23:00:00').getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
 
         const msg15 = `📊 Твоя статистика
-
+        
 🎟 Билетов: ${user.tickets}
 💰 Потрачено: ${totalSpent} руб
 👥 Приглашено друзей: ${invitedCount}
@@ -386,7 +387,7 @@ ${friendName} пригласил тебя в конкурс ЭТРА!
 Продолжай покупать и приглашать! 💪`
 
         const kb15 = { inline_keyboard: [
-            [{ text: '🛒 Купить', url: 'https://t.me/PRAEnzyme_bot' }],
+            [{ text: '🛒 Купить', url: 'https://tram-navy.vercel.app/home' }],
             [{ text: '👥 Пригласить', callback_data: 'share_cmd' }], // or just run share command logic
             [{ text: '🔄 Обновить', callback_data: 'stats_cmd' }]
         ] }
@@ -394,7 +395,70 @@ ${friendName} пригласил тебя в конкурс ЭТРА!
         return NextResponse.json({ ok: true })
     }
 
-    // 16. RULES COMMAND
+    // 16. ORDERS COMMAND / ЗАКАЗ
+    if (isOrders) {
+        if (!sup) {
+             await sendTelegramMessage("Ошибка доступа к базе данных. Попробуйте позже.", chatId)
+             return NextResponse.json({ ok: true })
+        }
+
+        const { data: orders, error } = await sup
+            .from('orders')
+            .select('*')
+            .eq('customer_info->>client_id', String(userId))
+            .in('status', ['paid', 'Оплачен', 'CONFIRMED'])
+            .order('created_at', { ascending: false })
+
+        if (error || !orders || orders.length === 0) {
+             await sendTelegramMessage("📭 У вас пока нет оплаченных заказов.", chatId)
+             return NextResponse.json({ ok: true })
+        }
+
+        let totalSpent = 0
+        const orderMessages = orders.map((order: any) => {
+             // Calculate Total
+             const orderSum = Number(order.total_amount || 0)
+             totalSpent += orderSum
+
+             // Parse items
+             let items: any[] = []
+             if (typeof order.items === 'string') {
+                 try { items = JSON.parse(order.items) } catch {}
+             } else if (Array.isArray(order.items)) {
+                 items = order.items
+             } else if (order.customer_info?.items_backup) {
+                 items = order.customer_info.items_backup
+             }
+
+             // Format items list
+             const itemNames = items.map((it: any) => it.name || it.title || 'Товар').join(', ')
+             const totalQty = items.reduce((acc: number, it: any) => acc + (Number(it.quantity || it.qty) || 1), 0)
+             
+             const dateStr = new Date(order.created_at || order.updated_at).toLocaleDateString('ru-RU')
+             
+             return `📦 Заказ #${order.id}\nТовар: ${itemNames}\nКоличество: ${totalQty}\nСумма: ${orderSum} руб.\nДата покупки: ${dateStr}`
+        })
+
+        const tickets = Math.floor(totalSpent / 1000)
+        const remainder = 1000 - (totalSpent % 1000)
+        
+        const summary = `📊 Сводная информация:\n💰 Общая сумма всех покупок: ${totalSpent} руб.\n🎟 Количество накопленных билетов: ${tickets}\n${remainder < 1000 ? `📉 Остаток до следующего билета: ${remainder} руб.` : ''}`
+
+        const fullText = `🗂 История заказов:\n\n${orderMessages.join('\n\n')}\n\n${summary}`
+        
+        if (fullText.length > 4000) {
+            await sendTelegramMessage(summary, chatId)
+            const shortList = orderMessages.slice(0, 10).join('\n\n')
+            await sendTelegramMessage(`Последние 10 заказов:\n\n${shortList}`, chatId)
+        } else {
+            await sendTelegramMessage(fullText, chatId)
+        }
+        
+        return NextResponse.json({ ok: true })
+    }
+
+
+    // 17. RULES COMMAND
     if (isRules) {
         const msg16 = `📋 Правила конкурса
 
