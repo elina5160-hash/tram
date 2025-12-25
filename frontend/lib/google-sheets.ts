@@ -76,12 +76,17 @@ export async function sendToGoogleSheet(orderData: any): Promise<any> {
         console.log(`Sending item "${item.name}" to Google Sheets...`);
         
         try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 3000); // 3s hard timeout
+
             const response = await fetch(SCRIPT_URL, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload),
                 redirect: "follow", // Follow redirects (Google Scripts often redirect)
+                signal: controller.signal
             });
+            clearTimeout(timeoutId);
             
             // 200 OK (final destination) or 302 (if manual)
             if (response.ok || response.status === 302) {
@@ -91,7 +96,11 @@ export async function sendToGoogleSheet(orderData: any): Promise<any> {
                 console.error(`Google Sheets error for item ${item.name}:`, response.status, text);
                 return { status: "error", code: response.status, text };
             }
-        } catch (e) {
+        } catch (e: any) {
+             if (e.name === 'AbortError') {
+                 console.error(`Google Sheets timeout for item ${item.name}`);
+                 return { status: "error", error: "Timeout" };
+             }
              console.error(`Fetch error for item ${item.name}:`, e);
              return { status: "error", error: String(e) };
         }

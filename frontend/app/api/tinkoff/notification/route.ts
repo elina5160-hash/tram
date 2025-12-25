@@ -61,14 +61,23 @@ export async function POST(req: Request) {
             // Extract DATA params if available (for recovery)
             const extraData = body.DATA || body.Data || {}
             
-            const success = await processSuccessfulPayment(OrderId, Amount, extraData)
-            
-            if (!success) {
-                 const msg = `Failed to process payment for order ${OrderId}`
-                 console.error(msg)
-                 await logToDb('payment_error', msg, {})
-            } else {
-                 await logToDb('payment_success', `Successfully processed ${OrderId}`, {})
+            // Hard timeout for processing to ensure we return OK to Tinkoff
+            // We give it 6 seconds. If it fails, we log it and return OK.
+            const timeoutPromise = new Promise((resolve, reject) => {
+                setTimeout(() => reject(new Error("Global Processing Timeout")), 6000)
+            });
+
+            try {
+                await Promise.race([
+                    processSuccessfulPayment(OrderId, Amount, extraData),
+                    timeoutPromise
+                ]);
+                await logToDb('payment_success', `Successfully processed ${OrderId}`, {})
+            } catch (e: any) {
+                const msg = `Exception processing payment for order ${OrderId}:`
+                console.error(msg, e)
+                await logToDb('payment_exception', msg, { error: String(e) })
+                // Even if it fails/timeouts, we fall through to return OK
             }
         } catch (e) {
             const msg = `Exception processing payment for order ${OrderId}:`

@@ -42,8 +42,22 @@ export async function sendTelegramMessage(text: string, chatId?: string, replyMa
 
   const payload = (pm?: string, id?: string) => JSON.stringify({ chat_id: id || targetChatId, text, parse_mode: pm, reply_markup: replyMarkup })
   const attempt = async (pm?: string, id?: string) => {
-    const res = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, { method: "POST", headers: { "Content-Type": "application/json" }, body: payload(pm, id) })
-    if (!res.ok) throw new Error(await res.text())
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 2500) // 2.5s hard timeout
+    try {
+        const res = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, { 
+            method: "POST", 
+            headers: { "Content-Type": "application/json" }, 
+            body: payload(pm, id),
+            signal: controller.signal
+        })
+        clearTimeout(timeoutId)
+        if (!res.ok) throw new Error(await res.text())
+    } catch (e: any) {
+        clearTimeout(timeoutId)
+        if (e.name === 'AbortError') throw new Error("Telegram Timeout")
+        throw e
+    }
   }
 
   let tries = 0
