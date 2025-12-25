@@ -23,6 +23,43 @@ export function ProfileDrawer({ isOpen, onClose, initialView = 'profile' }: Prof
   const [view, setView] = useState<'profile' | 'orders'>(initialView)
   const [expandedOrderId, setExpandedOrderId] = useState<number | null>(null)
   const [isCopied, setIsCopied] = useState(false)
+  const [savedAddress, setSavedAddress] = useState<string>("")
+  const [isEditingAddress, setIsEditingAddress] = useState(false)
+  const [tempAddress, setTempAddress] = useState("")
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+        const savedData = localStorage.getItem("cart_form_data")
+        if (savedData) {
+            try {
+                const parsed = JSON.parse(savedData)
+                if (parsed.address) setSavedAddress(parsed.address)
+            } catch (e) {
+                console.error(e)
+            }
+        }
+    }
+  }, [])
+
+  const saveAddress = () => {
+    if (typeof window !== "undefined") {
+        const savedData = localStorage.getItem("cart_form_data")
+        let parsed: any = {}
+        try {
+            if (savedData) parsed = JSON.parse(savedData)
+        } catch {}
+        
+        parsed.address = tempAddress
+        localStorage.setItem("cart_form_data", JSON.stringify(parsed))
+        setSavedAddress(tempAddress)
+        setIsEditingAddress(false)
+    }
+  }
+
+  const startEditing = () => {
+      setTempAddress(savedAddress)
+      setIsEditingAddress(true)
+  }
 
   useEffect(() => {
     if (isOpen) {
@@ -235,10 +272,54 @@ export function ProfileDrawer({ isOpen, onClose, initialView = 'profile' }: Prof
             
             {/* Addresses */}
             <div className="flex flex-col gap-3 pt-2">
-              <div className="text-[14px] text-white">Нет сохраненных адресов</div>
-              <button className="w-full bg-[#2c2c2e] rounded-[16px] py-4 text-[14px] font-medium text-white hover:bg-[#3a3a3c] transition-colors">
-                Добавить адрес
-              </button>
+              <label className="text-[13px] font-medium text-white">Адрес доставки</label>
+              
+              {isEditingAddress ? (
+                  <div className="flex flex-col gap-2 animate-in fade-in duration-200">
+                      <textarea 
+                        value={tempAddress}
+                        onChange={(e) => setTempAddress(e.target.value)}
+                        placeholder="Введите ваш адрес..."
+                        className="w-full bg-[#2c2c2e] rounded-[12px] p-3 text-[14px] text-white placeholder:text-gray-500 min-h-[80px] focus:outline-none focus:ring-1 focus:ring-[#2eb886]"
+                      />
+                      <div className="flex gap-2">
+                          <button 
+                            onClick={() => setIsEditingAddress(false)}
+                            className="flex-1 bg-[#3a3a3c] rounded-[12px] py-3 text-[13px] font-medium text-white hover:bg-[#48484a] transition-colors"
+                          >
+                            Отмена
+                          </button>
+                          <button 
+                            onClick={saveAddress}
+                            className="flex-1 bg-[#2eb886] rounded-[12px] py-3 text-[13px] font-medium text-white hover:bg-[#269970] transition-colors"
+                          >
+                            Сохранить
+                          </button>
+                      </div>
+                  </div>
+              ) : savedAddress ? (
+                  <div className="flex flex-col gap-2">
+                      <div className="bg-[#2c2c2e] rounded-[12px] p-3 text-[14px] text-gray-300">
+                          {savedAddress}
+                      </div>
+                      <button 
+                        onClick={startEditing}
+                        className="w-full bg-[#3a3a3c] rounded-[12px] py-3 text-[13px] font-medium text-white hover:bg-[#48484a] transition-colors"
+                      >
+                        Изменить адрес
+                      </button>
+                  </div>
+              ) : (
+                  <div className="flex flex-col gap-2">
+                    <div className="text-[14px] text-gray-400">Нет сохраненных адресов</div>
+                    <button 
+                        onClick={startEditing}
+                        className="w-full bg-[#2c2c2e] rounded-[16px] py-4 text-[14px] font-medium text-white hover:bg-[#3a3a3c] transition-colors"
+                    >
+                        Добавить адрес
+                    </button>
+                  </div>
+              )}
             </div>
           </div>
         </>
