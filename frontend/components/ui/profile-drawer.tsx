@@ -23,7 +23,6 @@ export function ProfileDrawer({ isOpen, onClose, initialView = 'profile' }: Prof
   const [view, setView] = useState<'profile' | 'orders'>(initialView)
   const [expandedOrderId, setExpandedOrderId] = useState<number | null>(null)
   const [isCopied, setIsCopied] = useState(false)
-  const [showOrderHistoryMessage, setShowOrderHistoryMessage] = useState(false)
 
   useEffect(() => {
     if (isOpen) {
@@ -203,11 +202,7 @@ export function ProfileDrawer({ isOpen, onClose, initialView = 'profile' }: Prof
                 Бонусы
               </button>
               <button 
-                onClick={() => {
-                   setShowOrderHistoryMessage(true)
-                   // Hide message after 5 seconds automatically
-                   setTimeout(() => setShowOrderHistoryMessage(false), 5000)
-                }}
+                onClick={() => setView('orders')}
                 className="bg-[#2c2c2e] rounded-[16px] py-4 text-[14px] font-medium text-white hover:bg-[#3a3a3c] transition-colors flex items-center justify-center gap-2"
               >
                 <Package size={16} />
@@ -215,38 +210,6 @@ export function ProfileDrawer({ isOpen, onClose, initialView = 'profile' }: Prof
               </button>
             </div>
             
-            {showOrderHistoryMessage && (
-                <div className="bg-[#2c2c2e] border border-[#2eb886]/30 rounded-[16px] p-4 animate-in fade-in slide-in-from-top-2">
-                    <div className="flex items-start gap-3">
-                        <div className="p-2 bg-[#2eb886]/10 rounded-full shrink-0">
-                            <Package className="text-[#2eb886]" size={20} />
-                        </div>
-                        <div className="flex-1">
-                            <h3 className="text-[14px] font-medium text-white mb-1">Где мои заказы?</h3>
-                            <p className="text-[13px] text-gray-300 leading-relaxed">
-                                Вся история заказов находится в боте <a 
-                                    href="https://t.me/KonkursEtraBot?start=orders" 
-                                    target="_blank"
-                                    onClick={(e) => {
-                                        if (typeof window !== 'undefined' && (window as any).Telegram?.WebApp?.openTelegramLink) {
-                                            e.preventDefault();
-                                            (window as any).Telegram.WebApp.openTelegramLink("https://t.me/KonkursEtraBot?start=orders");
-                                        }
-                                    }} 
-                                    className="text-[#2eb886] font-medium hover:underline"
-                                >@KonkursEtraBot</a> при команде <span className="font-mono bg-black/20 px-1 rounded">/заказ</span>
-                            </p>
-                        </div>
-                        <button 
-                            onClick={() => setShowOrderHistoryMessage(false)}
-                            className="text-gray-500 hover:text-white transition-colors"
-                        >
-                            <X size={16} />
-                        </button>
-                    </div>
-                </div>
-            )}
-
             {/* Addresses */}
             <div className="flex flex-col gap-3 pt-2">
               <div className="text-[14px] text-white">Нет сохраненных адресов</div>
