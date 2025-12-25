@@ -57,7 +57,11 @@ export async function POST(req: Request) {
       id: invId,
       total_amount: outSum,
       items: body.invoiceItems || [],
-      customer_info: { ...(body.customerInfo as object || { email: body.email }), discount_amount: body.discountAmount || 0 },
+      customer_info: { 
+          ...(body.customerInfo as object || { email: body.email }), 
+          discount_amount: body.discountAmount || 0,
+          items_backup: body.invoiceItems // Save backup for reliable restoration
+      },
       promo_code: body.promoCode,
       ref_code: body.refCode,
       status: 'pending',
