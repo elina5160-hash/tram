@@ -51,9 +51,9 @@ export async function sendToGoogleSheet(orderData: any): Promise<any> {
         const values = [
             orderData.id || "", // A: ORDER ID
             info.client_id || info.user_id || "", // B: USER ID
-            "https://tram-navy.vercel.app/home", // C: USER ID LINK
+            "https://tram-navy.vercel.app/", // C: USER ID LINK
             username, // D: USERNAME
-            username ? `https://t.me/${username}` : "", // E: USERNAME LINK
+            "https://tram-navy.vercel.app/", // E: USERNAME LINK
             telegramFirstName, // F: FIRST NAME
             new Date().toLocaleString("ru-RU", { timeZone: "Europe/Moscow" }), // G: DATA
             item.sum || 0, // H: TOTAL (Item Sum)
