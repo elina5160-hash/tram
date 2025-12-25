@@ -42,7 +42,6 @@ export async function POST(req: Request) {
     let invId = body.invId && typeof body.invId === "number" ? body.invId : Math.floor(Date.now() / 1000)
     
     // --- SAFE SUPABASE & TELEGRAM BLOCK ---
-    // We isolate this so if it fails, we still return the payment URL
     try {
         // Generate text format for items
         let itemsText = "Товары не указаны";
@@ -62,7 +61,6 @@ export async function POST(req: Request) {
             }));
         }
 
-        // Сохраняем заказ в Supabase
         let client = null
         try { client = getServiceSupabaseClient() } catch {}
         if (!client) {
@@ -102,7 +100,6 @@ export async function POST(req: Request) {
             })
         }
 
-        // Send Telegram notification
         const tickets = Math.floor(outSum / 1000);
         let ticketsText = `Начислено билетов: ${tickets}`;
         if (tickets > 0) {
@@ -135,94 +132,97 @@ export async function POST(req: Request) {
             ticketsText
         ].join('\n');
 
-        // Fire and forget (don't await strictly if it slows down, but here we await with timeout in lib)
         await sendTelegramMessage(msg);
 
     } catch (e) {
         console.error("Side effects error (DB/Telegram):", e)
-        // Continue execution to return URL!
     }
     // --- END SAFE BLOCK ---
 
     let receiptEncodedOnce = ""
-    let receiptEncodedTwice = ""
     
-    // Prepare Shp_ parameters for callback
     const shp: Record<string, string> = {
       Shp_name: sanitizeText(body.customerInfo?.name || ''),
-    Shp_phone: sanitizeText(body.customerInfo?.phone || ''),
-    Shp_email: sanitizeText(email || ''),
-    Shp_address: sanitizeText(body.customerInfo?.address || ''),
-    Shp_cdek: sanitizeText(body.customerInfo?.cdek || ''),
-    Shp_promo: sanitizeText(body.promoCode || ''),
-    Shp_ref: sanitizeText(body.refCode || ''),
-    Shp_client: sanitizeText(body.customerInfo?.client_id || ''),
-    Shp_username: sanitizeText(body.customerInfo?.username || '')
-  }
+      Shp_phone: sanitizeText(body.customerInfo?.phone || ''),
+      Shp_email: sanitizeText(email || ''),
+      Shp_address: sanitizeText(body.customerInfo?.address || ''),
+      Shp_cdek: sanitizeText(body.customerInfo?.cdek || ''),
+      Shp_promo: sanitizeText(body.promoCode || ''),
+      Shp_ref: sanitizeText(body.refCode || ''),
+      Shp_client: sanitizeText(body.customerInfo?.client_id || ''),
+      Shp_username: sanitizeText(body.customerInfo?.username || '')
+    }
 
-  // Add Shp_summary with product names as a fallback for notification
-  if (body.items && body.items.length > 0) {
-      const summary = body.items.map((it: any) => `${it.name || 'Товар'} (x${it.quantity || 1})`).join(', ')
-      shp.Shp_summary = sanitizeText(summary).substring(0, 500) // Limit length just in case
-  }
+    if (body.items && body.items.length > 0) {
+        const summary = body.items.map((it: any) => `${it.name || 'Товар'} (x${it.quantity || 1})`).join(', ')
+        shp.Shp_summary = sanitizeText(summary).substring(0, 500)
+    }
 
-  if (body.items && body.items.length > 0) {
-    try {
-      const receiptItems = body.items.map((it: any) => ({
-        name: sanitizeText(it.name || "Товар"),
-        quantity: it.quantity || 1,
-        sum: (it.cost || 0) * (it.quantity || 1),
-        tax: it.tax || "none",
-        payment_method: it.paymentMethod || "full_prepayment",
-        payment_object: it.paymentObject || "commodity"
-      }))
-      const receiptJson = JSON.stringify({ items: receiptItems })
-      receiptEncodedOnce = encodeURIComponent(receiptJson)
-      receiptEncodedTwice = encodeURIComponent(receiptEncodedOnce)
-      // Note: Shp_items removed to avoid signature issues. 
-      // Items are restored from Supabase in result/route.ts
-    } catch {}
-  }
+    if (body.items && body.items.length > 0) {
+      try {
+        const receiptItems = body.items.map((it: any) => ({
+          name: sanitizeText(it.name || "Товар"),
+          quantity: it.quantity || 1,
+          sum: (it.cost || 0) * (it.quantity || 1),
+          tax: it.tax || "none",
+          payment_method: it.paymentMethod || "full_prepayment",
+          payment_object: it.paymentObject || "commodity"
+        }))
+        const receiptJson = JSON.stringify({ items: receiptItems })
+        // Encoding Level 1
+        receiptEncodedOnce = encodeURIComponent(receiptJson)
+      } catch {}
+    }
 
-  const out = outSum.toString()
-  const baseParts = [merchant, out, String(invId)]
-  // Receipt must be included in the signature for Merchant/Index.aspx
-  // Support requested Double Encoded in URL. This means Server sees Single Encoded.
-  // So Base must use Single Encoded.
-  if (receiptEncodedTwice) baseParts.push(receiptEncodedOnce)
-  baseParts.push(password1ToUse as string)
-  let signatureBase = baseParts.join(":")
-  
-  const sortedKeys = Object.keys(shp).sort()
-  const shpString = sortedKeys.map(k => `${k}=${shp[k]}`).join(':')
+    const out = outSum.toString()
+    const baseParts = [merchant, out, String(invId)]
+    
+    // Robokassa expects the signature to be calculated using the 1x encoded Receipt
+    // (because Robokassa decodes the URL parameter from 2x to 1x before verification)
+    if (receiptEncodedOnce) baseParts.push(receiptEncodedOnce)
+    
+    baseParts.push(password1ToUse as string)
+    let signatureBase = baseParts.join(":")
+    
+    const sortedKeys = Object.keys(shp).sort()
+    const shpString = sortedKeys.map(k => `${k}=${shp[k]}`).join(':')
 
-  if (shpString) signatureBase = `${signatureBase}:${shpString}`
-  const signature = crypto.createHash("md5").update(signatureBase, "utf8").digest("hex")
-  
-  console.log(`[Robokassa] Base: ${signatureBase}`)
-  console.log(`[Robokassa] Signature: ${signature}`)
-
-  const params = new URLSearchParams()
-  params.set("MerchantLogin", merchant)
-  params.set("OutSum", out)
-  params.set("InvId", String(invId))
-  params.set("Description", description)
-  params.set("SignatureValue", signature)
-  // Fix: Use single encoded Receipt so URLSearchParams makes it double encoded
-  if (receiptEncodedTwice) params.set("Receipt", receiptEncodedOnce)
-  
-  if (email) params.set("Email", email)
-  sortedKeys.forEach((k) => params.set(k, shp[k]))
-  if (isTest) params.set("IsTest", "1")
-  
-  params.set("Culture", "ru")
-  
-  const url = `https://auth.robokassa.ru/Merchant/Index.aspx?${params.toString()}`
-  console.log(`[Robokassa] Generated URL: ${url}`)
-  
-  return NextResponse.json({ url, invId })
+    if (shpString) signatureBase = `${signatureBase}:${shpString}`
+    const signature = crypto.createHash("md5").update(signatureBase, "utf8").digest("hex")
+    
+    const params = new URLSearchParams()
+    params.set("MerchantLogin", merchant)
+    params.set("OutSum", out)
+    params.set("InvId", String(invId))
+    params.set("Description", description)
+    params.set("SignatureValue", signature)
+    
+    // Adding 1x encoded string to URLSearchParams will result in 2x encoded string in the final URL
+    // (e.g. %7B -> %257B)
+    if (receiptEncodedOnce) params.set("Receipt", receiptEncodedOnce)
+    
+    if (email) params.set("Email", email)
+    sortedKeys.forEach((k) => params.set(k, shp[k]))
+    if (isTest) params.set("IsTest", "1")
+    
+    params.set("Culture", "ru")
+    
+    const url = `https://auth.robokassa.ru/Merchant/Index.aspx?${params.toString()}`
+    
+    return NextResponse.json({ url, invId })
   } catch (e) {
     console.error("Critical error in robokassa/create:", e)
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 })
   }
+}
+
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    },
+  })
 }
