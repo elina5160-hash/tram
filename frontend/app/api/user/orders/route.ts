@@ -83,7 +83,7 @@ export async function GET(req: Request) {
      } : null
 
      return NextResponse.json({
-         data: filteredOrders,
+         orders: filteredOrders, // Changed from 'data' to 'orders' to match frontend expectation
          count: filteredOrders.length,
          debug: {
              clientId,
