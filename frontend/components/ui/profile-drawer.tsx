@@ -73,7 +73,16 @@ export function ProfileDrawer({ isOpen, onClose, initialView = 'profile' }: Prof
         if (typeof window !== "undefined") {
             const tg = (window as any).Telegram?.WebApp
             if (tg?.initDataUnsafe?.user) {
-                setUserInfo(tg.initDataUnsafe.user)
+                const user = tg.initDataUnsafe.user
+                setUserInfo(user)
+                
+                // Cache to localStorage
+                localStorage.setItem("user_id", String(user.id))
+                if (user.username) localStorage.setItem("user_username", user.username)
+                if (user.first_name) localStorage.setItem("user_first_name", user.first_name)
+                if (user.last_name) localStorage.setItem("user_last_name", user.last_name)
+                if (user.photo_url) localStorage.setItem("user_photo_url", user.photo_url)
+                
                 return true
             }
         }
@@ -95,7 +104,13 @@ export function ProfileDrawer({ isOpen, onClose, initialView = 'profile' }: Prof
     if (typeof window !== "undefined" && !userInfo) {
          const localId = localStorage.getItem("user_id")
          if (localId) {
-             setUserInfo({ id: localId, first_name: 'User' })
+             setUserInfo({ 
+                id: localId, 
+                first_name: localStorage.getItem("user_first_name") || 'Пользователь',
+                last_name: localStorage.getItem("user_last_name") || '',
+                username: localStorage.getItem("user_username") || '',
+                photo_url: localStorage.getItem("user_photo_url") || ''
+             })
          }
     }
   }, [])

@@ -90,6 +90,10 @@ function CartContent() {
         setClientId(user.id)
         if (user.username) setUsername(user.username)
         localStorage.setItem("user_id", String(user.id))
+        if (user.username) localStorage.setItem("user_username", user.username)
+        if (user.first_name) localStorage.setItem("user_first_name", user.first_name)
+        if (user.last_name) localStorage.setItem("user_last_name", user.last_name)
+        if (user.photo_url) localStorage.setItem("user_photo_url", user.photo_url)
       } else {
         const stored = localStorage.getItem("user_id")
         if (stored && stored !== "null") setClientId(stored)
