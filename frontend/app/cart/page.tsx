@@ -606,13 +606,14 @@ function CartContent() {
                       }
                       
                       console.error("Robokassa init failed:", dataRobo)
-                      alert("Ошибка инициализации оплаты. Попробуйте позже.")
+                      const errDetail = (dataRobo && typeof dataRobo === 'object' && 'error' in dataRobo) ? (dataRobo as any).error : resRobo.statusText
+                      alert(`Ошибка инициализации оплаты: ${errDetail || 'Неизвестная ошибка'}. Попробуйте позже.`)
                       setIsProcessing(false)
                       return
 
                     } catch (e) {
                       console.error("Payment init error:", e)
-                      alert("Ошибка соединения с платежным шлюзом.")
+                      alert(`Ошибка соединения с платежным шлюзом: ${e instanceof Error ? e.message : String(e)}`)
                       setIsProcessing(false)
                       return
                     }
