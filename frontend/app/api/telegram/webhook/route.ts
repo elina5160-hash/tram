@@ -447,21 +447,42 @@ ${friendName} пригласил тебя в конкурс ЭТРА!
 
              // Parse items
              let items: any[] = []
-             if (typeof order.items === 'string') {
-                 try { items = JSON.parse(order.items) } catch {}
-             } else if (Array.isArray(order.items)) {
+             
+             // 1. Try to use items directly if array
+             if (Array.isArray(order.items)) {
                  items = order.items
-             } else if (order.customer_info?.items_backup) {
+             } 
+             // 2. Try to parse if string
+             else if (typeof order.items === 'string') {
+                 try { 
+                    const parsed = JSON.parse(order.items)
+                    if (Array.isArray(parsed)) items = parsed
+                 } catch {}
+             }
+
+             // 3. Fallback to backup if still empty
+             if (items.length === 0 && order.customer_info?.items_backup) {
                  items = order.customer_info.items_backup
              }
 
              // Format items list
-             const itemNames = items.map((it: any) => it.name || it.title || 'Товар').join(', ')
+             let itemsList = ''
+             if (items.length > 0) {
+                 itemsList = items.map((it: any) => {
+                     const name = it.name || it.title || 'Товар'
+                     const qty = Number(it.quantity || it.qty) || 1
+                     return `- ${name} (x${qty})`
+                 }).join('\n')
+             } else {
+                 // Fallback if no structured items but there is a string description
+                 itemsList = typeof order.items === 'string' && order.items.length > 10 ? '📄 (список в чеке)' : 'Товары не указаны'
+             }
+
              const totalQty = items.reduce((acc: number, it: any) => acc + (Number(it.quantity || it.qty) || 1), 0)
              
              const dateStr = new Date(order.created_at || order.updated_at).toLocaleDateString('ru-RU')
              
-             return `📦 Заказ #${order.id}\nТовар: ${itemNames}\nКоличество: ${totalQty}\nСумма: ${orderSum} руб.\nДата покупки: ${dateStr}`
+             return `📦 Заказ #${order.id} от ${dateStr}\n${itemsList}\n💰 Сумма: ${orderSum} руб.`
         })
 
         const tickets = Math.floor(totalSpent / 1000)
