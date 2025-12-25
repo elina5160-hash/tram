@@ -612,18 +612,11 @@ function CartContent() {
                       }
                       
                       console.error("Robokassa init failed. Status:", resRobo.status, "Body:", rawText)
-                      
-                      let errDetail = (dataRobo && typeof dataRobo === 'object' && 'error' in dataRobo) ? (dataRobo as any).error : resRobo.statusText
-                      if (!errDetail) {
-                          if (rawText.trim().startsWith('<')) {
-                              errDetail = `Server Error ${resRobo.status}`
-                          } else {
-                              errDetail = rawText.substring(0, 200)
-                          }
-                      }
-
-                      alert(`Ошибка инициализации оплаты: ${errDetail || 'Неизвестная ошибка'}. Попробуйте позже.`)
-                      setIsProcessing(false)
+                       
+                       // DEBUG: Show exact response details to user
+                       alert(`DEBUG INFO:\nStatus: ${resRobo.status} ${resRobo.statusText}\nBody: ${rawText.substring(0, 500)}\n\nПожалуйста, отправьте скриншот разработчику.`)
+                       
+                       setIsProcessing(false)
                       return
 
                     } catch (e) {

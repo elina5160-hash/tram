@@ -12,162 +12,144 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const merchant = process.env.ROBO_MERCHANT_LOGIN?.trim()
-  const password1Raw = process.env.ROBO_PASSWORD1?.trim()
-  const isTest = process.env.ROBO_IS_TEST === "1"
-  const password1Test = process.env.ROBO_PASSWORD1_TEST?.trim()
-
-  const password1ToUse = isTest ? password1Test : password1Raw
-
-  if (!merchant || !password1ToUse) {
-    return NextResponse.json({ error: "Missing Robokassa credentials" }, { status: 500 })
-  }
-  
-  type ReceiptItemInput = {
-    id?: number
-    name?: string
-    quantity?: number
-    cost?: number
-    tax?: string
-    paymentMethod?: string
-    paymentObject?: string
-  }
-  let body: {
-    outSum?: number
-    description?: string
-    email?: string
-    customerInfo?: any
-    promoCode?: string
-    discountAmount?: number
-    refCode?: string
-    items?: ReceiptItemInput[]
-    invId?: number
-  } = {}
-  
   try {
-    body = await req.json()
-  } catch {}
+    const merchant = process.env.ROBO_MERCHANT_LOGIN?.trim()
+    const password1Raw = process.env.ROBO_PASSWORD1?.trim()
+    const isTest = process.env.ROBO_IS_TEST === "1"
+    const password1Test = process.env.ROBO_PASSWORD1_TEST?.trim()
 
-  const outSum = Number(body.outSum)
-  if (isNaN(outSum) || outSum <= 0) {
-    return NextResponse.json({ error: "Invalid amount" }, { status: 400 })
-  }
-  
-  const description = sanitizeText(body.description || "Оплата заказа")
-  const email = body.email || ""
-  // Use provided invId if valid number, else generate new one
-  let invId = body.invId && typeof body.invId === "number" ? body.invId : Math.floor(Date.now() / 1000)
-  
-  // Generate text format for items to match standard order format
-  let itemsText = "Товары не указаны";
-  let itemsBackup: { id?: number; name: string; quantity: number; price: number; sum: number }[] = [];
-  
-  if (body.items && Array.isArray(body.items)) {
-      itemsText = body.items.map(it => 
-          `- ${it.name || 'Товар'} x${it.quantity || 1} (${(it.cost || 0) * (it.quantity || 1)} руб.)`
-      ).join('\n');
-      
-      // Prepare backup with IDs for repeat functionality
-      itemsBackup = body.items.map(it => ({
-          id: it.id,
-          name: it.name || "Товар",
-          quantity: it.quantity || 1,
-          price: it.cost || 0,
-          sum: (it.cost || 0) * (it.quantity || 1)
-      }));
-  }
+    const password1ToUse = isTest ? password1Test : password1Raw
 
-  // Сохраняем заказ в Supabase (если настроены переменные окружения)
-  let client = getServiceSupabaseClient()
-  if (!client) {
-    client = getSupabaseClient()
-  }
-
-  if (client) {
-    const currentTime = new Date().toISOString();
-
-    const fullText = [
-        `📦 ЗАКАЗ #${invId}`,
-        `💰 Сумма: ${outSum} руб.`,
-        `👤 Клиент: ${body.customerInfo?.name || 'Не указано'}`,
-        `🆔 ID клиента: ${body.customerInfo?.client_id || 'Не указано'}`,
-        `📧 Email: ${email || 'Не указано'}`,
-        `📍 Адрес: ${body.customerInfo?.address || body.customerInfo?.cdek || 'Не указано'}`,
-        ``,
-        `🛒 Товары:`,
-        itemsText,
-        ``,
-        `🎁 Конкурс:`,
-        `Начислено билетов: 0 (ожидает оплаты)`
-    ].join('\n');
-
-    const { error } = await client.from("orders").insert({
-      id: invId,
-      total_amount: outSum,
-      items: fullText,
-      customer_info: { 
-        ...(body.customerInfo || { email }),
-        items_backup: itemsBackup,
-        discount_amount: body.discountAmount || 0
-      },
-      promo_code: body.promoCode,
-      ref_code: body.refCode,
-      status: 'pending',
-      updated_at: currentTime
-    })
-    if (error) {
-      console.error("Error creating pending order in Supabase:", error)
+    if (!merchant || !password1ToUse) {
+      return NextResponse.json({ error: "Missing Robokassa credentials" }, { status: 500 })
     }
-  }
-
-  // Send Telegram notification about order attempt
-  try {
-      // Calculate tickets
-      const tickets = Math.floor(outSum / 1000);
-      let ticketsText = `Начислено билетов: ${tickets}`;
-      if (tickets > 0) {
-          ticketsText += `\n(1000р - 1 билет, 2000р - 2 билета и т.д.)`;
-      } else {
-          ticketsText += ` (ожидает оплаты)`;
-      }
-
-      // Format product name for title (take first product or default)
-      let productTitle = "Заказ";
-      if (body.items && body.items.length > 0) {
-        productTitle = body.items[0].name || "Заказ";
-        if (body.items.length > 1) {
-            productTitle += " и др.";
-        }
-      }
-
-      const username = body.customerInfo?.username ? `@${body.customerInfo.username.replace('@', '')}` : 'Не указано';
-      const clientId = body.customerInfo?.client_id || 'Не указано';
-      
-      const msg = [
-          `📦 ${productTitle} #${invId}`,
-          `💰 Сумма: ${outSum} руб.`,
-          `👤 Клиент: ${body.customerInfo?.name || 'Не указано'}`,
-          `🆔 ID клиента: ${clientId} (${username})`,
-          `📞 Телефон: ${body.customerInfo?.phone || 'Не указано'}`,
-          `📧 Email: ${email || 'Не указано'}`,
-          `📍 Адрес: ${body.customerInfo?.address || body.customerInfo?.cdek || 'Не указано'}`,
-          ``,
-          `🎁 Конкурс:`,
-          ticketsText
-      ].join('\n');
-
-      await sendTelegramMessage(msg);
-
-  } catch (e) {
-      console.error("Failed to send notification:", e);
-  }
-
-  let receiptEncodedOnce = ""
-  let receiptEncodedTwice = ""
   
-  // Prepare Shp_ parameters for callback
-  const shp: Record<string, string> = {
-    Shp_name: sanitizeText(body.customerInfo?.name || ''),
+    let body: any = {}
+    try {
+      body = await req.json()
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 })
+    }
+
+    const outSum = Number(body.outSum)
+    if (isNaN(outSum) || outSum <= 0) {
+      return NextResponse.json({ error: "Invalid amount" }, { status: 400 })
+    }
+  
+    const description = sanitizeText(body.description || "Оплата заказа")
+    const email = body.email || ""
+    // Use provided invId if valid number, else generate new one
+    let invId = body.invId && typeof body.invId === "number" ? body.invId : Math.floor(Date.now() / 1000)
+    
+    // --- SAFE SUPABASE & TELEGRAM BLOCK ---
+    // We isolate this so if it fails, we still return the payment URL
+    try {
+        // Generate text format for items
+        let itemsText = "Товары не указаны";
+        let itemsBackup: any[] = [];
+        
+        if (body.items && Array.isArray(body.items)) {
+            itemsText = body.items.map((it: any) => 
+                `- ${it.name || 'Товар'} x${it.quantity || 1} (${(it.cost || 0) * (it.quantity || 1)} руб.)`
+            ).join('\n');
+            
+            itemsBackup = body.items.map((it: any) => ({
+                id: it.id,
+                name: it.name || "Товар",
+                quantity: it.quantity || 1,
+                price: it.cost || 0,
+                sum: (it.cost || 0) * (it.quantity || 1)
+            }));
+        }
+
+        // Сохраняем заказ в Supabase
+        let client = null
+        try { client = getServiceSupabaseClient() } catch {}
+        if (!client) {
+            try { client = getSupabaseClient() } catch {}
+        }
+
+        if (client) {
+            const currentTime = new Date().toISOString();
+            const fullText = [
+                `📦 ЗАКАЗ #${invId}`,
+                `💰 Сумма: ${outSum} руб.`,
+                `👤 Клиент: ${body.customerInfo?.name || 'Не указано'}`,
+                `🆔 ID клиента: ${body.customerInfo?.client_id || 'Не указано'}`,
+                `📧 Email: ${email || 'Не указано'}`,
+                `📍 Адрес: ${body.customerInfo?.address || body.customerInfo?.cdek || 'Не указано'}`,
+                ``,
+                `🛒 Товары:`,
+                itemsText,
+                ``,
+                `🎁 Конкурс:`,
+                `Начислено билетов: 0 (ожидает оплаты)`
+            ].join('\n');
+
+            await client.from("orders").insert({
+                id: invId,
+                total_amount: outSum,
+                items: fullText,
+                customer_info: { 
+                    ...(body.customerInfo || { email }),
+                    items_backup: itemsBackup,
+                    discount_amount: body.discountAmount || 0
+                },
+                promo_code: body.promoCode,
+                ref_code: body.refCode,
+                status: 'pending',
+                updated_at: currentTime
+            })
+        }
+
+        // Send Telegram notification
+        const tickets = Math.floor(outSum / 1000);
+        let ticketsText = `Начислено билетов: ${tickets}`;
+        if (tickets > 0) {
+            ticketsText += `\n(1000р - 1 билет, 2000р - 2 билета и т.д.)`;
+        } else {
+            ticketsText += ` (ожидает оплаты)`;
+        }
+
+        let productTitle = "Заказ";
+        if (body.items && body.items.length > 0) {
+            productTitle = body.items[0].name || "Заказ";
+            if (body.items.length > 1) {
+                productTitle += " и др.";
+            }
+        }
+
+        const username = body.customerInfo?.username ? `@${body.customerInfo.username.replace('@', '')}` : 'Не указано';
+        const clientId = body.customerInfo?.client_id || 'Не указано';
+        
+        const msg = [
+            `📦 ${productTitle} #${invId}`,
+            `💰 Сумма: ${outSum} руб.`,
+            `👤 Клиент: ${body.customerInfo?.name || 'Не указано'}`,
+            `🆔 ID клиента: ${clientId} (${username})`,
+            `📞 Телефон: ${body.customerInfo?.phone || 'Не указано'}`,
+            `📧 Email: ${email || 'Не указано'}`,
+            `📍 Адрес: ${body.customerInfo?.address || body.customerInfo?.cdek || 'Не указано'}`,
+            ``,
+            `🎁 Конкурс:`,
+            ticketsText
+        ].join('\n');
+
+        // Fire and forget (don't await strictly if it slows down, but here we await with timeout in lib)
+        await sendTelegramMessage(msg);
+
+    } catch (e) {
+        console.error("Side effects error (DB/Telegram):", e)
+        // Continue execution to return URL!
+    }
+    // --- END SAFE BLOCK ---
+
+    let receiptEncodedOnce = ""
+    let receiptEncodedTwice = ""
+    
+    // Prepare Shp_ parameters for callback
+    const shp: Record<string, string> = {
+      Shp_name: sanitizeText(body.customerInfo?.name || ''),
     Shp_phone: sanitizeText(body.customerInfo?.phone || ''),
     Shp_email: sanitizeText(email || ''),
     Shp_address: sanitizeText(body.customerInfo?.address || ''),
@@ -180,13 +162,13 @@ export async function POST(req: Request) {
 
   // Add Shp_summary with product names as a fallback for notification
   if (body.items && body.items.length > 0) {
-      const summary = body.items.map(it => `${it.name || 'Товар'} (x${it.quantity || 1})`).join(', ')
+      const summary = body.items.map((it: any) => `${it.name || 'Товар'} (x${it.quantity || 1})`).join(', ')
       shp.Shp_summary = sanitizeText(summary).substring(0, 500) // Limit length just in case
   }
 
   if (body.items && body.items.length > 0) {
     try {
-      const receiptItems = body.items.map((it: ReceiptItemInput) => ({
+      const receiptItems = body.items.map((it: any) => ({
         name: sanitizeText(it.name || "Товар"),
         quantity: it.quantity || 1,
         sum: (it.cost || 0) * (it.quantity || 1),
@@ -239,4 +221,8 @@ export async function POST(req: Request) {
   console.log(`[Robokassa] Generated URL: ${url}`)
   
   return NextResponse.json({ url, invId })
+  } catch (e) {
+    console.error("Critical error in robokassa/create:", e)
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 })
+  }
 }
