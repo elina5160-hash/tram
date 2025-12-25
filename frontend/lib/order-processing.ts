@@ -76,8 +76,8 @@ export async function processSuccessfulPayment(invId: string | number, amountKop
              orderData = newOrder
         }
     } else if (currentOrder.status === 'paid' || currentOrder.status === 'Оплачен') {
-        console.log(`Order ${orderId} is already paid. Skipping processing.`)
-        return true
+        console.log(`Order ${orderId} is already paid. Continuing to ensure notifications are sent.`)
+        // Do not return here, continue to send notifications
     } else {
         // 2. Update status
         const { error: updateError } = await client.from('orders').update({ status: 'paid' }).eq('id', orderId)
