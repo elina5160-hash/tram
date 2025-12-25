@@ -51,7 +51,9 @@ export async function POST(req: Request) {
   
   if (client) {
     const currentTime = new Date().toISOString();
-    const { error } = await client.from("orders").insert({
+    
+    // Add timeout for DB operations to avoid blocking the UI
+    const dbPromise = client.from("orders").insert({
       id: invId,
       total_amount: outSum,
       items: body.invoiceItems || [],
@@ -60,9 +62,20 @@ export async function POST(req: Request) {
       ref_code: body.refCode,
       status: 'pending',
       updated_at: currentTime
-    })
-    if (error) {
-      console.error("Error creating pending order in Supabase:", error)
+    });
+    
+    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("DB_TIMEOUT")), 3000));
+    
+    try {
+        const result: any = await Promise.race([dbPromise, timeoutPromise]);
+        if (result.error) {
+            console.error("Error creating pending order in Supabase:", result.error)
+        }
+    } catch (e) {
+        console.error("Supabase insert timed out or failed:", e)
+        // Continue to create invoice even if DB fails, to not block payment.
+        // Note: Result handler might fail to find order if this happens.
+        // Ideally we should pass data to Robokassa, but API is limited.
     }
   }
 
