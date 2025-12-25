@@ -224,6 +224,7 @@ export async function POST(req: Request) {
   params.set("InvId", String(invId))
   params.set("Description", description)
   params.set("SignatureValue", signature)
+  // Fix: Use single encoded Receipt so URLSearchParams makes it double encoded
   if (receiptEncodedTwice) params.set("Receipt", receiptEncodedOnce)
   
   if (email) params.set("Email", email)
@@ -233,5 +234,7 @@ export async function POST(req: Request) {
   params.set("Culture", "ru")
   
   const url = `https://auth.robokassa.ru/Merchant/Index.aspx?${params.toString()}`
+  console.log(`[Robokassa] Generated URL: ${url}`)
+  
   return NextResponse.json({ url, invId })
 }
