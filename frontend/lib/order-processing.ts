@@ -28,6 +28,8 @@ export async function processSuccessfulPayment(invId: string | number, amountKop
         console.error(`Database error selecting order ${orderId}:`, selectError)
     }
 
+    let orderData = currentOrder
+
     if (!currentOrder) {
         console.warn(`Order ${orderId} (type: ${typeof orderId}) not found in DB. Creating recovery record...`)
         
@@ -60,23 +62,32 @@ export async function processSuccessfulPayment(invId: string | number, amountKop
         
         if (insertError) {
              console.error("Failed to create recovery order:", insertError)
-             return false
+             // Proceed with in-memory data if DB fails
+             orderData = {
+                id: orderId,
+                total_amount: outSum,
+                status: 'paid',
+                customer_info: recoveredInfo,
+                items: 'Восстановлен из уведомления об оплате'
+             }
+        } else {
+             // Fetch the just-inserted order
+             const { data: newOrder } = await client.from('orders').select('*').eq('id', orderId).single()
+             orderData = newOrder
         }
     } else if (currentOrder.status === 'paid' || currentOrder.status === 'Оплачен') {
         console.log(`Order ${orderId} is already paid. Skipping processing.`)
         return true
-    }
-
-    // 2. Update status
-    const { error: updateError } = await client.from('orders').update({ status: 'paid' }).eq('id', orderId)
-    if (updateError) {
-        console.error("Failed to update order status:", updateError)
-        return false
+    } else {
+        // 2. Update status
+        const { error: updateError } = await client.from('orders').update({ status: 'paid' }).eq('id', orderId)
+        if (updateError) {
+            console.error("Failed to update order status:", updateError)
+            // Proceed anyway
+        }
     }
     
-    // 3. Fetch Full Order Data
-    const { data: orderData } = await client.from('orders').select('*').eq('id', orderId).single()
-    
+    // 3. Prepare Data for Notifications
     if (orderData) {
         // Restore Items
         let standardizedItems: any[] = []
@@ -105,29 +116,37 @@ export async function processSuccessfulPayment(invId: string | number, amountKop
         // Calculate Tickets (Cumulative)
         let ticketsEarned = 0
         let cumulativeSpent = outSum
-
-        if (clientId) {
-            const { data: pastOrders } = await client
-                .from('orders')
-                .select('total_amount')
-                .eq('customer_info->>client_id', String(clientId))
-                .neq('id', orderId)
-                .in('status', ['paid', 'Оплачен'])
-            
-            const pastSpent = pastOrders?.reduce((sum, o) => sum + (Number(o.total_amount) || 0), 0) || 0
-            cumulativeSpent = pastSpent + outSum
-            
-            const totalTickets = Math.floor(cumulativeSpent / 1000)
-            const pastTickets = Math.floor(pastSpent / 1000)
-            ticketsEarned = Math.max(0, totalTickets - pastTickets)
-        } else {
-            ticketsEarned = Math.floor(outSum / 1000)
+        
+        // Only try to calculate tickets if we have DB access
+        try {
+            if (clientId && client) {
+                const { data: pastOrders } = await client
+                    .from('orders')
+                    .select('total_amount')
+                    .eq('customer_info->>client_id', String(clientId))
+                    .neq('id', orderId)
+                    .in('status', ['paid', 'Оплачен'])
+                
+                const pastSpent = pastOrders?.reduce((sum, o) => sum + (Number(o.total_amount) || 0), 0) || 0
+                cumulativeSpent = pastSpent + outSum
+                
+                const totalTickets = Math.floor(cumulativeSpent / 1000)
+                const pastTickets = Math.floor(pastSpent / 1000)
+                ticketsEarned = Math.max(0, totalTickets - pastTickets)
+            } else {
+                ticketsEarned = Math.floor(outSum / 1000)
+            }
+        } catch (e) {
+            console.error("Error calculating tickets:", e)
+            ticketsEarned = Math.floor(outSum / 1000) // Fallback
         }
         
         // Award Tickets
-        if (ticketsEarned > 0) {
+        if (ticketsEarned > 0 && client) {
             // Update local record
-            await client.from('orders').update({ tickets_earned: ticketsEarned }).eq('id', orderId)
+            await client.from('orders').update({ tickets_earned: ticketsEarned }).eq('id', orderId).then(({ error }) => {
+                 if (error) console.error("Failed to update tickets_earned:", error)
+            })
             
             // Add tickets to contest system
             if (clientId) {
