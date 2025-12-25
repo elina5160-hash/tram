@@ -126,33 +126,67 @@ export async function POST(req: Request) {
         // Debug logging for orders command
         console.log(`[ORDERS_CMD] Fetching orders for userId: ${userId} (string: ${String(userId)})`)
 
-        // 1. Try exact match with status
-        const { data: orders, error } = await sup
+        // 1. Try to find orders. Since customer_info might be stored as a string, we can't rely solely on JSON arrows.
+        // We'll try two strategies: 
+        // A) JSON arrow query (if it works)
+        // B) Text search (ilike) as fallback or combined
+        
+        let orders: any[] = []
+        
+        // Strategy A: Try fetching via JSON arrow (standard)
+        const { data: dataJson, error: errJson } = await sup
             .from('orders')
             .select('*')
             .eq('customer_info->>client_id', String(userId))
             .in('status', ['paid', 'Оплачен', 'CONFIRMED'])
             .order('created_at', { ascending: false })
-
-        if (error) {
-            console.error('[ORDERS_CMD] Error fetching orders:', error)
-            await sendTelegramMessage("Произошла ошибка при получении списка заказов.", chatId)
-            return NextResponse.json({ ok: true })
+            
+        if (dataJson && dataJson.length > 0) {
+            orders = dataJson
+        } else {
+            // Strategy B: Fetch generic paid orders and filter in memory (more robust if schema is mixed)
+            // Fetch last 100 paid orders to be safe
+            const { data: dataRaw, error: errRaw } = await sup
+                .from('orders')
+                .select('*')
+                .in('status', ['paid', 'Оплачен', 'CONFIRMED'])
+                .order('created_at', { ascending: false })
+                .limit(100)
+                
+            if (dataRaw) {
+                orders = dataRaw.filter((o: any) => {
+                    let info = o.customer_info
+                    if (typeof info === 'string') {
+                        try { info = JSON.parse(info) } catch {}
+                    }
+                    return String(info?.client_id) === String(userId)
+                })
+            }
         }
 
-        console.log(`[ORDERS_CMD] Found ${orders?.length} orders with correct status`)
+        console.log(`[ORDERS_CMD] Found ${orders?.length} orders for user ${userId}`)
 
         if (!orders || orders.length === 0) {
              // Debug: check if any orders exist for this user regardless of status
-             const { data: allUserOrders } = await sup
+             // Using the robust filter method again
+             const { data: allOrdersRaw } = await sup
                 .from('orders')
-                .select('id, status, customer_info')
-                .eq('customer_info->>client_id', String(userId))
+                .select('*')
+                .order('created_at', { ascending: false })
+                .limit(50)
              
-             console.log(`[ORDERS_CMD] All orders for user ${userId}:`, JSON.stringify(allUserOrders, null, 2))
+             const userOrders = allOrdersRaw?.filter((o: any) => {
+                 let info = o.customer_info
+                 if (typeof info === 'string') {
+                     try { info = JSON.parse(info) } catch {}
+                 }
+                 return String(info?.client_id) === String(userId)
+             }) || []
 
-             if (allUserOrders && allUserOrders.length > 0) {
-                 const statuses = allUserOrders.map(o => o.status).join(', ')
+             console.log(`[ORDERS_CMD] All orders for user ${userId}:`, JSON.stringify(userOrders.map((o: any) => ({id: o.id, status: o.status})), null, 2))
+
+             if (userOrders.length > 0) {
+                 const statuses = userOrders.map((o: any) => o.status).join(', ')
                  await sendTelegramMessage(`📭 У вас нет оплаченных заказов. Найдены заказы со статусами: ${statuses}`, chatId)
              } else {
                  await sendTelegramMessage("📭 У вас пока нет заказов.", chatId)
