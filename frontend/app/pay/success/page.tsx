@@ -130,9 +130,9 @@ function SuccessPageContent() {
               <h3 className="text-xl font-bold text-gray-900">Оплата принята!</h3>
               
               <p className="text-gray-500 text-sm leading-relaxed">
-                Ваш заказ #{orderId} успешно оплачен и передан в обработку.
+                Ваш заказ #{orderId} успешно оплачен.
                 <br />
-                История заказов доступна в профиле.
+                Номер и история заказов находится в боте @KonkursEtraBot при команде /заказ
               </p>
 
               <button
