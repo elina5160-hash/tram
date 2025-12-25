@@ -48,16 +48,17 @@ export async function sendTelegramMessage(text: string, chatId?: string, replyMa
 
   let tries = 0
   let pm: string | undefined = "HTML"
-  while (tries < 4) {
+  // Reduced retries to avoid Vercel timeouts (Tinkoff webhook expects fast response)
+  while (tries < 2) {
     try {
       await attempt(pm)
       return
     } catch (e) {
-      const ms = Math.min(2000 * Math.pow(2, tries), 10000)
+      const ms = 1000 
       await new Promise((r) => setTimeout(r, ms))
       if (tries === 0) pm = undefined
       tries += 1
-      if (tries >= 4) {
+      if (tries >= 2) {
         try {
           const altId = normalizeChatId(String(targetChatIdRaw))
           if (altId && altId !== targetChatId) {

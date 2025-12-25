@@ -154,10 +154,16 @@ export async function processSuccessfulPayment(invId: string | number, amountKop
             itemsText
         ].join('\n');
 
-        // Send to Admin
-        await sendTelegramMessage(adminMessage)
+        // Parallelize notifications to prevent timeout (503)
+        const notificationPromises: Promise<any>[] = [];
 
-        // Prepare User Notification (KonkursEtraBot style)
+        // 1. Send to Admin
+        notificationPromises.push(
+            sendTelegramMessage(adminMessage)
+                .catch(e => console.error("Failed to send admin notification:", e))
+        );
+
+        // 2. Prepare & Send User Notification (KonkursEtraBot style)
         if (clientId && /^\d+$/.test(String(clientId))) {
             const remainder = cumulativeSpent % 1000
             const neededForNext = 1000 - remainder
@@ -182,10 +188,13 @@ export async function processSuccessfulPayment(invId: string | number, amountKop
             const userMessage = userMessageLines.join('\n')
             
             // Send to User
-            await sendTelegramMessage(userMessage, String(clientId))
+            notificationPromises.push(
+                sendTelegramMessage(userMessage, String(clientId))
+                    .catch(e => console.error("Failed to send user notification:", e))
+            );
         }
 
-        // Send to Google Sheets
+        // 3. Send to Google Sheets
         // We need to format data as expected by sendToGoogleSheet
         const googleSheetData = {
             id: orderId,
@@ -200,7 +209,14 @@ export async function processSuccessfulPayment(invId: string | number, amountKop
         }
 
         console.log(`Sending order ${orderId} to Google Sheets...`)
-        await sendToGoogleSheet(googleSheetData)
+        notificationPromises.push(
+            sendToGoogleSheet(googleSheetData)
+                .catch(e => console.error("Failed to send to Google Sheets:", e))
+        );
+
+        // Wait for all notifications (best effort)
+        // If they take too long, Vercel might kill it, but parallel is faster than sequential.
+        await Promise.allSettled(notificationPromises);
     }
 
     return true
