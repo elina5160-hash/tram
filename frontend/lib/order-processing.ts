@@ -49,12 +49,17 @@ export async function processSuccessfulPayment(invId: string | number, amountKop
         }
 
         // Create recovery record
+        let itemsStr = 'Восстановлен из уведомления об оплате'
+        if (extraData && extraData.ItemsSummary) {
+             itemsStr = extraData.ItemsSummary
+        }
+
         const { error: insertError } = await client.from('orders').insert({
             id: orderId,
             total_amount: outSum,
             status: 'paid',
             currency: 'RUB',
-            items: 'Восстановлен из уведомления об оплате',
+            items: itemsStr,
             customer_info: recoveredInfo,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
@@ -68,7 +73,7 @@ export async function processSuccessfulPayment(invId: string | number, amountKop
                 total_amount: outSum,
                 status: 'paid',
                 customer_info: recoveredInfo,
-                items: 'Восстановлен из уведомления об оплате'
+                items: itemsStr
              }
         } else {
              // Fetch the just-inserted order

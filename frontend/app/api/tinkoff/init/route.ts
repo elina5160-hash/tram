@@ -172,8 +172,8 @@ export async function POST(req: Request) {
           Phone: sanitizeText(body.customerInfo?.phone || "").substring(0, 20),
           Email: sanitizeText(email).substring(0, 100),
           ClientId: sanitizeText(body.customerInfo?.client_id || "").substring(0, 50),
-          // Address might be too long, but let's try shortened version
-          Address: sanitizeText(body.customerInfo?.address || "").substring(0, 100)
+          Address: sanitizeText(body.customerInfo?.address || "").substring(0, 100),
+          ItemsSummary: sanitizeText(itemsText.replace(/\n/g, ', ')).substring(0, 100)
       },
       SuccessURL: `${baseUrl}/pay/success`,
       FailURL: `${baseUrl}/pay/fail`,
