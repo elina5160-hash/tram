@@ -555,9 +555,11 @@ function CartContent() {
                          itemsCount: itemsForCreate.length
                     })
 
-                    // Быстрый путь: Tinkoff (вместо Robokassa)
+                    // Инициализация платежа через Robokassa
                     try {
-                      const resClassic = await fetch("/api/tinkoff/init", {
+                      // Используем endpoint для создания инвойса (старый метод)
+                      // или /api/robokassa/create если хотим прямую ссылку
+                      const resRobo = await fetch("/api/robokassa/invoice/create", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({
@@ -577,49 +579,43 @@ function CartContent() {
                           promoCode,
                           discountAmount,
                           refCode,
-                          items: itemsForCreate,
+                          invoiceItems: itemsForCreate, // Robokassa API expects invoiceItems
                           invId
                         }),
                       })
-                      let dataClassic: unknown = null
-                      try { dataClassic = await resClassic.json() } catch {}
                       
-                      if (resClassic.ok && typeof dataClassic === 'object' && dataClassic && 'url' in dataClassic) {
-                        const dc = dataClassic as { url: string; invId?: number | string }
-                        try {
-                          const payload = { type: 'CHECKOUT_REDIRECT', message: 'redirect to pay (classic)', data: { url: dc.url } }
-                          const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' })
-                          navigator.sendBeacon('/api/log', blob)
-                        } catch {}
-                        savePendingOrder(Number(dc.invId || invId))
-                        const url = `/pay/confirm?url=${encodeURIComponent(dc.url)}&invId=${encodeURIComponent(String(dc.invId || invId))}&discountAmount=${discountAmount}&outSum=${totalWithDiscount}`
-                        router.push(url)
-                        return
+                      let dataRobo: unknown = null
+                      try { dataRobo = await resRobo.json() } catch {}
+
+                      if (resRobo.ok && typeof dataRobo === 'object' && dataRobo && ('url' in dataRobo || 'invoiceUrl' in dataRobo)) {
+                         const dr = dataRobo as { url?: string; invoiceUrl?: string; invId?: number | string }
+                         const payUrl = dr.invoiceUrl || dr.url
+                         
+                         if (payUrl) {
+                            try {
+                              const payload = { type: 'CHECKOUT_REDIRECT', message: 'redirect to pay (robokassa)', data: { url: payUrl } }
+                              const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' })
+                              navigator.sendBeacon('/api/log', blob)
+                            } catch {}
+                            
+                            savePendingOrder(Number(dr.invId || invId))
+                            // Redirect directly to Robokassa
+                            window.location.href = payUrl
+                            return
+                         }
                       }
                       
-                      // Handle error from Tinkoff API
-                      if (dataClassic && typeof dataClassic === 'object' && 'error' in dataClassic) {
-                         const err = dataClassic as { error: string, details?: string }
-                         alert(`Ошибка оплаты: ${err.error}${err.details ? ` (${err.details})` : ''}`)
-                         setIsProcessing(false)
-                         return
-                      }
+                      console.error("Robokassa init failed:", dataRobo)
+                      alert("Ошибка инициализации оплаты. Попробуйте позже.")
+                      setIsProcessing(false)
+                      return
+
                     } catch (e) {
                       console.error("Payment init error:", e)
+                      alert("Ошибка соединения с платежным шлюзом.")
+                      setIsProcessing(false)
+                      return
                     }
-
-                    /* Robokassa InvoiceService Fallback - Disabled for Tinkoff
-                    // Резервный путь: InvoiceService (внешний вызов) → редирект
-                    try {
-                      const resInvoice = await fetch("/api/robokassa/invoice/create", {
-                      ...
-                      })
-                      ...
-                    } catch {}
-                    */
-                    
-                    setIsProcessing(false)
-                    alert("Не удалось получить ссылку на оплату. Попробуйте позже.")
                   }}
                 >
                   {isProcessing ? "Подождите пожалуйста" : "К оформлению"}
