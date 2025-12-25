@@ -116,6 +116,114 @@ export async function POST(req: Request) {
       return created
     }
 
+    // 16. ORDERS COMMAND / ЗАКАЗ (MOVED UP FOR DEEP LINKING PRIORITY)
+    if (isOrders) {
+        if (!sup) {
+             await sendTelegramMessage("Ошибка доступа к базе данных. Попробуйте позже.", chatId)
+             return NextResponse.json({ ok: true })
+        }
+
+        // Debug logging for orders command
+        console.log(`[ORDERS_CMD] Fetching orders for userId: ${userId} (string: ${String(userId)})`)
+
+        // 1. Try exact match with status
+        const { data: orders, error } = await sup
+            .from('orders')
+            .select('*')
+            .eq('customer_info->>client_id', String(userId))
+            .in('status', ['paid', 'Оплачен', 'CONFIRMED'])
+            .order('created_at', { ascending: false })
+
+        if (error) {
+            console.error('[ORDERS_CMD] Error fetching orders:', error)
+            await sendTelegramMessage("Произошла ошибка при получении списка заказов.", chatId)
+            return NextResponse.json({ ok: true })
+        }
+
+        console.log(`[ORDERS_CMD] Found ${orders?.length} orders with correct status`)
+
+        if (!orders || orders.length === 0) {
+             // Debug: check if any orders exist for this user regardless of status
+             const { data: allUserOrders } = await sup
+                .from('orders')
+                .select('id, status, customer_info')
+                .eq('customer_info->>client_id', String(userId))
+             
+             console.log(`[ORDERS_CMD] All orders for user ${userId}:`, JSON.stringify(allUserOrders, null, 2))
+
+             if (allUserOrders && allUserOrders.length > 0) {
+                 const statuses = allUserOrders.map(o => o.status).join(', ')
+                 await sendTelegramMessage(`📭 У вас нет оплаченных заказов. Найдены заказы со статусами: ${statuses}`, chatId)
+             } else {
+                 await sendTelegramMessage("📭 У вас пока нет заказов.", chatId)
+             }
+             return NextResponse.json({ ok: true })
+        }
+
+        let totalSpent = 0
+        const orderMessages = orders.map((order: any) => {
+             // Calculate Total
+             const orderSum = Number(order.total_amount || 0)
+             totalSpent += orderSum
+
+             // Parse items
+             let items: any[] = []
+             
+             // 1. Try to use items directly if array
+             if (Array.isArray(order.items)) {
+                 items = order.items
+             } 
+             // 2. Try to parse if string
+             else if (typeof order.items === 'string') {
+                 try { 
+                    const parsed = JSON.parse(order.items)
+                    if (Array.isArray(parsed)) items = parsed
+                 } catch {}
+             }
+
+             // 3. Fallback to backup if still empty
+             if (items.length === 0 && order.customer_info?.items_backup) {
+                 items = order.customer_info.items_backup
+             }
+
+             // Format items list
+             let itemsList = ''
+             if (items.length > 0) {
+                 itemsList = items.map((it: any) => {
+                     const name = it.name || it.title || 'Товар'
+                     const qty = Number(it.quantity || it.qty) || 1
+                     return `- ${name} (x${qty})`
+                 }).join('\n')
+             } else {
+                 // Fallback if no structured items but there is a string description
+                 itemsList = typeof order.items === 'string' && order.items.length > 10 ? '📄 (список в чеке)' : 'Товары не указаны'
+             }
+
+             const totalQty = items.reduce((acc: number, it: any) => acc + (Number(it.quantity || it.qty) || 1), 0)
+             
+             const dateStr = new Date(order.created_at || order.updated_at).toLocaleDateString('ru-RU')
+             
+             return `📦 Заказ #${order.id} от ${dateStr}\n${itemsList}\n💰 Сумма: ${orderSum} руб.`
+        })
+
+        const tickets = Math.floor(totalSpent / 1000)
+        const remainder = 1000 - (totalSpent % 1000)
+        
+        const summary = `📊 Сводная информация:\n💰 Общая сумма всех покупок: ${totalSpent} руб.\n🎟 Количество накопленных билетов: ${tickets}\n${remainder < 1000 ? `📉 Остаток до следующего билета: ${remainder} руб.` : ''}`
+
+        const fullText = `🗂 История заказов:\n\n${orderMessages.join('\n\n')}\n\n${summary}`
+        
+        if (fullText.length > 4000) {
+            await sendTelegramMessage(summary, chatId)
+            const shortList = orderMessages.slice(0, 10).join('\n\n')
+            await sendTelegramMessage(`Последние 10 заказов:\n\n${shortList}`, chatId)
+        } else {
+            await sendTelegramMessage(fullText, chatId)
+        }
+        
+        return NextResponse.json({ ok: true })
+    }
+
     // 1. START LOGIC
     if (isStart) {
       const user = await makeUser()
@@ -396,114 +504,6 @@ ${friendName} пригласил тебя в конкурс ЭТРА!
             [{ text: '🔄 Обновить', callback_data: 'stats_cmd' }]
         ] }
         await sendTelegramMessage(msg15, chatId, kb15)
-        return NextResponse.json({ ok: true })
-    }
-
-    // 16. ORDERS COMMAND / ЗАКАЗ
-    if (isOrders) {
-        if (!sup) {
-             await sendTelegramMessage("Ошибка доступа к базе данных. Попробуйте позже.", chatId)
-             return NextResponse.json({ ok: true })
-        }
-
-        // Debug logging for orders command
-        console.log(`[ORDERS_CMD] Fetching orders for userId: ${userId} (string: ${String(userId)})`)
-
-        // 1. Try exact match with status
-        const { data: orders, error } = await sup
-            .from('orders')
-            .select('*')
-            .eq('customer_info->>client_id', String(userId))
-            .in('status', ['paid', 'Оплачен', 'CONFIRMED'])
-            .order('created_at', { ascending: false })
-
-        if (error) {
-            console.error('[ORDERS_CMD] Error fetching orders:', error)
-            await sendTelegramMessage("Произошла ошибка при получении списка заказов.", chatId)
-            return NextResponse.json({ ok: true })
-        }
-
-        console.log(`[ORDERS_CMD] Found ${orders?.length} orders with correct status`)
-
-        if (!orders || orders.length === 0) {
-             // Debug: check if any orders exist for this user regardless of status
-             const { data: allUserOrders } = await sup
-                .from('orders')
-                .select('id, status, customer_info')
-                .eq('customer_info->>client_id', String(userId))
-             
-             console.log(`[ORDERS_CMD] All orders for user ${userId}:`, JSON.stringify(allUserOrders, null, 2))
-
-             if (allUserOrders && allUserOrders.length > 0) {
-                 const statuses = allUserOrders.map(o => o.status).join(', ')
-                 await sendTelegramMessage(`📭 У вас нет оплаченных заказов. Найдены заказы со статусами: ${statuses}`, chatId)
-             } else {
-                 await sendTelegramMessage("📭 У вас пока нет заказов.", chatId)
-             }
-             return NextResponse.json({ ok: true })
-        }
-
-        let totalSpent = 0
-        const orderMessages = orders.map((order: any) => {
-             // Calculate Total
-             const orderSum = Number(order.total_amount || 0)
-             totalSpent += orderSum
-
-             // Parse items
-             let items: any[] = []
-             
-             // 1. Try to use items directly if array
-             if (Array.isArray(order.items)) {
-                 items = order.items
-             } 
-             // 2. Try to parse if string
-             else if (typeof order.items === 'string') {
-                 try { 
-                    const parsed = JSON.parse(order.items)
-                    if (Array.isArray(parsed)) items = parsed
-                 } catch {}
-             }
-
-             // 3. Fallback to backup if still empty
-             if (items.length === 0 && order.customer_info?.items_backup) {
-                 items = order.customer_info.items_backup
-             }
-
-             // Format items list
-             let itemsList = ''
-             if (items.length > 0) {
-                 itemsList = items.map((it: any) => {
-                     const name = it.name || it.title || 'Товар'
-                     const qty = Number(it.quantity || it.qty) || 1
-                     return `- ${name} (x${qty})`
-                 }).join('\n')
-             } else {
-                 // Fallback if no structured items but there is a string description
-                 itemsList = typeof order.items === 'string' && order.items.length > 10 ? '📄 (список в чеке)' : 'Товары не указаны'
-             }
-
-             const totalQty = items.reduce((acc: number, it: any) => acc + (Number(it.quantity || it.qty) || 1), 0)
-             
-             const dateStr = new Date(order.created_at || order.updated_at).toLocaleDateString('ru-RU')
-             
-             return `📦 Заказ #${order.id} от ${dateStr}\n${itemsList}\n💰 Сумма: ${orderSum} руб.`
-        })
-
-        const tickets = Math.floor(totalSpent / 1000)
-        const remainder = 1000 - (totalSpent % 1000)
-        
-        const summary = `📊 Сводная информация:\n💰 Общая сумма всех покупок: ${totalSpent} руб.\n🎟 Количество накопленных билетов: ${tickets}\n${remainder < 1000 ? `📉 Остаток до следующего билета: ${remainder} руб.` : ''}`
-
-        const fullText = `🗂 История заказов:\n\n${orderMessages.join('\n\n')}\n\n${summary}`
-        
-        if (fullText.length > 4000) {
-            await sendTelegramMessage(summary, chatId)
-            const shortList = orderMessages.slice(0, 10).join('\n\n')
-            await sendTelegramMessage(`Последние 10 заказов:\n\n${shortList}`, chatId)
-        } else {
-            await sendTelegramMessage(fullText, chatId)
-        }
-        
         return NextResponse.json({ ok: true })
     }
 

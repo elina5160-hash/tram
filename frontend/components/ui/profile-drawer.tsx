@@ -224,7 +224,7 @@ export function ProfileDrawer({ isOpen, onClose, initialView = 'profile' }: Prof
                         <div className="flex-1">
                             <h3 className="text-[14px] font-medium text-white mb-1">Где мои заказы?</h3>
                             <p className="text-[13px] text-gray-300 leading-relaxed">
-                                Вся история заказов находится в боте <span className="text-[#2eb886] font-medium">@KonkursEtraBot</span> при команде <span className="font-mono bg-black/20 px-1 rounded">/заказ</span>
+                                Вся история заказов находится в боте <a href="https://t.me/KonkursEtraBot?start=orders" className="text-[#2eb886] font-medium hover:underline">@KonkursEtraBot</a> при команде <span className="font-mono bg-black/20 px-1 rounded">/заказ</span>
                             </p>
                         </div>
                         <button 

@@ -209,7 +209,10 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
         const finalClientId = payload.client || orderData?.customer_info?.client_id
         const finalUsername = payload.username || orderData?.customer_info?.username || ''
         
-        console.log(`[ROBOKASSA_RESULT] Processing order ${invId}. Payload client: ${payload.client}, DB client: ${orderData?.customer_info?.client_id}, Final: ${finalClientId}`)
+        console.log(`[ROBOKASSA_RESULT] Processing order ${invId}. Payload client: '${payload.client}', DB client: '${orderData?.customer_info?.client_id}', Final: '${finalClientId}'`)
+        if (!finalClientId) {
+             console.warn(`[ROBOKASSA_RESULT] WARNING: No client_id found for order ${invId}! This order will not be visible in history.`)
+        }
 
         // Update order in Supabase with finalized data and status
         if (client && invId) {

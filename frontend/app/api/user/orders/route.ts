@@ -16,6 +16,8 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: 'Client ID is required' }, { status: 400 })
     }
 
+    console.log(`[USER_ORDERS_API] Fetching orders for clientId: '${clientId}'`)
+
     const result = await listOrders({
       client_id: clientId,
       limit,
