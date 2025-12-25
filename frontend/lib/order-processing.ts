@@ -20,12 +20,32 @@ export async function processSuccessfulPayment(invId: string | number, amountKop
         return false
     }
 
-    // 1. Check if order exists
+    // 1. Check if order exists (with timeout)
     console.log(`Searching for order ${orderId} in DB (Client: ${isService ? 'Service' : 'Anon'})...`)
-    const { data: currentOrder, error: selectError } = await client.from('orders').select('*').eq('id', orderId).single()
     
-    if (selectError && selectError.code !== 'PGRST116') {
-        console.error(`Database error selecting order ${orderId}:`, selectError)
+    let currentOrder: any = null
+    let dbError: any = null
+
+    try {
+        // Create a promise that rejects after 3 seconds
+        const dbTimeout = new Promise((_, reject) => setTimeout(() => reject(new Error("DB_TIMEOUT")), 3000));
+        
+        const dbQuery = client.from('orders').select('*').eq('id', orderId).single();
+        
+        const result: any = await Promise.race([dbQuery, dbTimeout]);
+        
+        if (result.error && result.error.code !== 'PGRST116') {
+             dbError = result.error
+        } else {
+             currentOrder = result.data
+        }
+    } catch (e: any) {
+        console.warn(`Database check timed out or failed for order ${orderId}:`, e)
+        // We treat timeout as "not found" or "db error" and proceed to recovery
+    }
+    
+    if (dbError) {
+        console.error(`Database error selecting order ${orderId}:`, dbError)
     }
 
     let orderData = currentOrder
