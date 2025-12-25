@@ -283,8 +283,10 @@ export async function listOrders(options: {
 
   // Filter by client_id inside the JSONB column customer_info
   if (options.client_id) {
+    // Search in multiple possible fields (client_id, user_id, telegram_id)
     // We use the arrow operator ->> to get the value as text
-    query = query.eq('customer_info->>client_id', options.client_id)
+    const cid = options.client_id
+    query = query.or(`customer_info->>client_id.eq.${cid},customer_info->>user_id.eq.${cid},customer_info->>telegram_id.eq.${cid},customer_info->>id.eq.${cid}`)
   }
 
   if (options.search) {
