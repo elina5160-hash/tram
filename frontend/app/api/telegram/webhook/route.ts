@@ -405,6 +405,7 @@ ${friendName} пригласил тебя в конкурс ЭТРА!
         // Debug logging for orders command
         console.log(`[ORDERS_CMD] Fetching orders for userId: ${userId} (string: ${String(userId)})`)
 
+        // 1. Try exact match with status
         const { data: orders, error } = await sup
             .from('orders')
             .select('*')
@@ -418,15 +419,23 @@ ${friendName} пригласил тебя в конкурс ЭТРА!
             return NextResponse.json({ ok: true })
         }
 
-        console.log(`[ORDERS_CMD] Found ${orders?.length} orders`)
+        console.log(`[ORDERS_CMD] Found ${orders?.length} orders with correct status`)
 
         if (!orders || orders.length === 0) {
-             // Fallback: try checking if client_id is stored differently or maybe status is different?
-             // Let's try to find ANY order for this user to debug
-             const { count } = await sup.from('orders').select('*', { count: 'exact', head: true }).eq('customer_info->>client_id', String(userId))
-             console.log(`[ORDERS_CMD] Total orders for user (any status): ${count}`)
+             // Debug: check if any orders exist for this user regardless of status
+             const { data: allUserOrders } = await sup
+                .from('orders')
+                .select('id, status, customer_info')
+                .eq('customer_info->>client_id', String(userId))
              
-             await sendTelegramMessage("📭 У вас пока нет оплаченных заказов.", chatId)
+             console.log(`[ORDERS_CMD] All orders for user ${userId}:`, JSON.stringify(allUserOrders, null, 2))
+
+             if (allUserOrders && allUserOrders.length > 0) {
+                 const statuses = allUserOrders.map(o => o.status).join(', ')
+                 await sendTelegramMessage(`📭 У вас нет оплаченных заказов. Найдены заказы со статусами: ${statuses}`, chatId)
+             } else {
+                 await sendTelegramMessage("📭 У вас пока нет заказов.", chatId)
+             }
              return NextResponse.json({ ok: true })
         }
 

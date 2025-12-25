@@ -208,6 +208,8 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
         // Determine Final Client ID and Username early
         const finalClientId = payload.client || orderData?.customer_info?.client_id
         const finalUsername = payload.username || orderData?.customer_info?.username || ''
+        
+        console.log(`[ROBOKASSA_RESULT] Processing order ${invId}. Payload client: ${payload.client}, DB client: ${orderData?.customer_info?.client_id}, Final: ${finalClientId}`)
 
         // Update order in Supabase with finalized data and status
         if (client && invId) {
@@ -217,19 +219,24 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
                      updated_at: new Date().toISOString()
                  }
                  
-                 // If we found a client ID and it was missing in the DB order, save it
-                 // We merge with existing customer_info to preserve other fields
-                 if (finalClientId && (!orderData?.customer_info?.client_id)) {
-                     const updatedCustomerInfo = {
-                         ...(orderData?.customer_info || {}),
-                         client_id: finalClientId,
-                         username: finalUsername
+                 // If we found a client ID in payload, always ensure it's saved if it's missing or if we want to enforce it
+                 // Current logic: if we have a valid finalClientId, ensure it's in customer_info
+                 if (finalClientId) {
+                     const currentInfo = orderData?.customer_info || {}
+                     // Update if missing or different (though usually we trust the one in DB if it exists, but payload is from the payment time)
+                     // Let's stick to: if missing in DB, add it.
+                     if (!currentInfo.client_id || currentInfo.client_id === 'undefined' || currentInfo.client_id === 'null') {
+                         const updatedCustomerInfo = {
+                             ...currentInfo,
+                             client_id: finalClientId,
+                             username: finalUsername
+                         }
+                         // Ensure we don't overwrite with empty values if they exist in DB but not here
+                         if (!updatedCustomerInfo.name && payload.name) updatedCustomerInfo.name = payload.name;
+                         if (!updatedCustomerInfo.phone && payload.phone) updatedCustomerInfo.phone = payload.phone;
+                         
+                         updateData.customer_info = updatedCustomerInfo
                      }
-                     // Ensure we don't overwrite with empty values if they exist in DB but not here
-                     if (!updatedCustomerInfo.name && payload.name) updatedCustomerInfo.name = payload.name;
-                     if (!updatedCustomerInfo.phone && payload.phone) updatedCustomerInfo.phone = payload.phone;
-                     
-                     updateData.customer_info = updatedCustomerInfo
                  }
 
                  // Use the ID from the fetched order if available (to ensure type correctness), otherwise invId
