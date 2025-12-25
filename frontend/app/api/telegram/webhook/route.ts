@@ -40,10 +40,15 @@ export async function POST(req: Request) {
     
     // Simplified command detection
     const isStart = text.toLowerCase().startsWith('/start')
+    const startPayload = isStart ? text.split(' ')[1] : ''
+    
     const isHelp = text.toLowerCase().startsWith('/help')
     const isRules = text.toLowerCase().startsWith('/rules') || text.toLowerCase() === 'правила'
     const isStats = text.toLowerCase().startsWith('/stats') || text.toLowerCase() === 'моя статистика' || text.toLowerCase() === 'статистика'
-    const isOrders = text.toLowerCase().startsWith('/orders') || text.toLowerCase() === '/заказ' || text.toLowerCase() === 'мои заказы'
+    
+    // Check for deep link orders or direct command
+    const isOrders = text.toLowerCase().startsWith('/orders') || text.toLowerCase() === '/заказ' || text.toLowerCase() === 'мои заказы' || (isStart && startPayload === 'orders')
+    
     const isAdminCmd = text.toLowerCase().startsWith('/admin')
     const isShare = text.toLowerCase().startsWith('/share') || text === 'Поделиться ссылкой' || text === '👥 Пригласить друзей' || text === '👥 Позвать друзей' || text === '👥 Пригласить' || text === '👥 Пригласить ещё'
 
@@ -116,7 +121,6 @@ export async function POST(req: Request) {
       const user = await makeUser()
       const subscribed = await isSubscribedToOfficial(userId)
 
-      const startPayload = text.split(' ')[1]
       const isRef = startPayload && startPayload.startsWith('ref_')
       
       // Handle Referral Registration (Scenario 2 & 7)

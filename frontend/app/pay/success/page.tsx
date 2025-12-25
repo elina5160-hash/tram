@@ -132,7 +132,7 @@ function SuccessPageContent() {
               <p className="text-gray-500 text-sm leading-relaxed">
                 Ваш заказ #{orderId} успешно оплачен.
                 <br />
-                Номер и история заказов находится в боте @KonkursEtraBot при команде /заказ
+                Номер и история заказов находится в боте <a href="https://t.me/KonkursEtraBot?start=orders" target="_blank" rel="noopener noreferrer" className="text-[#2eb886] font-medium hover:underline">@KonkursEtraBot</a> при команде /заказ
               </p>
 
               <button
