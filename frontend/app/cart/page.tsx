@@ -605,8 +605,16 @@ function CartContent() {
                             } catch {}
                             
                             savePendingOrder(Number(dr.invId || invId))
-                            // Redirect directly to Robokassa
-                            window.location.href = payUrl
+                            
+                            // Handle Telegram WebApp environment
+                            const tg = (window as any).Telegram?.WebApp
+                            if (tg && tg.openLink) {
+                                // Use Telegram's native method to open external link
+                                tg.openLink(payUrl)
+                            } else {
+                                // Fallback for regular browser
+                                window.location.href = payUrl
+                            }
                             return
                          }
                       }
