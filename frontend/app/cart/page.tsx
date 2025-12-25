@@ -585,7 +585,13 @@ function CartContent() {
                       })
                       
                       let dataRobo: unknown = null
-                      try { dataRobo = await resRobo.json() } catch {}
+                      let rawText = ""
+                      try { 
+                          rawText = await resRobo.text()
+                          if (rawText) {
+                             try { dataRobo = JSON.parse(rawText) } catch (e) { console.error("JSON parse error:", e) }
+                          }
+                      } catch (e) { console.error("Response read error:", e) }
 
                       if (resRobo.ok && typeof dataRobo === 'object' && dataRobo && ('url' in dataRobo || 'invoiceUrl' in dataRobo)) {
                          const dr = dataRobo as { url?: string; invoiceUrl?: string; invId?: number | string }
@@ -605,8 +611,17 @@ function CartContent() {
                          }
                       }
                       
-                      console.error("Robokassa init failed:", dataRobo)
-                      const errDetail = (dataRobo && typeof dataRobo === 'object' && 'error' in dataRobo) ? (dataRobo as any).error : resRobo.statusText
+                      console.error("Robokassa init failed. Status:", resRobo.status, "Body:", rawText)
+                      
+                      let errDetail = (dataRobo && typeof dataRobo === 'object' && 'error' in dataRobo) ? (dataRobo as any).error : resRobo.statusText
+                      if (!errDetail) {
+                          if (rawText.trim().startsWith('<')) {
+                              errDetail = `Server Error ${resRobo.status}`
+                          } else {
+                              errDetail = rawText.substring(0, 200)
+                          }
+                      }
+
                       alert(`Ошибка инициализации оплаты: ${errDetail || 'Неизвестная ошибка'}. Попробуйте позже.`)
                       setIsProcessing(false)
                       return

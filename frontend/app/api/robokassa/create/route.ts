@@ -7,6 +7,10 @@ function sanitizeText(input: string | number) {
   return Array.from(String(input)).filter((ch) => !/\p{Extended_Pictographic}/u.test(ch) && ch !== "\u200D" && ch !== "\uFE0F").join("")
 }
 
+export async function GET() {
+  return NextResponse.json({ ok: true, status: "active" })
+}
+
 export async function POST(req: Request) {
   const merchant = process.env.ROBO_MERCHANT_LOGIN?.trim()
   const password1Raw = process.env.ROBO_PASSWORD1?.trim()
