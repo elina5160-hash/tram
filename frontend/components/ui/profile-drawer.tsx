@@ -31,17 +31,35 @@ export function ProfileDrawer({ isOpen, onClose, initialView = 'profile' }: Prof
   }, [isOpen, initialView])
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-        const tg = (window as any).Telegram?.WebApp
-        if (tg?.initDataUnsafe?.user) {
-            setUserInfo(tg.initDataUnsafe.user)
-        } else {
-            // Try to recover from localStorage for non-Telegram envs
-            const localId = localStorage.getItem("user_id")
-            if (localId) {
-                setUserInfo({ id: localId, first_name: 'User' })
+    // Function to update user info
+    const updateUserInfo = () => {
+        if (typeof window !== "undefined") {
+            const tg = (window as any).Telegram?.WebApp
+            if (tg?.initDataUnsafe?.user) {
+                setUserInfo(tg.initDataUnsafe.user)
+                return true
             }
         }
+        return false
+    }
+
+    // Try immediately
+    if (!updateUserInfo()) {
+        // Retry a few times in case Telegram script loads late
+        const interval = setInterval(() => {
+            if (updateUserInfo()) {
+                clearInterval(interval)
+            }
+        }, 100)
+        setTimeout(() => clearInterval(interval), 2000)
+    }
+
+    // Also check localStorage
+    if (typeof window !== "undefined" && !userInfo) {
+         const localId = localStorage.getItem("user_id")
+         if (localId) {
+             setUserInfo({ id: localId, first_name: 'User' })
+         }
     }
   }, [])
 
