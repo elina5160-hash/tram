@@ -22,20 +22,69 @@ export async function GET(req: Request) {
 
     console.log(`[USER_ORDERS_API] Fetching orders for clientId: '${clientId}'. ServiceKey: ${usedServiceKey}`)
 
-    const result = await listOrders({
-      client_id: clientId,
-      limit,
-      offset,
+    // Fetch recent 200 orders without filtering by ID in SQL, 
+    // to handle corrupted/inconsistent customer_info formats (strings, weird objects, etc.)
+    const { data: allOrders } = await listOrders({
+      limit: 200,
+      offset: 0,
       status: status || undefined,
       search
     })
 
+    // Robust matching logic
+    const filteredOrders = (allOrders || []).map(order => {
+        // Try to normalize customer_info
+        let info = order.customer_info
+        
+        // Helper to recursively parse
+        const parse = (inp: any): any => {
+            if (!inp) return {}
+            if (typeof inp === 'string') {
+                try {
+                    const p = JSON.parse(inp)
+                    return parse(p)
+                } catch { return {} }
+            }
+            // Handle "weird object" (spread string)
+            if (typeof inp === 'object' && inp !== null && '0' in inp && '1' in inp) {
+                try {
+                    const len = Object.keys(inp).length
+                    let s = ""
+                    for(let i=0; i<len; i++) s += inp[String(i)] || ""
+                    // If it looks like JSON, parse it
+                    if (s.startsWith('{') || s.startsWith('[')) return parse(s)
+                    return inp
+                } catch { return inp }
+            }
+            return inp
+        }
+
+        const cleanInfo = parse(info)
+        return { ...order, customer_info: cleanInfo }
+    }).filter(order => {
+        const info = order.customer_info
+        if (!info) return false
+        
+        // Check all possible ID fields
+        const ids = [
+            info.client_id, 
+            info.user_id, 
+            info.telegram_id, 
+            info.id
+        ].map(String).filter(Boolean)
+
+        return ids.includes(String(clientId))
+    })
+
     return NextResponse.json({
-        ...result,
+        data: filteredOrders,
+        count: filteredOrders.length,
         debug: {
             clientId,
             usedServiceKey,
-            hasEnv: !!process.env.SUPABASE_SERVICE_ROLE_KEY
+            hasEnv: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+            fetchedTotal: allOrders?.length || 0,
+            filteredTotal: filteredOrders.length
         }
     })
   } catch (e: any) {
