@@ -49,10 +49,15 @@ export function ProfileDrawer({ isOpen, onClose, initialView = 'profile' }: Prof
   const refLink = `https://t.me/KonkursEtraBot?start=ref_${userId}`
 
   // Fetch orders when in 'orders' view
-  const { data: ordersData, isLoading, mutate } = useSWR(
+  const { data: ordersData, isLoading, mutate, error: fetchError } = useSWR(
     view === 'orders' && isOpen ? `/api/user/orders?client_id=${userId}` : null,
     fetcher,
-    { refreshInterval: 5000 }
+    { 
+        refreshInterval: 5000,
+        onError: (err) => {
+            console.error("Order fetch error:", err)
+        }
+    }
   )
 
   // Check for locally stored pending order and sync it
@@ -244,6 +249,11 @@ export function ProfileDrawer({ isOpen, onClose, initialView = 'profile' }: Prof
               <div className="flex flex-col items-center justify-center py-20 text-gray-400 gap-2">
                 <Package size={48} className="opacity-20" />
                 <p>У вас пока нет заказов</p>
+                {/* Debug Info */}
+                <div className="mt-4 p-2 bg-black/20 rounded text-[10px] text-gray-600 font-mono max-w-[200px] break-all">
+                    ID: {userId}<br/>
+                    {fetchError ? `Error: ${fetchError.message}` : ''}
+                </div>
                 <button 
                   onClick={onClose}
                   className="mt-4 px-6 py-2 bg-[#2eb886] text-white rounded-full text-sm font-medium"
