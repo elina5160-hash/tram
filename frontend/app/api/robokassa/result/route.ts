@@ -205,6 +205,51 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
             }
         }
 
+        // Determine Final Client ID and Username early
+        const finalClientId = payload.client || orderData?.customer_info?.client_id
+        const finalUsername = payload.username || orderData?.customer_info?.username || ''
+
+        // Update order in Supabase with finalized data and status
+        if (client && invId) {
+             try {
+                 const updateData: any = {
+                     status: 'paid', // Explicitly mark as paid
+                     updated_at: new Date().toISOString()
+                 }
+                 
+                 // If we found a client ID and it was missing in the DB order, save it
+                 // We merge with existing customer_info to preserve other fields
+                 if (finalClientId && (!orderData?.customer_info?.client_id)) {
+                     const updatedCustomerInfo = {
+                         ...(orderData?.customer_info || {}),
+                         client_id: finalClientId,
+                         username: finalUsername
+                     }
+                     // Ensure we don't overwrite with empty values if they exist in DB but not here
+                     if (!updatedCustomerInfo.name && payload.name) updatedCustomerInfo.name = payload.name;
+                     if (!updatedCustomerInfo.phone && payload.phone) updatedCustomerInfo.phone = payload.phone;
+                     
+                     updateData.customer_info = updatedCustomerInfo
+                 }
+
+                 // Use the ID from the fetched order if available (to ensure type correctness), otherwise invId
+                 const targetId = orderData?.id || invId
+
+                 const { error: updateError } = await client
+                     .from('orders')
+                     .update(updateData)
+                     .eq('id', targetId)
+
+                 if (updateError) {
+                     console.error("Failed to update order status/info in Supabase:", updateError)
+                 } else {
+                     console.log(`Order ${targetId} marked as paid and updated with client info if needed.`)
+                 }
+             } catch (e) {
+                 console.error("Error updating order in Supabase:", e)
+             }
+        }
+
         // Fix: If we have only 1 item but it looks like a combined list (newline separated or comma separated), parse it
         if (standardizedItems.length === 1) {
             const singleName = standardizedItems[0].name;
@@ -298,6 +343,7 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
         
         const contact = [
           name ? `👤 ${name}` : '',
+          payload.username ? `🔹 @${payload.username.replace('@', '')}` : '',
           phone ? `📞 <a href="tel:${phone}">${phone}</a>` : '',
           address ? `📍 ${address}` : '',
           email ? `✉️ <a href="mailto:${email}">${email}</a>` : '',
@@ -312,6 +358,7 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
           `✅ Новый заказ № ${invId}`,
           ``,
           name ? `👤 ${name}` : '',
+          payload.username ? `🔹 @${payload.username.replace('@', '')}` : '',
           phone ? `📞 ${phone}` : '',
           address ? `📍 ${address}` : '',
           email ? `✉️ ${email}` : '',
@@ -328,7 +375,7 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
         let totalSpent = Number(outSum)
         let shortForNext = 0
         
-        if (payload.client) {
+        if (finalClientId) {
              if (client) {
                  try {
                      // Fetch past paid orders to calculate cumulative spend
@@ -336,7 +383,7 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
                      const { data: pastOrders } = await client
                         .from('orders')
                         .select('total_amount')
-                        .eq('customer_info->>client_id', payload.client)
+                        .eq('customer_info->>client_id', finalClientId)
                         .neq('id', invId) // Exclude current if somehow present
                         .in('status', ['paid', 'Оплачен'])
                      
@@ -364,7 +411,7 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
              }
         }
 
-        if (payload.client) {
+        if (finalClientId) {
              const itemsReceipt = standardizedItems.map(it => 
                 ` Товар: ${it.name}\n Количество: ${it.quantity}\n Сумма: ${it.sum.toLocaleString('ru-RU')} руб.`
             ).join('\n\n')
@@ -380,7 +427,7 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
                 ` Билеты начисляются за каждые 1000 руб суммарных покупок.`
             ].join('\n')
 
-            await sendTelegramMessage(customerReceiptText, payload.client, undefined)
+            await sendTelegramMessage(customerReceiptText, finalClientId, undefined)
         }
 
         // Send formatted notification to specific channel

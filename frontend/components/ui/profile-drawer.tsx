@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Copy, Edit, X, Package, Calendar, ChevronRight, Loader2, Home } from "lucide-react"
+import { Copy, Edit, X, Package, Calendar, ChevronRight, Loader2, Home, Check } from "lucide-react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import useSWR from "swr"
@@ -22,6 +22,8 @@ export function ProfileDrawer({ isOpen, onClose, initialView = 'profile' }: Prof
   const [showBonuses, setShowBonuses] = useState(false)
   const [view, setView] = useState<'profile' | 'orders'>(initialView)
   const [expandedOrderId, setExpandedOrderId] = useState<number | null>(null)
+  const [isCopied, setIsCopied] = useState(false)
+  const [showOrderHistoryMessage, setShowOrderHistoryMessage] = useState(false)
 
   useEffect(() => {
     if (isOpen) {
@@ -185,9 +187,9 @@ export function ProfileDrawer({ isOpen, onClose, initialView = 'profile' }: Prof
                 </div>
                 <button 
                   onClick={copyToClipboard}
-                  className="w-12 rounded-[12px] bg-[#2c2c2e] flex items-center justify-center text-gray-400 hover:text-white shrink-0"
+                  className="w-12 rounded-[12px] bg-[#2c2c2e] flex items-center justify-center text-gray-400 hover:text-white shrink-0 transition-colors"
                 >
-                  <Copy size={18} />
+                  {isCopied ? <Check size={18} className="text-green-500" /> : <Copy size={18} />}
                 </button>
               </div>
             </div>
@@ -201,13 +203,39 @@ export function ProfileDrawer({ isOpen, onClose, initialView = 'profile' }: Prof
                 Бонусы
               </button>
               <button 
-                onClick={() => setView('orders')}
+                onClick={() => {
+                   setShowOrderHistoryMessage(true)
+                   // Hide message after 5 seconds automatically
+                   setTimeout(() => setShowOrderHistoryMessage(false), 5000)
+                }}
                 className="bg-[#2c2c2e] rounded-[16px] py-4 text-[14px] font-medium text-white hover:bg-[#3a3a3c] transition-colors flex items-center justify-center gap-2"
               >
                 <Package size={16} />
                 История заказов
               </button>
             </div>
+            
+            {showOrderHistoryMessage && (
+                <div className="bg-[#2c2c2e] border border-[#2eb886]/30 rounded-[16px] p-4 animate-in fade-in slide-in-from-top-2">
+                    <div className="flex items-start gap-3">
+                        <div className="p-2 bg-[#2eb886]/10 rounded-full shrink-0">
+                            <Package className="text-[#2eb886]" size={20} />
+                        </div>
+                        <div className="flex-1">
+                            <h3 className="text-[14px] font-medium text-white mb-1">Где мои заказы?</h3>
+                            <p className="text-[13px] text-gray-300 leading-relaxed">
+                                Вся история заказов находится в боте <span className="text-[#2eb886] font-medium">@KonkursEtraBot</span> при команде <span className="font-mono bg-black/20 px-1 rounded">/заказ</span>
+                            </p>
+                        </div>
+                        <button 
+                            onClick={() => setShowOrderHistoryMessage(false)}
+                            className="text-gray-500 hover:text-white transition-colors"
+                        >
+                            <X size={16} />
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {/* Addresses */}
             <div className="flex flex-col gap-3 pt-2">
