@@ -559,7 +559,7 @@ function CartContent() {
                     try {
                       // Используем endpoint для создания инвойса (старый метод)
                       // или /api/robokassa/create если хотим прямую ссылку
-                      const resRobo = await fetch("/api/robokassa/invoice/create", {
+                      const resRobo = await fetch("/api/robokassa/create", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({
@@ -579,7 +579,7 @@ function CartContent() {
                           promoCode,
                           discountAmount,
                           refCode,
-                          invoiceItems: itemsForCreate, // Robokassa API expects invoiceItems
+                          items: itemsForCreate, // Robokassa API expects items
                           invId
                         }),
                       })
