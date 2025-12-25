@@ -538,6 +538,18 @@ function CartContent() {
                     } catch {}
 
                     const invId = Math.floor(Date.now() / 1000)
+
+                    // Force refresh client_id from Telegram WebApp if available
+                    let finalClientId = clientId;
+                    if (typeof window !== "undefined" && (window as any).Telegram?.WebApp?.initDataUnsafe?.user?.id) {
+                         finalClientId = (window as any).Telegram.WebApp.initDataUnsafe.user.id;
+                         setClientId(finalClientId); // Update state too
+                    }
+                    // Also try local storage if state is empty
+                    if (!finalClientId && typeof window !== "undefined") {
+                         finalClientId = localStorage.getItem("user_id") || "";
+                    }
+
                     const itemsForCreate = invoiceItems.map(it => ({
                       id: it.id, // Ensure ID is passed for backup
                       name: it.name,
@@ -552,7 +564,8 @@ function CartContent() {
                     console.log("Init payload:", {
                          outSum: totalWithDiscount,
                          customerInfoName: name,
-                         itemsCount: itemsForCreate.length
+                         itemsCount: itemsForCreate.length,
+                         clientId: finalClientId
                     })
 
                     // Инициализация платежа через Robokassa
@@ -572,7 +585,7 @@ function CartContent() {
                             cdek,
                             address,
                             email,
-                            client_id: clientId,
+                            client_id: finalClientId,
                             username,
                             order_time: new Date().toISOString()
                           },
