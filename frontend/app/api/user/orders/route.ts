@@ -66,27 +66,34 @@ export async function GET(req: Request) {
         if (!info) return false
         
         // Check all possible ID fields
-        const ids = [
-            info.client_id, 
-            info.user_id, 
-            info.telegram_id, 
-            info.id
-        ].map(String).filter(Boolean)
+         const ids = [
+             info.client_id, 
+             info.user_id, 
+             info.telegram_id, 
+             info.id
+         ].map(String).filter(Boolean)
 
-        return ids.includes(String(clientId))
-    })
+         return ids.includes(String(clientId))
+     })
 
-    return NextResponse.json({
-        data: filteredOrders,
-        count: filteredOrders.length,
-        debug: {
-            clientId,
-            usedServiceKey,
-            hasEnv: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-            fetchedTotal: allOrders?.length || 0,
-            filteredTotal: filteredOrders.length
-        }
-    })
+     // Debugging the first order to see how it was parsed
+     const debugFirstOrder = allOrders && allOrders.length > 0 ? {
+        original: allOrders[0].customer_info,
+        parsed: filteredOrders.length > 0 ? filteredOrders[0].customer_info : 'Not matched'
+     } : null
+
+     return NextResponse.json({
+         data: filteredOrders,
+         count: filteredOrders.length,
+         debug: {
+             clientId,
+             usedServiceKey,
+             hasEnv: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+             fetchedTotal: allOrders?.length || 0,
+             filteredTotal: filteredOrders.length,
+             sampleParse: debugFirstOrder
+         }
+     })
   } catch (e: any) {
     console.error('Fetch user orders error:', e)
     return NextResponse.json({ error: e.message || 'Failed to fetch orders' }, { status: 500 })

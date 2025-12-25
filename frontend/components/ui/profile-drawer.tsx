@@ -275,6 +275,8 @@ export function ProfileDrawer({ isOpen, onClose, initialView = 'profile' }: Prof
                         <>
                         <br/>SK: {ordersData.debug.usedServiceKey ? 'Yes' : 'No'}
                         <br/>Env: {ordersData.debug.hasEnv ? 'Yes' : 'No'}
+                        <br/>Fetched: {ordersData.debug.fetchedTotal}
+                        <br/>Filtered: {ordersData.debug.filteredTotal}
                         </>
                     ) : null}
                 </div>
