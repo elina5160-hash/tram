@@ -20,6 +20,7 @@ export function OrdersTable() {
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState("")
   const [selectedOrder, setSelectedOrder] = useState<OrderRow | null>(null)
+  const [totalRevenue, setTotalRevenue] = useState(0)
 
   useEffect(() => {
     let timer: any
@@ -27,7 +28,18 @@ export function OrdersTable() {
       try {
         const res = await fetch("/api/admin/orders")
         const data = await res.json()
-        if (Array.isArray(data)) setOrders(data)
+        if (Array.isArray(data)) {
+            setOrders(data)
+            // Fallback calculation
+            const rev = data.reduce((sum, o) => {
+                 const isPaid = o.status === 'Оплачен' || o.status === 'paid'
+                 return isPaid ? sum + Number(o.total_amount || 0) : sum
+            }, 0)
+            setTotalRevenue(rev)
+        } else if (data.orders && Array.isArray(data.orders)) {
+            setOrders(data.orders)
+            setTotalRevenue(data.stats?.totalRevenue || 0)
+        }
       } catch {}
       setLoading(false)
     }
@@ -58,6 +70,11 @@ export function OrdersTable() {
 
   return (
     <div className="space-y-4 h-full flex flex-col pt-5">
+      <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+        <div className="text-sm text-gray-500 font-medium">Общая выручка (оплаченные заказы)</div>
+        <div className="text-2xl font-bold text-green-600 mt-1">{totalRevenue.toLocaleString()} руб.</div>
+      </div>
+
       <div className="flex flex-col md:flex-row items-stretch md:items-center gap-4 flex-shrink-0">
         <div className="flex items-center gap-2">
             <button

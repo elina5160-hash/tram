@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { listOrders } from "@/lib/orders"
+import { getServiceSupabaseClient } from "@/lib/supabase"
 
 export async function GET() {
   try {
@@ -17,9 +18,28 @@ export async function GET() {
     // Remove duplicates if any (though unlikely with different status filters)
     const unique = Array.from(new Map(combined.map(item => [item.id, item])).values())
 
-    return NextResponse.json(unique)
+    // Calculate total revenue (all time)
+    let totalRevenue = 0
+    const client = getServiceSupabaseClient()
+    if (client) {
+        const { data: revenueData } = await client
+            .from('orders')
+            .select('total_amount')
+            .in('status', ['Оплачен', 'paid'])
+        
+        if (revenueData) {
+            totalRevenue = revenueData.reduce((sum, o) => sum + (Number(o.total_amount) || 0), 0)
+        }
+    }
+
+    return NextResponse.json({
+        orders: unique,
+        stats: {
+            totalRevenue
+        }
+    })
   } catch (e) {
     console.error('Admin API Error:', e)
-    return NextResponse.json([], { status: 500 })
+    return NextResponse.json({ orders: [], stats: { totalRevenue: 0 } }, { status: 500 })
   }
 }
