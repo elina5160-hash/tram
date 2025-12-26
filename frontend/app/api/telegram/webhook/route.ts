@@ -173,7 +173,21 @@ export async function POST(req: Request) {
       try {
           const { data: user, error: fetchError } = await sup.from('contest_participants').select('*').eq('user_id', String(userId)).single()
           
-          if (user) return user
+          if (user) {
+              // Update user info if missing or changed (to ensure Admin Panel has latest data)
+              const needsUpdate = !user.first_name || !user.username || user.first_name !== firstName || user.username !== String(msg?.from?.username || "")
+              
+              if (needsUpdate) {
+                  await sup.from('contest_participants').update({
+                      first_name: firstName,
+                      username: String(msg?.from?.username || "")
+                  }).eq('user_id', String(userId))
+                  
+                  // Return updated object locally
+                  return { ...user, first_name: firstName, username: String(msg?.from?.username || "") }
+              }
+              return user
+          }
           
           // If error is not "no rows", log it
           if (fetchError && fetchError.code !== 'PGRST116') {

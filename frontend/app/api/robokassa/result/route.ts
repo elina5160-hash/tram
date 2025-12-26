@@ -349,7 +349,7 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
         // NORMALIZE ITEM SUMS TO MATCH OutSum (handling discounts/promo codes)
         // If the sum of items differs from the actual paid amount (OutSum), redistribute the difference.
         if (standardizedItems.length > 0) {
-            const currentTotal = standardizedItems.reduce((acc, it) => acc + (it.sum || 0), 0);
+            const currentTotal = standardizedItems.reduce((acc, it) => acc + Number(it.sum || 0), 0);
             const paidTotal = Number(outSum);
             
             // If difference is significant (e.g. > 1 rub), applies if promo code reduced the total but items kept original price
@@ -575,7 +575,10 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
                 let newTotalTickets = 0
                 
                 if (tickets > 0) {
-                    await addTickets(refereeId, tickets, 'purchase_reward', invId, true)
+                    await addTickets(refereeId, tickets, 'purchase_reward', invId, true, {
+                        first_name: payload.name || orderData?.customer_info?.name,
+                        username: payload.username || orderData?.customer_info?.username
+                    })
                     
                     // Fetch updated tickets for notification (Scenario 6)
                     const { data: user } = await client.from('contest_participants').select('tickets').eq('user_id', String(refereeId)).single()
@@ -684,7 +687,10 @@ export async function GET(req: Request) {
       params: Object.fromEntries(params.entries())
   })
 
-  const outSum = params.get("OutSum") || ""
+  let outSum = params.get("OutSum") || ""
+  // Sanitize comma to dot for numeric conversion
+  outSum = outSum.replace(',', '.')
+
   const invId = params.get("InvId") || ""
   const signature = params.get("SignatureValue") || ""
   

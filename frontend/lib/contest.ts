@@ -1,6 +1,6 @@
 import { getServiceSupabaseClient } from './supabase'
 
-export async function addTickets(userId: number | string, count: number, reason: string, relatedId?: string, suppressNotification: boolean = false) {
+export async function addTickets(userId: number | string, count: number, reason: string, relatedId?: string, suppressNotification: boolean = false, userInfo?: { first_name?: string, username?: string }) {
     const supabase = getServiceSupabaseClient()
     if (!supabase) {
         console.error("addTickets: No service client available")
@@ -30,10 +30,17 @@ export async function addTickets(userId: number | string, count: number, reason:
         // 3. Update or Insert
         if (user) {
             const updatedTickets = [...currentTickets, ...newTickets]
-            const { error: updateError } = await supabase.from('contest_participants').update({ 
+            const updateData: any = { 
                 ticket_numbers: updatedTickets,
                 tickets: updatedTickets.length
-            }).eq('user_id', String(userId))
+            }
+            // Update user info if provided and missing/changed
+            if (userInfo) {
+                if (userInfo.first_name) updateData.first_name = userInfo.first_name
+                if (userInfo.username) updateData.username = userInfo.username
+            }
+
+            const { error: updateError } = await supabase.from('contest_participants').update(updateData).eq('user_id', String(userId))
             
             if (updateError) {
                 console.error('Error updating tickets:', updateError)
@@ -41,13 +48,19 @@ export async function addTickets(userId: number | string, count: number, reason:
             }
         } else {
             // Create new participant
-            const { error: insertError } = await supabase.from('contest_participants').insert({
+            const insertData: any = {
                 user_id: String(userId),
                 ticket_numbers: newTickets,
                 tickets: newTickets.length,
                 status: 'active',
-                contact_info: {} // We might want to fill this later
-            })
+                contact_info: {} 
+            }
+            if (userInfo) {
+                if (userInfo.first_name) insertData.first_name = userInfo.first_name
+                if (userInfo.username) insertData.username = userInfo.username
+            }
+
+            const { error: insertError } = await supabase.from('contest_participants').insert(insertData)
             
             if (insertError) {
                 console.error('Error inserting participant:', insertError)

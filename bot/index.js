@@ -100,6 +100,17 @@ async function getOrCreateUser(ctx) {
         }
         return newUser
     }
+    
+    // Update user info if missing or changed
+    if (user.first_name !== firstName || user.username !== username) {
+         await supabase.from('contest_participants').update({
+            first_name: firstName,
+            username: username
+        }).eq('user_id', userId)
+        user.first_name = firstName
+        user.username = username
+    }
+    
     return user
 }
 
