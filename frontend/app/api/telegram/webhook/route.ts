@@ -89,6 +89,66 @@ export async function POST(req: Request) {
             ] }
             await sendTelegramMessage(msg10, String(cbChatId), kb10)
         }
+
+        if (cbData === 'check_sub') {
+            const isSub = await isSubscribedToOfficial(cbUserId)
+            if (!isSub) {
+                 // Answer callback with alert
+                 const token = process.env.TELEGRAM_BOT_TOKEN || ""
+                 await fetch(`https://api.telegram.org/bot${token}/answerCallbackQuery`, {
+                     method: 'POST',
+                     headers: { 'Content-Type': 'application/json' },
+                     body: JSON.stringify({ callback_query_id: callbackQuery.id, text: '❌ Вы ещё не подписаны на канал @etraproject_official', show_alert: true })
+                 })
+            } else {
+                 // Check if bonus already given
+                 let hasBonus = false
+                 if (sup) {
+                    const { count } = await sup.from('bot_logs').select('*', { count: 'exact', head: true }).eq('type', 'subscription_bonus').contains('data', { userId: cbUserId })
+                    hasBonus = (count || 0) > 0
+                 }
+
+                 if (!hasBonus) {
+                     await addTickets(cbUserId, 1, 'subscription_bonus', undefined, true)
+                     await logEvent('subscription_bonus', 'Awarded subscription bonus', { userId: cbUserId })
+                 }
+
+                 // Send success message
+                 const firstName = callbackQuery.from.first_name || "Друг"
+                 const msg3 = `✅ Отлично, ${firstName}! Ты зарегистрирован!
+
+Как участвовать:
+💰 Покупай продукты ЭТРА
+Заходи в @KonkursEtraBot и покупай
+Каждая 1000 руб = 1 билет в конкурсе
+
+👥 Приглашай друзей
+Вот твоя реферальная ссылка:
+\`${getRefLink(cbUserId)}\`
+Отправь её друзьям!
+За каждую покупку друга получишь +1 билет
+
+📊 Следи за билетами
+Заходи в @KonkursEtraBot → смотри свои билеты
+
+Конкурс до 7 января. Удачи! 🍀`
+          
+                  const kb3 = { inline_keyboard: [
+                      [{ text: '🛒 Перейти в магазин', url: 'https://tram-navy.vercel.app/home' }],
+                      [{ text: '📤 Переслать ссылку', url: `https://t.me/share/url?url=${encodeURIComponent(getRefLink(cbUserId))}&text=${encodeURIComponent('🎁 Участвуй в конкурсе ЭТРА!\n101 победитель\nГлавный приз ЭТРАГЕНЕЗ\nРозыгрыш 7 января\n\nРегистрируйся по моей ссылке и получи приветственный бонус:')}` }]
+                  ] }
+                  
+                  await sendTelegramMessage(msg3, String(cbChatId), kb3)
+                  
+                  // Clean up the "Stop" message or answer callback
+                  const token = process.env.TELEGRAM_BOT_TOKEN || ""
+                  await fetch(`https://api.telegram.org/bot${token}/answerCallbackQuery`, {
+                     method: 'POST',
+                     headers: { 'Content-Type': 'application/json' },
+                     body: JSON.stringify({ callback_query_id: callbackQuery.id, text: '✅ Подписка подтверждена!' })
+                  })
+            }
+        }
         
         return NextResponse.json({ ok: true })
     }
