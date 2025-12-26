@@ -174,7 +174,7 @@ export default function HomeClient() {
           aria-label="Баннер"
           className="mt-3 h-[220px] relative rounded-[20px] overflow-hidden"
         >
-          <a href="https://t.me/KonkursEtraBot" target="_blank" rel="noopener noreferrer" className="block w-full h-full relative">
+          <a href="https://t.me/etraproject_official/341" target="_blank" rel="noopener noreferrer" className="block w-full h-full relative">
             <Image src="/главная3.png" alt="Афиша" fill className="object-cover rounded-[20px]" priority />
           </a>
         </div>

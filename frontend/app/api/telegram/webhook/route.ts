@@ -156,24 +156,76 @@ export async function POST(req: Request) {
     if (!chatId || !text) return NextResponse.json({ ok: true })
 
     const makeUser = async () => {
-      if (!sup) return { user_id: String(userId), first_name: firstName, username: String(msg?.from?.username || ""), personal_promo_code: transliterate(firstName) + "15", tickets: 0, ticket_numbers: [] as string[] }
+      // Default fallback user structure
+      const fallback = { 
+          user_id: String(userId), 
+          first_name: firstName, 
+          username: String(msg?.from?.username || ""), 
+          personal_promo_code: "USER" + userId, 
+          tickets: 0, 
+          ticket_numbers: [] as string[],
+          created_at: new Date().toISOString(),
+          status: 'fallback'
+      }
       
-      const { data: user } = await sup.from('contest_participants').select('*').eq('user_id', String(userId)).single()
-      if (user) return user
+      if (!sup) return fallback
       
-      let promo = transliterate(firstName) + "15"
-      const { data: exists } = await sup.from('contest_participants').select('personal_promo_code').eq('personal_promo_code', promo).single()
-      if (exists) promo = promo + String(userId).slice(-3)
-      
-      const { data: created } = await sup.from('contest_participants').insert({ 
-        user_id: String(userId), 
-        first_name: firstName, 
-        username: String(msg?.from?.username || ""), 
-        personal_promo_code: promo, 
-        tickets: 0,
-        status: 'created' 
-      }).select().single()
-      return created
+      try {
+          const { data: user, error: fetchError } = await sup.from('contest_participants').select('*').eq('user_id', String(userId)).single()
+          
+          if (user) return user
+          
+          // If error is not "no rows", log it
+          if (fetchError && fetchError.code !== 'PGRST116') {
+              console.error('[makeUser] Error fetching user:', fetchError)
+          }
+
+          let basePromo = transliterate(firstName)
+          if (!basePromo || basePromo.length < 2) basePromo = "USER"
+          
+          let promo = basePromo + "15"
+          
+          // Check for collision
+          const { data: exists } = await sup.from('contest_participants').select('personal_promo_code').eq('personal_promo_code', promo).maybeSingle()
+          
+          if (exists) {
+              promo = promo + String(userId).slice(-3)
+          }
+          
+          const { data: created, error: insertError } = await sup.from('contest_participants').insert({ 
+            user_id: String(userId), 
+            first_name: firstName, 
+            username: String(msg?.from?.username || ""), 
+            personal_promo_code: promo, 
+            tickets: 0,
+            status: 'created' 
+          }).select().single()
+
+          if (insertError) {
+              console.error('[makeUser] Insert failed:', insertError)
+              // Retry with safer promo if unique violation suspected
+              if (insertError.code === '23505') {
+                   const safePromo = basePromo + "15" + String(userId)
+                   const { data: retry, error: retryError } = await sup.from('contest_participants').insert({ 
+                        user_id: String(userId), 
+                        first_name: firstName, 
+                        username: String(msg?.from?.username || ""), 
+                        personal_promo_code: safePromo, 
+                        tickets: 0,
+                        status: 'created' 
+                   }).select().single()
+                   
+                   if (retry) return retry
+                   console.error('[makeUser] Retry failed:', retryError)
+              }
+              return fallback // Return fake user to prevent crash, but they won't be in DB
+          }
+          
+          return created
+      } catch (e) {
+          console.error('[makeUser] Exception:', e)
+          return fallback
+      }
     }
 
     // 16. ORDERS COMMAND / ЗАКАЗ (MOVED UP FOR DEEP LINKING PRIORITY)
@@ -650,6 +702,7 @@ ${friendName} пригласил тебя в конкурс ЭТРА!
     
     // 17. ADMIN COMMAND
     if (isAdminCmd) {
+        console.log('[ADMIN_CMD] Executed by', chatId)
         if (sup) {
             // 1. Total participants
             const { count: totalUsers } = await sup.from('contest_participants').select('*', { count: 'exact', head: true })
@@ -676,27 +729,7 @@ ${friendName} пригласил тебя в конкурс ЭТРА!
         return NextResponse.json({ ok: true })
     }
 
-    // Callback query handling (for buttons like 'Я подписался')
-    if (update.callback_query) {
-        const cb = update.callback_query
-        const cbData = cb.data
-        const cbChatId = String(cb.message?.chat?.id || "")
-        const cbUserId = cb.from.id
-        
-        if (cbData === 'check_sub') {
-             const sub = await isSubscribedToOfficial(cbUserId)
-             if (sub) {
-                 await sendTelegramMessage(`✅ Подписка подтверждена! Нажми /start`, cbChatId)
-             } else {
-                 await sendTelegramMessage(`❌ Пока не вижу подписки. Попробуй еще раз через минуту.`, cbChatId)
-             }
-        }
-        if (cbData === 'stats_cmd') {
-            // Re-run stats logic? (Simplified: just tell them to type /stats or send stats directly if we refactor)
-            // For now just reply
-            await sendTelegramMessage(`Обновляю... Нажми /stats`, cbChatId)
-        }
-    }
+    return NextResponse.json({ ok: true })
 
     return NextResponse.json({ ok: true })
   } catch (e) {
