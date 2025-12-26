@@ -346,6 +346,40 @@ async function processOrder(invId: string, outSum: string, payload?: Record<stri
             }
         }
 
+        // NORMALIZE ITEM SUMS TO MATCH OutSum (handling discounts/promo codes)
+        // If the sum of items differs from the actual paid amount (OutSum), redistribute the difference.
+        if (standardizedItems.length > 0) {
+            const currentTotal = standardizedItems.reduce((acc, it) => acc + (it.sum || 0), 0);
+            const paidTotal = Number(outSum);
+            
+            // If difference is significant (e.g. > 1 rub), applies if promo code reduced the total but items kept original price
+            if (Math.abs(currentTotal - paidTotal) > 1.0) {
+                console.log(`Normalizing items total: ItemsSum=${currentTotal} vs Paid=${paidTotal}`);
+                const ratio = paidTotal / currentTotal;
+                
+                let runningTotal = 0;
+                standardizedItems.forEach((it, index) => {
+                    // Scale sum
+                    let newSum = it.sum * ratio;
+                    
+                    // Round to 2 decimals
+                    newSum = Math.round(newSum * 100) / 100;
+                    
+                    // Adjust last item to handle rounding errors
+                    if (index === standardizedItems.length - 1) {
+                         const diff = paidTotal - runningTotal;
+                         // If diff is reasonable (close to newSum), use it. 
+                         // Otherwise, if it's huge, something is wrong, but here we just want to match total.
+                         newSum = Math.round(diff * 100) / 100;
+                    }
+                    
+                    it.sum = newSum;
+                    it.price = it.quantity > 0 ? newSum / it.quantity : 0;
+                    runningTotal += newSum;
+                });
+            }
+        }
+
         // Prepare items for display
         const lines = standardizedItems.map((it) => {
           return `• ${it.name} × ${it.quantity} — ${it.sum.toLocaleString('ru-RU')} руб.`
